@@ -33,7 +33,7 @@ Native mobile applications and app-store distribution are outside the MVP scope.
 
 The MVP will initially be hosted through a managed web-hosting platform connected to GitHub. Self-hosting on a Synology NAS may be considered later, once the product and deployment setup are stable.
 
-## Proposed structure
+## Target layers
 
 - User interface: screens, navigation, cards, forms, and visual states.
 - Application logic: current event selection, Travel Brain decisions, recommendations, readiness, reminders, and daily briefing logic.
@@ -41,12 +41,38 @@ The MVP will initially be hosted through a managed web-hosting platform connecte
 - Storage: local-first browser storage for essential trip data, with optional secure synchronization later.
 - External services: weather, maps, AI services, notifications, and provider portals only when they add clear value.
 
-## Repository shape
+## Sprint 1 foundation
 
-- `src/` holds reusable app shell and feature code.
-- `trips/` holds trip-specific data for each journey.
-- `assets/` holds static resources.
-- `docs/` holds product and product-management documentation.
+The initial application foundation uses React, TypeScript, Vite, Tailwind CSS,
+React Router, and `vite-plugin-pwa`.
+
+The implemented repository structure is organized by responsibility:
+
+- `src/app/` contains routing, the application shell, and app-wide providers.
+- `src/components/` contains reusable presentation components.
+- `src/features/` contains feature-owned screens and UI; Sprint 1 contains
+  placeholders only.
+- `src/storage/` contains repository contracts and browser-backed implementations.
+- `src/styles/` contains global styling and design tokens.
+- `public/` contains installable PWA icons and static assets.
+- `docs/` contains product, architecture, governance, and decision documentation.
+
+UI components do not call browser storage directly. A narrow repository
+interface owns theme preference persistence through local storage, allowing the
+implementation to change without coupling it to the interface.
+
+The generated service worker precaches the application shell. Essential trip
+data and feature-specific offline behavior will be introduced with the features
+that require them.
+
+Sprint 1 deliberately contains no trip countdown, itinerary calculations,
+recommendation logic, Travel Brain implementation, complete domain model,
+time-zone handling, validation framework, sync, authentication, documents, or
+notifications. Those concerns will be designed when a concrete later-sprint
+feature requires them.
+
+Trip configurations will live outside the reusable shell, under `trips/`, when
+the first real trip feature defines the minimum required structure.
 
 ## Guidance
 
@@ -54,3 +80,5 @@ The MVP will initially be hosted through a managed web-hosting platform connecte
 - Prefer structured data over hard-coded UI content.
 - Delay backend and sync work until the foundation is stable.
 - Keep deployment portable so the app can move from managed hosting to self-hosting later without major redesign.
+- Record significant changes in `docs/decisions/` and review meaningful sprint
+  changes using `docs/review-process.md`.

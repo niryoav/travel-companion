@@ -5,10 +5,17 @@
 - Create the repository structure and documentation baseline.
 - Keep the scope limited to planning and scaffolding.
 
-## Sprint 1: Core travel experience
-- Add the core trip overview, today view, tomorrow briefing, and itinerary flow.
-- Introduce local-first storage for essential trip data.
+## Sprint 1: PWA foundation
+- Establish the React, TypeScript, Vite, and Tailwind CSS application foundation.
+- Add the installable PWA shell and Vercel deployment configuration.
+- Add mobile-first navigation for Today, Trip, Discover, Documents, and More.
+- Support light and dark themes.
+- Introduce a repository boundary with local preference storage.
+- Keep all five destinations as placeholders and defer travel-domain logic.
 
 ## Later phases
-- Expand to ports, excursions, documents, packing, expenses, and notes.
+- Introduce the first core travel experience and evolve the domain model from
+  concrete user needs.
+- Expand to itinerary logic, briefings, ports, excursions, documents, packing,
+  expenses, and notes.
 - Add offline polish and optional sync or notifications when the core is proven.
