@@ -14,3 +14,6 @@ The design system should remain simple and practical during Sprint 0.
 - Favor reusable components over one-off UI patterns.
 - Keep visual language warm, premium, and understated.
 - Treat the current mock-up as inspiration, not a final specification.
+- Support light and dark color schemes with equivalent hierarchy and contrast.
+- Respect device safe areas and reduced-motion preferences.
+- Keep primary navigation fixed within thumb reach on mobile.

@@ -279,6 +279,20 @@ Agents must respect existing decisions unless they clearly explain why a change 
 
 ---
 
+## Review governance
+
+Meaningful sprint deliverables should receive an independent review before
+merge. Follow `docs/review-process.md` for the review package, categories,
+severity levels, score, merge recommendation, and archive convention.
+
+Reviewers must check relevant accepted ADRs in `docs/decisions/`. A review should
+evaluate the approved scope and identify risks; it should not expand the sprint
+or redesign accepted work without making that proposal explicit.
+
+The product owner makes the final merge decision.
+
+---
+
 ## Definition of done
 
 A task is not complete merely because the code runs.
@@ -299,28 +313,11 @@ A feature is done when:
 
 ## Architectural decisions
 
-For significant technical choices, create a short Architecture Decision Record in:
+For significant technical choices, follow the lightweight ADR process in
+`docs/decisions/README.md` and create a record in:
 
 ```text
 docs/decisions/
-```
-
-Use this format:
-
-```text
-# ADR-XXX: Decision title
-
-## Context
-What problem or choice exists?
-
-## Decision
-What was chosen?
-
-## Alternatives considered
-What other options were considered?
-
-## Consequences
-What benefits, costs and risks follow?
 ```
 
 Examples of decisions that require an ADR:
@@ -364,16 +361,17 @@ Prefer:
 
 ## Current project status
 
-The repository is in **Sprint 0: Foundation**.
+**Sprint 1: PWA Foundation is complete.** Sprint 2 has not started.
 
-The immediate objective is to establish:
+The approved Sprint 1 foundation includes:
 
-- product vision;
-- architecture overview;
-- roadmap;
-- design and UX guidance;
-- project structure;
-- development conventions;
-- initial PWA scaffolding only after the foundation is reviewed.
+- the React, TypeScript, Vite, and Tailwind CSS foundation;
+- an installable mobile-first PWA shell;
+- five placeholder navigation destinations;
+- light and dark themes;
+- a repository abstraction with simple local preference storage;
+- Vercel deployment readiness.
 
-Do not build advanced features before Sprint 0 has been approved by the product owner.
+Travel-domain models and behavior, itinerary logic, briefings, recommendations,
+Travel Brain implementation, AI, synchronization, authentication, document
+management, and notifications remain deferred until later sprints.
