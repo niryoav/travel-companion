@@ -22,8 +22,40 @@ page-specific color values:
 - white for primary cover text;
 - champagne gold for small highlights.
 
-The established neutral application surfaces remain available. Deep ocean green
-is not the primary brand color.
+Ocean-blue surfaces remain primary throughout the shell. White or cream must not
+become the primary page background, and deep ocean green is not the brand color.
+
+## Day Ocean and Night Ocean
+
+Travel Companion uses two variants of the same ocean-blue identity rather than a
+white light mode and a conventional dark mode:
+
+- **Day Ocean** uses clearer, somewhat lighter ocean blues, crisp white text,
+  blue-grey supporting text, and restrained sky/water gradients. It should feel
+  fresh, clear, energetic, and easy to scan.
+- **Night Ocean** uses navy and midnight-ocean backgrounds, deeper cards,
+  warm-white text, muted blue-grey supporting text, and warmer champagne
+  accents. It should feel calm, warm, and comfortable in the evening.
+
+The default preference is **Follow system**: a light system appearance resolves
+to Day Ocean and a dark system appearance resolves to Night Ocean. This follows
+the device appearance setting, not the clock. Manual choices for Follow system,
+Day Ocean, and Night Ocean live under More → Appearance; Home has no prominent
+appearance toggle.
+
+Shared root tokens define page gradients, surfaces, text, borders, navigation,
+status colors, and card treatments for both appearances. Avoid page-specific
+copies of appearance colors. Background gradients may suggest open sky or water,
+but must remain subtle, non-photographic, and subordinate to content.
+
+Champagne is reserved for key times, countdowns, next milestones, active
+navigation, and important actions. Green remains reserved for confirmed or
+completed states, while warning color appears only for genuine actionable
+alerts.
+
+Both appearances must preserve readable contrast, visible keyboard focus, large
+touch targets, and the established typography. Reduced brightness in Night Ocean
+must never mean reduced legibility.
 
 ## Typography
 

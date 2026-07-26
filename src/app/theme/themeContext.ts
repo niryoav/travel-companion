@@ -1,10 +1,11 @@
 import { createContext } from 'react'
 
-import type { ThemePreference } from '../../storage/PreferencesRepository'
+import type { AppearancePreference } from '../../storage/PreferencesRepository'
 
 export interface ThemeContextValue {
-  theme: ThemePreference
-  toggleTheme: () => void
+  appearance: AppearancePreference
+  resolvedAppearance: Exclude<AppearancePreference, 'system'>
+  setAppearance: (appearance: AppearancePreference) => void
 }
 
 export const ThemeContext = createContext<ThemeContextValue | null>(null)

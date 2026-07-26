@@ -1,9 +1,9 @@
-export type ThemePreference = 'light' | 'dark'
+export type AppearancePreference = 'day-ocean' | 'night-ocean' | 'system'
 export type TravelerProfile = 'Isabel' | 'Yoav'
 
 export interface PreferencesRepository {
-  getTheme(): ThemePreference | null
+  getAppearance(): AppearancePreference | null
   getTravelerProfile(): TravelerProfile | null
-  setTheme(theme: ThemePreference): void
+  setAppearance(appearance: AppearancePreference): void
   setTravelerProfile(traveler: TravelerProfile): void
 }

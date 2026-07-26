@@ -13,7 +13,8 @@ full daily itinerary.
 
 ## Approved Visual Direction
 
-- Deep ocean-blue page background and dark-blue card surfaces
+- Day Ocean and Night Ocean variants of the deep ocean-blue experience
+- Ocean-blue page backgrounds and dark-blue card surfaces in both variants
 - High-contrast white primary text and blue-grey supporting text
 - Champagne accents for key times, countdowns, actions, and active states
 - Green only for confirmed or completed states
@@ -45,6 +46,8 @@ is not stored in the repository.
   actionable alert
 - Query-parameter demo control for reviewing every phase
 - Responsive dark ocean-blue Home and bottom-navigation treatment
+- System-aware Day Ocean and Night Ocean appearances
+- Manual Follow system, Day Ocean, and Night Ocean choices under More
 
 ## Out of Scope
 
@@ -61,6 +64,11 @@ Rendering components live under `src/features/home/` and consume a typed
 More/Profile live under `src/features/profile/`. Traveler preference uses the
 existing storage repository boundary; UI code does not call browser storage
 directly. Home receives the resolved traveler and contains no profile controls.
+
+Appearance preference also uses the repository boundary. The theme provider
+resolves Follow system through `prefers-color-scheme` and applies centralized
+Day Ocean or Night Ocean tokens. Manual controls live under More → Appearance;
+Home and the shared header contain no appearance toggle.
 
 This sprint introduces only the minimum Home-specific types required by the
 brief. It does not define the complete trip domain model.
@@ -96,12 +104,18 @@ for review only and does not dominate the production UI.
 - [ ] Home is readable and usable from 320px mobile width through desktop.
 - [ ] Existing navigation, theme, welcome cover, tests, and PWA behavior remain
       intact.
+- [ ] Light system appearance resolves to Day Ocean and dark resolves to Night
+      Ocean unless a manual choice is saved.
+- [ ] Follow system, Day Ocean, and Night Ocean can be selected and persisted
+      under More → Appearance.
+- [ ] Home has no prominent appearance toggle.
 
 ## Testing
 
 - Greeting boundaries and phase-query parsing
 - First-use traveler choice, persistence, and invalid stored values
 - More/Profile traveler changes and the resulting Home greeting
+- System and manual appearance resolution and persistence
 - Shared component variants and phase-specific Home content
 - Port-day all-aboard and sea-day omission
 - Checklist and alert constraints
@@ -119,6 +133,9 @@ for review only and does not dominate the production UI.
 - [ ] Port-day all-aboard prominence
 - [ ] Sea-day hierarchy without an empty all-aboard state
 - [ ] Dark bottom navigation, active state, safe areas, and touch targets
+- [ ] Day Ocean and Night Ocean contrast across Home, setup, More, placeholders,
+      and bottom navigation
+- [ ] More → Appearance choices and absence of a Home appearance toggle
 - [ ] Keyboard focus, headings, contrast, and no color-only status
 - [ ] Home remains concise and distinct from Today
 

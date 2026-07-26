@@ -2,26 +2,26 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import type {
+  AppearancePreference,
   PreferencesRepository,
-  ThemePreference,
   TravelerProfile,
 } from '../storage/PreferencesRepository'
 import { App } from './App'
 
 class MemoryPreferencesRepository implements PreferencesRepository {
-  theme: ThemePreference | null = null
+  appearance: AppearancePreference | null = null
   traveler: TravelerProfile | null = null
 
-  getTheme() {
-    return this.theme
+  getAppearance() {
+    return this.appearance
   }
 
   getTravelerProfile() {
     return this.traveler
   }
 
-  setTheme(theme: ThemePreference) {
-    this.theme = theme
+  setAppearance(appearance: AppearancePreference) {
+    this.appearance = appearance
   }
 
   setTravelerProfile(traveler: TravelerProfile) {
@@ -32,7 +32,7 @@ class MemoryPreferencesRepository implements PreferencesRepository {
 describe('App', () => {
   beforeEach(() => {
     window.history.replaceState({}, '', '/')
-    document.documentElement.removeAttribute('data-theme')
+    document.documentElement.removeAttribute('data-appearance')
   })
 
   it('shows the approved trip welcome content without primary navigation', () => {
@@ -104,21 +104,19 @@ describe('App', () => {
     expect(window.location.pathname).toBe('/today')
   })
 
-  it('persists an explicit theme choice through the repository', async () => {
+  it('does not show a prominent appearance toggle on Home', async () => {
     const repository = new MemoryPreferencesRepository()
     repository.traveler = 'Yoav'
     window.history.replaceState({}, '', '/home')
     render(<App preferencesRepository={repository} />)
 
-    const toggle = await screen.findByRole('button', {
-      name: 'Switch to dark mode',
+    await screen.findByRole('heading', {
+      level: 1,
+      name: /Good (morning|afternoon|evening), Yoav/,
     })
-    fireEvent.click(toggle)
-
-    await waitFor(() => {
-      expect(document.documentElement).toHaveAttribute('data-theme', 'dark')
-    })
-    expect(repository.theme).toBe('dark')
+    expect(
+      screen.queryByRole('button', { name: /Switch to/ }),
+    ).not.toBeInTheDocument()
   })
 
   it('shows first-use traveler choice when no profile is saved', async () => {
@@ -178,5 +176,41 @@ describe('App', () => {
         name: /Good (morning|afternoon|evening), Isabel/,
       }),
     ).toBeInTheDocument()
+  })
+
+  it('supports and persists manual ocean appearances under More', async () => {
+    const repository = new MemoryPreferencesRepository()
+    repository.traveler = 'Yoav'
+    window.history.replaceState({}, '', '/more')
+    render(<App preferencesRepository={repository} />)
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: /Day Ocean/ }),
+    )
+    await waitFor(() => {
+      expect(document.documentElement).toHaveAttribute(
+        'data-appearance',
+        'day-ocean',
+      )
+    })
+    expect(repository.appearance).toBe('day-ocean')
+
+    fireEvent.click(screen.getByRole('button', { name: /Night Ocean/ }))
+    await waitFor(() => {
+      expect(document.documentElement).toHaveAttribute(
+        'data-appearance',
+        'night-ocean',
+      )
+    })
+    expect(repository.appearance).toBe('night-ocean')
+
+    fireEvent.click(screen.getByRole('button', { name: /Follow system/ }))
+    await waitFor(() => {
+      expect(document.documentElement).toHaveAttribute(
+        'data-appearance',
+        'day-ocean',
+      )
+    })
+    expect(repository.appearance).toBe('system')
   })
 })

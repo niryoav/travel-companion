@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 
 import type {
+  AppearancePreference,
   PreferencesRepository,
-  ThemePreference,
 } from '../../storage/PreferencesRepository'
 import { ThemeContext } from './themeContext'
 
@@ -11,37 +11,64 @@ interface ThemeProviderProps {
   repository: PreferencesRepository
 }
 
-function preferredTheme(): ThemePreference {
+type ResolvedAppearance = Exclude<AppearancePreference, 'system'>
+
+function systemAppearance(): ResolvedAppearance {
   return window.matchMedia('(prefers-color-scheme: dark)').matches
-    ? 'dark'
-    : 'light'
+    ? 'night-ocean'
+    : 'day-ocean'
 }
 
 export function ThemeProvider({
   children,
   repository,
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<ThemePreference>(
-    () => repository.getTheme() ?? preferredTheme(),
+  const [appearance, setAppearanceState] = useState<AppearancePreference>(
+    () => repository.getAppearance() ?? 'system',
   )
+  const [systemResolvedAppearance, setSystemResolvedAppearance] =
+    useState<ResolvedAppearance>(systemAppearance)
 
   useEffect(() => {
-    document.documentElement.dataset.theme = theme
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const updateSystemAppearance = () => {
+      setSystemResolvedAppearance(
+        mediaQuery.matches ? 'night-ocean' : 'day-ocean',
+      )
+    }
+
+    updateSystemAppearance()
+    mediaQuery.addEventListener('change', updateSystemAppearance)
+
+    return () => {
+      mediaQuery.removeEventListener('change', updateSystemAppearance)
+    }
+  }, [])
+
+  const resolvedAppearance =
+    appearance === 'system' ? systemResolvedAppearance : appearance
+
+  useEffect(() => {
+    document.documentElement.dataset.appearance = resolvedAppearance
+    document.documentElement.removeAttribute('data-theme')
     document
       .querySelector('meta[name="theme-color"]')
-      ?.setAttribute('content', theme === 'dark' ? '#122522' : '#f6f4ef')
-  }, [theme])
+      ?.setAttribute(
+        'content',
+        resolvedAppearance === 'night-ocean' ? '#031525' : '#075080',
+      )
+  }, [resolvedAppearance])
 
   const value = useMemo(
     () => ({
-      theme,
-      toggleTheme: () => {
-        const nextTheme = theme === 'light' ? 'dark' : 'light'
-        repository.setTheme(nextTheme)
-        setTheme(nextTheme)
+      appearance,
+      resolvedAppearance,
+      setAppearance: (nextAppearance: AppearancePreference) => {
+        repository.setAppearance(nextAppearance)
+        setAppearanceState(nextAppearance)
       },
     }),
-    [repository, theme],
+    [appearance, repository, resolvedAppearance],
   )
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>

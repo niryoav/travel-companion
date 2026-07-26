@@ -12,49 +12,76 @@
 }
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
   font-family: var(--font-sans);
-  background: #f6f4ef;
-  color: #102a3b;
+  background: #075080;
+  color: #fff;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  --surface: #f6f4ef;
-  --surface-raised: #fffdf9;
-  --surface-muted: #ebe6dc;
-  --text: #102a3b;
-  --text-muted: #60717c;
-  --accent: #126d96;
-  --accent-soft: #dceef6;
-  --positive: #27705f;
-  --positive-soft: #e0eee9;
-  --attention: #8a5a18;
-  --attention-soft: #f6e9d4;
-  --border: #ddd8ce;
-  --shadow: 0 18px 50px rgb(17 47 64 / 10%);
+  --surface: #075080;
+  --surface-raised: #0b4a70;
+  --surface-muted: #145d83;
+  --text: #fff;
+  --text-muted: #c4d8e4;
+  --accent: #e6c47f;
+  --accent-soft: rgb(230 196 127 / 16%);
+  --positive: #91d5b3;
+  --positive-soft: rgb(145 213 179 / 18%);
+  --attention: #efc979;
+  --attention-soft: rgb(94 66 27 / 52%);
+  --border: rgb(180 213 229 / 36%);
+  --shadow: 0 18px 50px rgb(0 31 54 / 22%);
   --ocean-950: #071d2c;
   --ocean-800: #0d3d5a;
   --ocean-600: #16739c;
   --sky-100: #d8edf7;
-  --champagne: #dfc48e;
+  --champagne: #e6c47f;
+  --page-gradient-start: #0a5f94;
+  --page-gradient-middle: #074b76;
+  --page-gradient-end: #053657;
+  --page-glow: rgb(105 185 225 / 26%);
+  --home-context-start: rgb(26 105 146 / 88%);
+  --home-context-end: rgb(8 65 99 / 94%);
+  --home-card-start: rgb(17 88 125 / 94%);
+  --home-card-end: rgb(7 62 94 / 97%);
+  --navigation-background: rgb(5 51 80 / 94%);
+  --setup-card-background: rgb(8 67 101 / 94%);
+  --setup-choice-background: rgb(21 93 128 / 90%);
+  --alert-background: rgb(94 66 27 / 50%);
+  --timeline-ring: #0d5078;
 }
 
-:root[data-theme="dark"] {
+:root[data-appearance="night-ocean"] {
   color-scheme: dark;
-  background: #081a26;
-  color: #f2eee5;
-  --surface: #081a26;
-  --surface-raised: #102b3b;
-  --surface-muted: #17384a;
-  --text: #f2eee5;
-  --text-muted: #b7c8d1;
-  --accent: #8bd0e9;
-  --accent-soft: #173f53;
-  --positive: #8bd5b6;
-  --positive-soft: #19483d;
-  --attention: #f2c77f;
-  --attention-soft: #4a3a24;
-  --border: #315062;
-  --shadow: 0 18px 50px rgb(0 0 0 / 24%);
+  background: #031525;
+  color: #f7f2e9;
+  --surface: #031525;
+  --surface-raised: #07243a;
+  --surface-muted: #0d3450;
+  --text: #f7f2e9;
+  --text-muted: #adc3d0;
+  --accent: #f0c879;
+  --accent-soft: rgb(240 200 121 / 14%);
+  --positive: #86cda9;
+  --positive-soft: rgb(134 205 169 / 16%);
+  --attention: #f1c574;
+  --attention-soft: rgb(73 49 20 / 58%);
+  --border: rgb(141 178 199 / 30%);
+  --shadow: 0 18px 50px rgb(0 4 12 / 34%);
+  --champagne: #f0c879;
+  --page-gradient-start: #062b49;
+  --page-gradient-middle: #041e34;
+  --page-gradient-end: #02111e;
+  --page-glow: rgb(20 91 132 / 24%);
+  --home-context-start: rgb(10 55 82 / 94%);
+  --home-context-end: rgb(4 31 49 / 97%);
+  --home-card-start: rgb(8 48 73 / 96%);
+  --home-card-end: rgb(3 28 45 / 98%);
+  --navigation-background: rgb(2 20 33 / 96%);
+  --setup-card-background: rgb(4 35 55 / 96%);
+  --setup-choice-background: rgb(10 53 78 / 94%);
+  --alert-background: rgb(64 43 17 / 58%);
+  --timeline-ring: #082b43;
 }
 
 * {
@@ -83,8 +110,14 @@ body {
   min-height: 100dvh;
   margin: 0;
   background:
-    radial-gradient(circle at top right, rgb(215 168 91 / 12%), transparent 18rem),
-    var(--surface);
+    radial-gradient(circle at 82% 8%, var(--page-glow), transparent 26rem),
+    linear-gradient(
+      180deg,
+      var(--page-gradient-start),
+      var(--page-gradient-middle) 48%,
+      var(--page-gradient-end)
+    );
+  background-attachment: fixed;
   color: var(--text);
 }
 
@@ -245,26 +278,18 @@ a:focus-visible {
   min-height: 100vh;
   min-height: 100dvh;
   margin: 0 auto;
+  background:
+    radial-gradient(circle at 88% 8%, var(--page-glow), transparent 25rem),
+    linear-gradient(
+      180deg,
+      var(--page-gradient-start),
+      var(--page-gradient-middle) 42%,
+      var(--page-gradient-end)
+    );
   padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
 }
 
 .app-shell-home {
-  --surface: #061d2e;
-  --surface-raised: #0b3550;
-  --surface-muted: #124663;
-  --text: #f8fbfd;
-  --text-muted: #b8ccd8;
-  --accent: #edcc8c;
-  --accent-soft: rgb(237 204 140 / 15%);
-  --positive: #8ed0ad;
-  --positive-soft: rgb(142 208 173 / 16%);
-  --attention: #f3cf8c;
-  --attention-soft: rgb(243 207 140 / 14%);
-  --border: rgb(160 201 221 / 28%);
-  --shadow: 0 18px 50px rgb(0 10 20 / 28%);
-  background:
-    radial-gradient(circle at 88% 8%, rgb(24 111 154 / 34%), transparent 25rem),
-    linear-gradient(180deg, #073252 0%, #061d2e 42%, #041725 100%);
   color: var(--text);
 }
 
@@ -311,18 +336,6 @@ a:focus-visible {
   font-size: 0.875rem;
 }
 
-.theme-toggle {
-  display: grid;
-  width: 2.75rem;
-  height: 2.75rem;
-  place-items: center;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--surface-raised);
-  color: var(--text);
-  cursor: pointer;
-}
-
 .app-content {
   padding: clamp(1.5rem, 5vw, 3rem)
     max(1.25rem, env(safe-area-inset-right)) 2rem
@@ -338,11 +351,6 @@ a:focus-visible {
 }
 
 .app-shell-home .app-kicker {
-  color: var(--champagne);
-}
-
-.app-shell-home .theme-toggle {
-  background: rgb(5 30 47 / 72%);
   color: var(--champagne);
 }
 
@@ -390,10 +398,10 @@ a:focus-visible {
 
 .home-context {
   padding: 1.05rem 1.15rem;
-  border: 1px solid rgb(160 201 221 / 18%);
+  border: 1px solid var(--border);
   border-radius: 1.35rem;
   background:
-    linear-gradient(135deg, rgb(27 93 127 / 44%), rgb(5 35 54 / 76%));
+    linear-gradient(135deg, var(--home-context-start), var(--home-context-end));
   box-shadow: inset 0 1px rgb(255 255 255 / 5%);
 }
 
@@ -452,7 +460,7 @@ a:focus-visible {
   border: 1px solid var(--border);
   border-radius: 1.35rem;
   background:
-    linear-gradient(145deg, rgb(18 71 99 / 92%), rgb(7 43 65 / 96%));
+    linear-gradient(145deg, var(--home-card-start), var(--home-card-end));
   box-shadow: var(--shadow), inset 0 1px rgb(255 255 255 / 5%);
   padding: 1.15rem;
 }
@@ -468,7 +476,7 @@ a:focus-visible {
 
 .milestone-card {
   position: relative;
-  border-color: rgb(237 204 140 / 38%);
+  border-color: color-mix(in srgb, var(--champagne) 38%, transparent);
 }
 
 .milestone-card::before {
@@ -485,7 +493,8 @@ a:focus-visible {
 .milestone-card-urgent {
   box-shadow:
     0 18px 50px rgb(0 10 20 / 30%),
-    inset 0 0 0 1px rgb(237 204 140 / 12%);
+    inset 0 0 0 1px
+      color-mix(in srgb, var(--champagne) 12%, transparent);
 }
 
 .milestone-heading {
@@ -500,7 +509,7 @@ a:focus-visible {
   height: 1rem;
   flex: 0 0 auto;
   margin-top: 0.25rem;
-  border: 3px solid #0b3550;
+  border: 3px solid var(--timeline-ring);
   border-radius: 999px;
   background: var(--champagne);
   box-shadow: 0 0 0 1px var(--champagne);
@@ -654,9 +663,10 @@ a:focus-visible {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 0.85rem;
-  border: 1px solid rgb(243 207 140 / 42%);
+  border: 1px solid
+    color-mix(in srgb, var(--attention) 42%, transparent);
   border-radius: 1.25rem;
-  background: rgb(84 58 26 / 44%);
+  background: var(--alert-background);
   padding: 1rem;
 }
 
@@ -819,7 +829,7 @@ a:focus-visible {
   min-height: 4.75rem;
   margin: 0 auto;
   border-top: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface-raised) 92%, transparent);
+  background: var(--navigation-background);
   padding:
     0.45rem
     max(0.4rem, env(safe-area-inset-right))
@@ -854,9 +864,14 @@ a:focus-visible {
   min-height: 100dvh;
   place-items: center;
   background:
-    radial-gradient(circle at 80% 12%, rgb(24 111 154 / 38%), transparent 24rem),
-    linear-gradient(180deg, #073252 0%, #061d2e 55%, #041725 100%);
-  color: #f8fbfd;
+    radial-gradient(circle at 80% 12%, var(--page-glow), transparent 24rem),
+    linear-gradient(
+      180deg,
+      var(--page-gradient-start),
+      var(--page-gradient-middle) 55%,
+      var(--page-gradient-end)
+    );
+  color: var(--text);
   padding:
     max(1.25rem, env(safe-area-inset-top))
     max(1.25rem, env(safe-area-inset-right))
@@ -866,10 +881,10 @@ a:focus-visible {
 
 .profile-setup-card {
   width: min(100%, 30rem);
-  border: 1px solid rgb(160 201 221 / 30%);
+  border: 1px solid var(--border);
   border-radius: 1.5rem;
-  background: rgb(7 43 65 / 88%);
-  box-shadow: 0 24px 70px rgb(0 10 20 / 32%);
+  background: var(--setup-card-background);
+  box-shadow: var(--shadow);
   padding: clamp(1.3rem, 5vw, 2rem);
 }
 
@@ -891,7 +906,7 @@ a:focus-visible {
 
 .profile-setup-description,
 .profile-local-note {
-  color: #b8ccd8;
+  color: var(--text-muted);
   line-height: 1.55;
 }
 
@@ -941,9 +956,9 @@ a:focus-visible {
 }
 
 .profile-setup .traveler-choice-button {
-  border-color: rgb(160 201 221 / 32%);
-  background: rgb(18 70 98 / 82%);
-  color: #f8fbfd;
+  border-color: var(--border);
+  background: var(--setup-choice-background);
+  color: var(--text);
 }
 
 .traveler-choice-button strong {
@@ -958,7 +973,7 @@ a:focus-visible {
 }
 
 .profile-setup .traveler-choice-button span {
-  color: #b8ccd8;
+  color: var(--text-muted);
 }
 
 .traveler-choice-button-selected {
@@ -976,31 +991,83 @@ a:focus-visible {
   outline-color: var(--champagne);
 }
 
-.profile-settings {
+.profile-settings,
+.appearance-settings {
   max-width: 38rem;
   margin-top: clamp(1.5rem, 6vw, 2.5rem);
   padding: 1.25rem;
 }
 
-.profile-settings h2 {
+.profile-settings h2,
+.appearance-settings h2 {
   margin: 0.45rem 0 0;
   font-size: clamp(1.25rem, 5vw, 1.55rem);
 }
 
-.profile-settings > p:not(.card-eyebrow) {
+.profile-settings > p:not(.card-eyebrow),
+.appearance-settings > p:not(.card-eyebrow) {
   margin: 0.55rem 0 0;
   color: var(--text-muted);
   line-height: 1.55;
 }
 
-.app-shell-home .bottom-navigation {
-  border-color: rgb(160 201 221 / 24%);
-  background: rgb(4 25 40 / 94%);
+.appearance-choice {
+  min-width: 0;
+  margin: 1.25rem 0 0;
+  border: 0;
+  padding: 0;
 }
 
-.app-shell-home .navigation-item-active {
-  background: rgb(237 204 140 / 13%);
-  color: var(--champagne);
+.appearance-choice legend {
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 750;
+}
+
+.appearance-description {
+  margin: 0.35rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.appearance-options {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.8rem;
+}
+
+.appearance-option {
+  display: grid;
+  min-height: 4rem;
+  align-content: center;
+  gap: 0.18rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface-muted);
+  color: var(--text);
+  padding: 0.75rem 0.9rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.appearance-option strong {
+  font-size: 0.98rem;
+}
+
+.appearance-option span {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.appearance-option-selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.appearance-option:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
 }
 
 .app-icon {

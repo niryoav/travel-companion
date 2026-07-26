@@ -6,6 +6,7 @@ import type {
   PreferencesRepository,
   TravelerProfile,
 } from '../../storage/PreferencesRepository'
+import { AppearanceSettings } from './AppearanceSettings'
 import { TravelerChoice } from './TravelerChoice'
 
 interface MoreScreenProps {
@@ -44,6 +45,16 @@ export function MoreScreen({
           onChoose={chooseTraveler}
           selectedTraveler={traveler}
         />
+      </SurfaceCard>
+
+      <SurfaceCard className="appearance-settings">
+        <p className="card-eyebrow">Appearance</p>
+        <h2>Ocean appearance</h2>
+        <p>
+          Choose how Travel Companion follows the ocean-blue design on this
+          device.
+        </p>
+        <AppearanceSettings />
       </SurfaceCard>
     </main>
   )
