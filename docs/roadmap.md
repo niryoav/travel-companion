@@ -8,7 +8,7 @@
 ## Sprint 1: PWA foundation
 - Establish the React, TypeScript, Vite, and Tailwind CSS application foundation.
 - Add the installable PWA shell and Vercel deployment configuration.
-- Add mobile-first navigation for Today, Trip, Discover, Documents, and More.
+- Add mobile-first navigation for Home, Today, Trip, Documents, and More.
 - Support light and dark themes.
 - Introduce a repository boundary with local preference storage.
 - Keep all five destinations as placeholders and defer travel-domain logic.
