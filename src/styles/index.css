@@ -6,82 +6,49 @@
   --color-ocean-800: #0d3d5a;
   --color-ocean-600: #16739c;
   --color-sky-100: #d8edf7;
-  --color-sand-50: #f6f4ef;
-  --color-sand-100: #ebe6dc;
   --color-champagne-500: #dfc48e;
 }
 
 :root {
   color-scheme: dark;
   font-family: var(--font-sans);
-  background: #075080;
+  background: #063b61;
   color: #fff;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  --surface: #075080;
-  --surface-raised: #0b4a70;
-  --surface-muted: #145d83;
+  --surface: #063b61;
+  --surface-raised: rgb(7 49 77 / 88%);
+  --surface-muted: rgb(14 74 108 / 88%);
   --text: #fff;
-  --text-muted: #c4d8e4;
-  --accent: #e6c47f;
-  --accent-soft: rgb(230 196 127 / 16%);
+  --text-muted: #c3d6e2;
+  --accent: #e8c77f;
+  --accent-soft: rgb(232 199 127 / 16%);
   --positive: #91d5b3;
   --positive-soft: rgb(145 213 179 / 18%);
   --attention: #efc979;
   --attention-soft: rgb(94 66 27 / 52%);
-  --border: rgb(180 213 229 / 36%);
-  --shadow: 0 18px 50px rgb(0 31 54 / 22%);
+  --border: rgb(167 205 224 / 34%);
+  --shadow: 0 18px 50px rgb(0 18 35 / 28%);
   --ocean-950: #071d2c;
   --ocean-800: #0d3d5a;
   --ocean-600: #16739c;
   --sky-100: #d8edf7;
-  --champagne: #e6c47f;
-  --page-gradient-start: #0a5f94;
-  --page-gradient-middle: #074b76;
-  --page-gradient-end: #053657;
-  --page-glow: rgb(105 185 225 / 26%);
-  --home-context-start: rgb(26 105 146 / 88%);
-  --home-context-end: rgb(8 65 99 / 94%);
-  --home-card-start: rgb(17 88 125 / 94%);
-  --home-card-end: rgb(7 62 94 / 97%);
-  --navigation-background: rgb(5 51 80 / 94%);
-  --setup-card-background: rgb(8 67 101 / 94%);
-  --setup-choice-background: rgb(21 93 128 / 90%);
+  --champagne: #e8c77f;
+  --page-gradient-start: #0a5688;
+  --page-gradient-middle: #063e67;
+  --page-gradient-end: #032844;
+  --page-glow: rgb(105 186 224 / 24%);
+  --horizon-glow: rgb(80 158 198 / 18%);
+  --water-depth: rgb(0 24 43 / 28%);
+  --home-context-start: rgb(10 70 105 / 88%);
+  --home-context-end: rgb(4 43 69 / 94%);
+  --home-card-start: rgb(8 60 91 / 94%);
+  --home-card-end: rgb(3 39 63 / 97%);
+  --navigation-background: rgb(3 37 60 / 95%);
+  --setup-card-background: rgb(5 47 75 / 94%);
+  --setup-choice-background: rgb(10 65 95 / 90%);
   --alert-background: rgb(94 66 27 / 50%);
-  --timeline-ring: #0d5078;
-}
-
-:root[data-appearance="night-ocean"] {
-  color-scheme: dark;
-  background: #031525;
-  color: #f7f2e9;
-  --surface: #031525;
-  --surface-raised: #07243a;
-  --surface-muted: #0d3450;
-  --text: #f7f2e9;
-  --text-muted: #adc3d0;
-  --accent: #f0c879;
-  --accent-soft: rgb(240 200 121 / 14%);
-  --positive: #86cda9;
-  --positive-soft: rgb(134 205 169 / 16%);
-  --attention: #f1c574;
-  --attention-soft: rgb(73 49 20 / 58%);
-  --border: rgb(141 178 199 / 30%);
-  --shadow: 0 18px 50px rgb(0 4 12 / 34%);
-  --champagne: #f0c879;
-  --page-gradient-start: #062b49;
-  --page-gradient-middle: #041e34;
-  --page-gradient-end: #02111e;
-  --page-glow: rgb(20 91 132 / 24%);
-  --home-context-start: rgb(10 55 82 / 94%);
-  --home-context-end: rgb(4 31 49 / 97%);
-  --home-card-start: rgb(8 48 73 / 96%);
-  --home-card-end: rgb(3 28 45 / 98%);
-  --navigation-background: rgb(2 20 33 / 96%);
-  --setup-card-background: rgb(4 35 55 / 96%);
-  --setup-choice-background: rgb(10 53 78 / 94%);
-  --alert-background: rgb(64 43 17 / 58%);
-  --timeline-ring: #082b43;
+  --timeline-ring: #083e62;
 }
 
 * {
@@ -110,11 +77,17 @@ body {
   min-height: 100dvh;
   margin: 0;
   background:
-    radial-gradient(circle at 82% 8%, var(--page-glow), transparent 26rem),
+    radial-gradient(circle at 82% 7%, var(--page-glow), transparent 24rem),
+    radial-gradient(
+      ellipse at 48% 48%,
+      var(--horizon-glow),
+      transparent 34rem
+    ),
+    radial-gradient(ellipse at 50% 110%, transparent 18%, var(--water-depth) 72%),
     linear-gradient(
       180deg,
       var(--page-gradient-start),
-      var(--page-gradient-middle) 48%,
+      var(--page-gradient-middle) 46%,
       var(--page-gradient-end)
     );
   background-attachment: fixed;
@@ -279,7 +252,13 @@ a:focus-visible {
   min-height: 100dvh;
   margin: 0 auto;
   background:
-    radial-gradient(circle at 88% 8%, var(--page-glow), transparent 25rem),
+    radial-gradient(circle at 88% 7%, var(--page-glow), transparent 24rem),
+    radial-gradient(
+      ellipse at 48% 46%,
+      var(--horizon-glow),
+      transparent 32rem
+    ),
+    radial-gradient(ellipse at 50% 110%, transparent 18%, var(--water-depth) 72%),
     linear-gradient(
       180deg,
       var(--page-gradient-start),
@@ -991,83 +970,21 @@ a:focus-visible {
   outline-color: var(--champagne);
 }
 
-.profile-settings,
-.appearance-settings {
+.profile-settings {
   max-width: 38rem;
   margin-top: clamp(1.5rem, 6vw, 2.5rem);
   padding: 1.25rem;
 }
 
-.profile-settings h2,
-.appearance-settings h2 {
+.profile-settings h2 {
   margin: 0.45rem 0 0;
   font-size: clamp(1.25rem, 5vw, 1.55rem);
 }
 
-.profile-settings > p:not(.card-eyebrow),
-.appearance-settings > p:not(.card-eyebrow) {
+.profile-settings > p:not(.card-eyebrow) {
   margin: 0.55rem 0 0;
   color: var(--text-muted);
   line-height: 1.55;
-}
-
-.appearance-choice {
-  min-width: 0;
-  margin: 1.25rem 0 0;
-  border: 0;
-  padding: 0;
-}
-
-.appearance-choice legend {
-  color: var(--text);
-  font-size: 0.95rem;
-  font-weight: 750;
-}
-
-.appearance-description {
-  margin: 0.35rem 0 0;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-}
-
-.appearance-options {
-  display: grid;
-  gap: 0.65rem;
-  margin-top: 0.8rem;
-}
-
-.appearance-option {
-  display: grid;
-  min-height: 4rem;
-  align-content: center;
-  gap: 0.18rem;
-  border: 1px solid var(--border);
-  border-radius: 1rem;
-  background: var(--surface-muted);
-  color: var(--text);
-  padding: 0.75rem 0.9rem;
-  text-align: left;
-  cursor: pointer;
-}
-
-.appearance-option strong {
-  font-size: 0.98rem;
-}
-
-.appearance-option span {
-  color: var(--text-muted);
-  font-size: 0.8rem;
-}
-
-.appearance-option-selected {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  box-shadow: inset 0 0 0 1px var(--accent);
-}
-
-.appearance-option:focus-visible {
-  outline: 3px solid var(--accent);
-  outline-offset: 3px;
 }
 
 .app-icon {

@@ -1,27 +1,17 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import type {
-  AppearancePreference,
   PreferencesRepository,
   TravelerProfile,
 } from '../storage/PreferencesRepository'
 import { App } from './App'
 
 class MemoryPreferencesRepository implements PreferencesRepository {
-  appearance: AppearancePreference | null = null
   traveler: TravelerProfile | null = null
-
-  getAppearance() {
-    return this.appearance
-  }
 
   getTravelerProfile() {
     return this.traveler
-  }
-
-  setAppearance(appearance: AppearancePreference) {
-    this.appearance = appearance
   }
 
   setTravelerProfile(traveler: TravelerProfile) {
@@ -32,7 +22,6 @@ class MemoryPreferencesRepository implements PreferencesRepository {
 describe('App', () => {
   beforeEach(() => {
     window.history.replaceState({}, '', '/')
-    document.documentElement.removeAttribute('data-appearance')
   })
 
   it('shows the approved trip welcome content without primary navigation', () => {
@@ -178,39 +167,19 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 
-  it('supports and persists manual ocean appearances under More', async () => {
+  it('does not show an appearance selector under More', async () => {
     const repository = new MemoryPreferencesRepository()
     repository.traveler = 'Yoav'
     window.history.replaceState({}, '', '/more')
     render(<App preferencesRepository={repository} />)
 
-    fireEvent.click(
-      await screen.findByRole('button', { name: /Day Ocean/ }),
-    )
-    await waitFor(() => {
-      expect(document.documentElement).toHaveAttribute(
-        'data-appearance',
-        'day-ocean',
-      )
+    await screen.findByRole('heading', {
+      level: 2,
+      name: 'Traveler on this device',
     })
-    expect(repository.appearance).toBe('day-ocean')
-
-    fireEvent.click(screen.getByRole('button', { name: /Night Ocean/ }))
-    await waitFor(() => {
-      expect(document.documentElement).toHaveAttribute(
-        'data-appearance',
-        'night-ocean',
-      )
-    })
-    expect(repository.appearance).toBe('night-ocean')
-
-    fireEvent.click(screen.getByRole('button', { name: /Follow system/ }))
-    await waitFor(() => {
-      expect(document.documentElement).toHaveAttribute(
-        'data-appearance',
-        'day-ocean',
-      )
-    })
-    expect(repository.appearance).toBe('system')
+    expect(screen.queryByText('Ocean appearance')).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Day Ocean|Night Ocean|Follow system/ }),
+    ).not.toBeInTheDocument()
   })
 })

@@ -13,8 +13,8 @@ full daily itinerary.
 
 ## Approved Visual Direction
 
-- Day Ocean and Night Ocean variants of the deep ocean-blue experience
-- Ocean-blue page backgrounds and dark-blue card surfaces in both variants
+- One branded Ocean Day appearance with rich deep-to-medium ocean-blue depth
+- Dark translucent blue cards with clear separation from the background
 - High-contrast white primary text and blue-grey supporting text
 - Champagne accents for key times, countdowns, actions, and active states
 - Green only for confirmed or completed states
@@ -46,8 +46,7 @@ is not stored in the repository.
   actionable alert
 - Query-parameter demo control for reviewing every phase
 - Responsive dark ocean-blue Home and bottom-navigation treatment
-- System-aware Day Ocean and Night Ocean appearances
-- Manual Follow system, Day Ocean, and Night Ocean choices under More
+- One centralized Ocean Day token system across the existing screens
 
 ## Out of Scope
 
@@ -65,10 +64,10 @@ More/Profile live under `src/features/profile/`. Traveler preference uses the
 existing storage repository boundary; UI code does not call browser storage
 directly. Home receives the resolved traveler and contains no profile controls.
 
-Appearance preference also uses the repository boundary. The theme provider
-resolves Follow system through `prefers-color-scheme` and applies centralized
-Day Ocean or Night Ocean tokens. Manual controls live under More → Appearance;
-Home and the shared header contain no appearance toggle.
+Ocean Day is defined through centralized CSS variables for backgrounds, cards,
+text, borders, navigation, and semantic accents. Sprint 3 has no appearance
+provider, system switching, saved appearance preference, More selector, or
+prominent theme toggle.
 
 This sprint introduces only the minimum Home-specific types required by the
 brief. It does not define the complete trip domain model.
@@ -102,12 +101,11 @@ for review only and does not dominate the production UI.
 - [ ] Home remains distinct from Today and omits the complete itinerary.
 - [ ] Components do not contain demo data or direct storage calls.
 - [ ] Home is readable and usable from 320px mobile width through desktop.
-- [ ] Existing navigation, theme, welcome cover, tests, and PWA behavior remain
+- [ ] Existing navigation, Ocean Day theme, welcome cover, tests, and PWA behavior remain
       intact.
-- [ ] Light system appearance resolves to Day Ocean and dark resolves to Night
-      Ocean unless a manual choice is saved.
-- [ ] Follow system, Day Ocean, and Night Ocean can be selected and persisted
-      under More → Appearance.
+- [ ] Ocean Day retains visible gradient depth and dark translucent cards without
+      using photographic Home backgrounds.
+- [ ] More contains no appearance selector.
 - [ ] Home has no prominent appearance toggle.
 
 ## Testing
@@ -115,7 +113,7 @@ for review only and does not dominate the production UI.
 - Greeting boundaries and phase-query parsing
 - First-use traveler choice, persistence, and invalid stored values
 - More/Profile traveler changes and the resulting Home greeting
-- System and manual appearance resolution and persistence
+- Absence of appearance controls on Home and More
 - Shared component variants and phase-specific Home content
 - Port-day all-aboard and sea-day omission
 - Checklist and alert constraints
@@ -133,9 +131,9 @@ for review only and does not dominate the production UI.
 - [ ] Port-day all-aboard prominence
 - [ ] Sea-day hierarchy without an empty all-aboard state
 - [ ] Dark bottom navigation, active state, safe areas, and touch targets
-- [ ] Day Ocean and Night Ocean contrast across Home, setup, More, placeholders,
-      and bottom navigation
-- [ ] More → Appearance choices and absence of a Home appearance toggle
+- [ ] Ocean Day contrast and depth across Home, setup, More, placeholders, and
+      bottom navigation
+- [ ] Absence of appearance controls on Home and More
 - [ ] Keyboard focus, headings, contrast, and no color-only status
 - [ ] Home remains concise and distinct from Today
 
