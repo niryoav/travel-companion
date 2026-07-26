@@ -1,24 +1,31 @@
 import { useLocation } from 'react-router'
 
-import type { TravelerProfile } from '../../storage/PreferencesRepository'
+import type { TripData } from '../../domain/trip/tripTypes'
 import { demoHomeStateFromSearch } from './demoPhase'
+import { homeReviewFixtures } from './fixtures/homeReviewFixtures'
 import { greetingFor } from './greeting'
-import { homeDemoData } from './homeDemoData'
 import { HomePhaseView } from './HomePhaseView'
+import { selectHomeViewModel } from './selectors/selectHomeViewModel'
 
 interface HomeScreenProps {
-  traveler: TravelerProfile
+  travelerName: string
+  tripData: TripData
 }
 
-export function HomeScreen({ traveler }: HomeScreenProps) {
+export function HomeScreen({
+  travelerName,
+  tripData,
+}: HomeScreenProps) {
   const { search } = useLocation()
-  const demoState = demoHomeStateFromSearch(search)
-  const viewModel = homeDemoData[demoState]
+  const reviewState = demoHomeStateFromSearch(search)
+  const viewModel = reviewState
+    ? homeReviewFixtures[reviewState]
+    : selectHomeViewModel(tripData)
 
   return (
     <main className="home-screen" id="main-content">
       <HomePhaseView
-        greeting={greetingFor(traveler)}
+        greeting={greetingFor(travelerName)}
         viewModel={viewModel}
       />
     </main>

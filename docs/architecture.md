@@ -57,9 +57,9 @@ The implemented repository structure is organized by responsibility:
 - `public/` contains installable PWA icons and static assets.
 - `docs/` contains product, architecture, governance, and decision documentation.
 
-UI components do not call browser storage directly. A narrow repository
-interface owns theme preference persistence through local storage, allowing the
-implementation to change without coupling it to the interface.
+UI components do not call browser storage directly. Narrow repository interfaces
+own browser persistence, allowing implementations to change without coupling
+them to the interface.
 
 The generated service worker precaches the application shell. Essential trip
 data and feature-specific offline behavior will be introduced with the features
@@ -71,8 +71,26 @@ time-zone handling, validation framework, sync, authentication, documents, or
 notifications. Those concerns will be designed when a concrete later-sprint
 feature requires them.
 
-Trip configurations will live outside the reusable shell, under `trips/`, when
-the first real trip feature defines the minimum required structure.
+## Sprint 4 trip-data foundation
+
+Approved non-sensitive operational facts for the active trip live in one
+controlled trip configuration under `src/trips/`. The configuration is imported
+only by a bundled `TripRepository`, so Home, Welcome, profile flows, and tests do
+not own copies of production trip data.
+
+The trip configuration is compiled into the application bundle and therefore
+covered by the existing PWA application-shell precache. Only small mutable
+device state is stored locally in a versioned envelope; the full bundled
+itinerary is not copied into browser storage.
+
+Pure domain selectors derive Today, trip phase, next event, and cruise context
+from explicit trip-day windows and offset-aware timestamps. A feature adapter
+maps those results to the existing `HomeViewModel`. Privacy-safe fixtures remain
+separate and power deterministic review routes.
+
+Real identity details, full booking references, payment details, cabin numbers,
+private addresses and phone numbers, medical information, tickets, codes, and
+sensitive document files must not be stored in the trip configuration.
 
 ## Guidance
 

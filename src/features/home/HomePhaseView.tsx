@@ -23,12 +23,18 @@ export function HomePhaseView({
       />
 
       <div className="home-briefing-grid">
-        <NextMilestoneCard milestone={viewModel.milestone} />
-        <QuickWeatherCard weather={viewModel.weather} />
-        <QuickChecklist
-          items={viewModel.checklist}
-          title={viewModel.checklistTitle}
-        />
+        {viewModel.milestone ? (
+          <NextMilestoneCard milestone={viewModel.milestone} />
+        ) : null}
+        {viewModel.weather ? (
+          <QuickWeatherCard weather={viewModel.weather} />
+        ) : null}
+        {viewModel.checklist && viewModel.checklistTitle ? (
+          <QuickChecklist
+            items={viewModel.checklist}
+            title={viewModel.checklistTitle}
+          />
+        ) : null}
       </div>
 
       {viewModel.alert ? <HomeAlert alert={viewModel.alert} /> : null}

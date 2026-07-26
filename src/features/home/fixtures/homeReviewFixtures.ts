@@ -2,36 +2,36 @@ import {
   CRUISE_DAY_TYPES,
   HOME_PHASES,
   type HomeViewModel,
-} from './homeTypes'
+} from '../homeTypes'
 
-export type DemoHomeState =
+export type ReviewHomeState =
   | 'departure-day'
   | 'final-travel-day'
   | 'port-day'
   | 'pre-trip'
   | 'sea-day'
 
-export const DEFAULT_DEMO_HOME_STATE: DemoHomeState = 'pre-trip'
+export const DEFAULT_REVIEW_HOME_STATE: ReviewHomeState = 'pre-trip'
 
-export const homeDemoData: Record<DemoHomeState, HomeViewModel> = {
+export const homeReviewFixtures: Record<ReviewHomeState, HomeViewModel> = {
   'pre-trip': {
     phase: HOME_PHASES.PRE_TRIP,
     context: {
       eyebrow: 'Before your trip',
-      title: 'Iceland & British Isles',
-      summary: 'Oceania Marina',
-      tripDates: '22 August – 4 September 2026',
+      title: 'Northern Coast Journey',
+      summary: 'MV Example',
+      tripDates: '10–14 May 2030',
       countdown: '27 days to departure',
     },
     milestone: {
       label: 'Next milestone',
-      title: 'Leave for Brussels Airport',
+      title: 'Leave for Harbor City Airport',
       time: '13:00',
-      detail: 'Planned departure from home',
-      countdown: 'Departure day · 22 August',
+      detail: 'Planned departure from home area',
+      countdown: 'Departure day · 10 May',
     },
     weather: {
-      location: 'Reykjavík',
+      location: 'Harbor City',
       temperature: '12°C',
       condition: 'Cloudy',
       wind: '18 km/h',
@@ -39,34 +39,33 @@ export const homeDemoData: Record<DemoHomeState, HomeViewModel> = {
     },
     checklistTitle: 'Before departure',
     checklist: [
-      { label: 'Passports', complete: true },
-      { label: 'Flight documents' },
+      { label: 'Travel documents', complete: true },
       { label: 'Medication', complete: true },
       { label: 'Chargers', complete: true },
       { label: 'Luggage check' },
     ],
     alert: {
       title: 'Travel documents still need checking',
-      detail: 'Review the flight documents before departure day.',
+      detail: 'Review the fixture documents before departure day.',
     },
   },
   'departure-day': {
     phase: HOME_PHASES.DEPARTURE_DAY,
     context: {
       eyebrow: 'Departure day',
-      title: 'Travel to Reykjavík',
-      summary: 'From home to your Reykjavík hotel',
-      tripDates: 'Saturday · 22 August 2026',
+      title: 'Travel to Harbor City',
+      summary: 'Departure journey',
+      tripDates: 'Friday · 10 May 2030',
     },
     milestone: {
       label: 'Next milestone',
-      title: 'Leave home',
+      title: 'Leave home area',
       time: '13:00',
-      detail: 'Allow 90 minutes for traffic and check-in',
+      detail: 'Allow time for traffic and check-in',
       countdown: 'Flight at 17:45',
     },
     weather: {
-      location: 'Reykjavík',
+      location: 'Harbor City',
       temperature: '11°C',
       condition: 'Mostly cloudy',
       wind: '16 km/h',
@@ -74,9 +73,8 @@ export const homeDemoData: Record<DemoHomeState, HomeViewModel> = {
     },
     checklistTitle: 'Before leaving',
     checklist: [
-      { label: 'Passports', complete: true },
+      { label: 'Travel documents', complete: true },
       { label: 'Wallet', complete: true },
-      { label: 'Medication', complete: true },
       { label: 'Phones and chargers' },
       { label: 'Luggage', complete: true },
     ],
@@ -90,25 +88,25 @@ export const homeDemoData: Record<DemoHomeState, HomeViewModel> = {
     cruiseDayType: CRUISE_DAY_TYPES.PORT_DAY,
     context: {
       eyebrow: 'Port day',
-      title: 'Belfast',
-      summary: 'Northern Ireland',
+      title: 'Harbor City',
+      summary: 'Example Country',
     },
     cruiseProgress: {
-      day: 7,
-      totalDays: 13,
-      daysRemaining: 6,
+      day: 2,
+      totalDays: 4,
+      daysRemaining: 2,
     },
     milestone: {
       label: 'Next milestone',
-      title: 'Giant’s Causeway excursion',
-      time: '08:15',
-      location: 'Marina Lounge',
+      title: 'Coastal walk',
+      time: '09:30',
+      location: 'Harbor Terminal',
       detail: 'Meet before going ashore',
       allAboardTime: '17:30',
       tone: 'urgent',
     },
     weather: {
-      location: 'Belfast',
+      location: 'Harbor City',
       temperature: '14°C',
       condition: 'Light rain',
       wind: 'Windy',
@@ -123,7 +121,7 @@ export const homeDemoData: Record<DemoHomeState, HomeViewModel> = {
     ],
     alert: {
       title: 'Leave the ship in 20 minutes',
-      detail: 'Meet in the Marina Lounge at 08:15.',
+      detail: 'Meet at Harbor Terminal at 09:30.',
     },
   },
   'sea-day': {
@@ -132,20 +130,19 @@ export const homeDemoData: Record<DemoHomeState, HomeViewModel> = {
     context: {
       eyebrow: 'Sea day',
       title: 'At sea',
-      summary: 'A relaxed day aboard Oceania Marina',
+      summary: 'A relaxed day aboard MV Example',
     },
     cruiseProgress: {
-      day: 5,
-      totalDays: 13,
-      daysRemaining: 8,
+      day: 3,
+      totalDays: 4,
+      daysRemaining: 1,
     },
     milestone: {
       label: 'Next milestone',
-      title: 'Wine tasting',
-      time: '14:30',
-      location: 'La Reserve',
+      title: 'Dinner reservation',
+      time: '19:00',
       detail: 'Arrive a few minutes early',
-      countdown: 'This afternoon',
+      countdown: 'This evening',
     },
     weather: {
       location: 'At sea',
@@ -159,38 +156,36 @@ export const homeDemoData: Record<DemoHomeState, HomeViewModel> = {
       { label: 'Dinner reservation', complete: true },
       { label: 'Medication', complete: true },
       { label: 'Pool bag' },
-      { label: 'Evening dress code' },
     ],
   },
   'final-travel-day': {
     phase: HOME_PHASES.FINAL_TRAVEL_DAY,
     context: {
       eyebrow: 'Final travel day',
-      title: 'Southampton → Home',
+      title: 'Harbor City → Home',
       summary: 'Disembarkation and journey home',
-      tripDates: 'Friday · 4 September 2026',
+      tripDates: 'Tuesday · 14 May 2030',
     },
     milestone: {
       label: 'Next milestone',
       title: 'Disembark and meet transfer',
       time: '08:30',
-      location: 'Herbert Walker Avenue, Southampton',
-      detail: 'Transfer continues to Heathrow',
+      location: 'Harbor Terminal',
+      detail: 'Transfer continues to the airport',
       tone: 'urgent',
     },
     weather: {
-      location: 'Southampton',
+      location: 'Harbor City',
       temperature: '15°C',
       condition: 'Partly cloudy',
       wind: '12 km/h',
     },
     checklistTitle: 'Before disembarking',
     checklist: [
-      { label: 'Passports', complete: true },
-      { label: 'Flight documents', complete: true },
+      { label: 'Travel documents', complete: true },
       { label: 'Medication', complete: true },
       { label: 'Phone chargers' },
-      { label: 'Cabin checked' },
+      { label: 'Room checked' },
     ],
     alert: {
       title: 'Transfer arrives in 20 minutes',

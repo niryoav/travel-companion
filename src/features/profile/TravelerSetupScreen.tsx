@@ -1,27 +1,27 @@
 import { Navigate, useNavigate } from 'react-router'
 
-import type {
-  PreferencesRepository,
-  TravelerProfile,
-} from '../../storage/PreferencesRepository'
+import type { Traveler, TravelerId } from '../../domain/trip/tripTypes'
+import type { TripStateRepository } from '../../storage/TripStateRepository'
 import { TravelerChoice } from './TravelerChoice'
 
 interface TravelerSetupScreenProps {
-  preferencesRepository: PreferencesRepository
+  travelers: Traveler[]
+  tripStateRepository: TripStateRepository
 }
 
 export function TravelerSetupScreen({
-  preferencesRepository,
+  travelers,
+  tripStateRepository,
 }: TravelerSetupScreenProps) {
   const navigate = useNavigate()
-  const savedTraveler = preferencesRepository.getTravelerProfile()
+  const savedTravelerId = tripStateRepository.getTravelerId()
 
-  if (savedTraveler) {
+  if (savedTravelerId) {
     return <Navigate to="/home" replace />
   }
 
-  const chooseTraveler = (traveler: TravelerProfile) => {
-    preferencesRepository.setTravelerProfile(traveler)
+  const chooseTraveler = (travelerId: TravelerId) => {
+    tripStateRepository.setTravelerId(travelerId)
     navigate('/home', { replace: true })
   }
 
@@ -40,6 +40,7 @@ export function TravelerSetupScreen({
         <TravelerChoice
           legend="Choose your traveler profile"
           onChoose={chooseTraveler}
+          travelers={travelers}
         />
         <p className="profile-local-note">
           This choice stays only on this device.

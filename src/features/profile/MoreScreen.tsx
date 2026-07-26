@@ -3,25 +3,28 @@ import { useState } from 'react'
 import { PageHeader } from '../../components/PageHeader'
 import { SurfaceCard } from '../../components/SurfaceCard'
 import type {
-  PreferencesRepository,
-  TravelerProfile,
-} from '../../storage/PreferencesRepository'
+  Traveler,
+  TravelerId,
+} from '../../domain/trip/tripTypes'
+import type { TripStateRepository } from '../../storage/TripStateRepository'
 import { TravelerChoice } from './TravelerChoice'
 
 interface MoreScreenProps {
-  preferencesRepository: PreferencesRepository
+  travelers: Traveler[]
+  tripStateRepository: TripStateRepository
 }
 
 export function MoreScreen({
-  preferencesRepository,
+  travelers,
+  tripStateRepository,
 }: MoreScreenProps) {
-  const [traveler, setTraveler] = useState<TravelerProfile | null>(
-    () => preferencesRepository.getTravelerProfile(),
+  const [travelerId, setTravelerId] = useState<TravelerId | null>(
+    () => tripStateRepository.getTravelerId(),
   )
 
-  const chooseTraveler = (nextTraveler: TravelerProfile) => {
-    preferencesRepository.setTravelerProfile(nextTraveler)
-    setTraveler(nextTraveler)
+  const chooseTraveler = (nextTravelerId: TravelerId) => {
+    tripStateRepository.setTravelerId(nextTravelerId)
+    setTravelerId(nextTravelerId)
   }
 
   return (
@@ -42,7 +45,8 @@ export function MoreScreen({
         <TravelerChoice
           legend="Change traveler profile"
           onChoose={chooseTraveler}
-          selectedTraveler={traveler}
+          selectedTravelerId={travelerId}
+          travelers={travelers}
         />
       </SurfaceCard>
     </main>

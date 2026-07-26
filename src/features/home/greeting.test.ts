@@ -4,17 +4,17 @@ import { greetingFor } from './greeting'
 
 describe('greetingFor', () => {
   it.each([
-    [new Date(2026, 7, 22, 11, 59), 'Good morning, Yoav'],
-    [new Date(2026, 7, 22, 12, 0), 'Good afternoon, Yoav'],
-    [new Date(2026, 7, 22, 17, 59), 'Good afternoon, Yoav'],
-    [new Date(2026, 7, 22, 18, 0), 'Good evening, Yoav'],
+    [new Date(2030, 4, 10, 11, 59), 'Good morning, Alex'],
+    [new Date(2030, 4, 10, 12, 0), 'Good afternoon, Alex'],
+    [new Date(2030, 4, 10, 17, 59), 'Good afternoon, Alex'],
+    [new Date(2030, 4, 10, 18, 0), 'Good evening, Alex'],
   ])('uses the local hour boundary at %s', (date, expected) => {
-    expect(greetingFor('Yoav', date)).toBe(expected)
+    expect(greetingFor('Alex', date)).toBe(expected)
   })
 
   it('includes the selected traveler', () => {
-    expect(greetingFor('Isabel', new Date(2026, 7, 22, 9))).toBe(
-      'Good morning, Isabel',
+    expect(greetingFor('Sam', new Date(2030, 4, 10, 9))).toBe(
+      'Good morning, Sam',
     )
   })
 })

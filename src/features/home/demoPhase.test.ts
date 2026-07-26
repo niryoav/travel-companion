@@ -7,8 +7,8 @@ describe('demoHomeStateFromSearch', () => {
     expect(demoHomeStateFromSearch('?phase=port-day')).toBe('port-day')
   })
 
-  it('falls back to pre-trip for missing or unsupported values', () => {
-    expect(demoHomeStateFromSearch('')).toBe('pre-trip')
-    expect(demoHomeStateFromSearch('?phase=unknown')).toBe('pre-trip')
+  it('does not override production data for missing or unsupported values', () => {
+    expect(demoHomeStateFromSearch('')).toBeNull()
+    expect(demoHomeStateFromSearch('?phase=unknown')).toBeNull()
   })
 })

@@ -4,8 +4,8 @@ import { daysUntilDeparture, formatDaysToGo } from './countdown'
 
 describe('welcome countdown', () => {
   it('counts calendar days until departure', () => {
-    const departure = new Date(2026, 7, 22)
-    const today = new Date(2026, 7, 19, 23, 30)
+    const departure = new Date(2030, 4, 10)
+    const today = new Date(2030, 4, 7, 23, 30)
 
     expect(daysUntilDeparture(departure, today)).toBe(3)
   })

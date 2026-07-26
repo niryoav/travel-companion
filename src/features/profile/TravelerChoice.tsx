@@ -1,36 +1,39 @@
-import type { TravelerProfile } from '../../storage/PreferencesRepository'
+import type {
+  Traveler,
+  TravelerId,
+} from '../../domain/trip/tripTypes'
 
 interface TravelerChoiceProps {
   legend: string
-  onChoose: (traveler: TravelerProfile) => void
-  selectedTraveler?: TravelerProfile | null
+  onChoose: (travelerId: TravelerId) => void
+  selectedTravelerId?: TravelerId | null
+  travelers: Traveler[]
 }
-
-const travelers: TravelerProfile[] = ['Yoav', 'Isabel']
 
 export function TravelerChoice({
   legend,
   onChoose,
-  selectedTraveler,
+  selectedTravelerId,
+  travelers,
 }: TravelerChoiceProps) {
   return (
     <fieldset className="traveler-choice">
       <legend>{legend}</legend>
       <div className="traveler-choice-options">
         {travelers.map((traveler) => {
-          const selected = traveler === selectedTraveler
+          const selected = traveler.id === selectedTravelerId
 
           return (
             <button
-              key={traveler}
+              key={traveler.id}
               className={`traveler-choice-button${
                 selected ? ' traveler-choice-button-selected' : ''
               }`}
               type="button"
               aria-pressed={selected}
-              onClick={() => onChoose(traveler)}
+              onClick={() => onChoose(traveler.id)}
             >
-              <strong>{traveler}</strong>
+              <strong>{traveler.displayName}</strong>
               <span>{selected ? 'Selected on this device' : 'Use this profile'}</span>
             </button>
           )
