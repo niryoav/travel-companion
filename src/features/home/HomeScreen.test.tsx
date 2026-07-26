@@ -1,47 +1,16 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 
-import type {
-  PreferencesRepository,
-  ThemePreference,
-  TravelerProfile,
-} from '../../storage/PreferencesRepository'
 import { homeDemoData } from './homeDemoData'
 import { HomeScreen } from './HomeScreen'
 
-class MemoryPreferencesRepository implements PreferencesRepository {
-  theme: ThemePreference | null = null
-  traveler: TravelerProfile | null = null
-
-  getTheme() {
-    return this.theme
-  }
-
-  getTravelerProfile() {
-    return this.traveler
-  }
-
-  setTheme(theme: ThemePreference) {
-    this.theme = theme
-  }
-
-  setTravelerProfile(traveler: TravelerProfile) {
-    this.traveler = traveler
-  }
-}
-
-function renderHome(
-  route: string,
-  repository = new MemoryPreferencesRepository(),
-) {
+function renderHome(route: string) {
   render(
     <MemoryRouter initialEntries={[route]}>
-      <HomeScreen preferencesRepository={repository} />
+      <HomeScreen traveler="Yoav" />
     </MemoryRouter>,
   )
-
-  return repository
 }
 
 describe('HomeScreen', () => {
@@ -67,20 +36,17 @@ describe('HomeScreen', () => {
     expect(screen.queryByText('All aboard')).not.toBeInTheDocument()
   })
 
-  it('changes and persists the local traveler profile', () => {
-    const repository = renderHome('/home')
+  it('shows the selected traveler only in the greeting', () => {
+    renderHome('/home')
 
-    fireEvent.change(screen.getByLabelText('Traveler profile'), {
-      target: { value: 'Isabel' },
-    })
-
-    expect(repository.traveler).toBe('Isabel')
     expect(
       screen.getByRole('heading', {
         level: 1,
-        name: /Good (morning|afternoon|evening), Isabel/,
+        name: /Good (morning|afternoon|evening), Yoav/,
       }),
     ).toBeInTheDocument()
+    expect(screen.queryByLabelText('Traveler profile')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Isabel/ })).not.toBeInTheDocument()
   })
 
   it('keeps every demo checklist within the five-item Home limit', () => {

@@ -3,7 +3,7 @@ import type { IconName } from '../../components/AppIcon'
 export interface DestinationDefinition {
   description: string
   icon: IconName
-  path: 'documents' | 'more' | 'today' | 'trip'
+  path: 'documents' | 'today' | 'trip'
   placeholder: string
   title: string
 }
@@ -32,13 +32,5 @@ export const destinationDefinitions: DestinationDefinition[] = [
     description: 'A calm home for important travel references.',
     placeholder:
       'Document handling and private travel files will be designed in a future sprint.',
-  },
-  {
-    path: 'more',
-    title: 'More',
-    icon: 'more',
-    description: 'Supporting information and preferences, without clutter.',
-    placeholder:
-      'Additional settings and secondary tools will appear only when they provide clear value.',
   },
 ]

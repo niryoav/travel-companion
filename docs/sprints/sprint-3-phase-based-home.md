@@ -36,7 +36,8 @@ is not stored in the repository.
 ## Scope
 
 - Dynamic local-time greeting for the selected traveler
-- Local device traveler choice: Yoav or Isabel
+- First-use local device traveler choice: Yoav or Isabel
+- A small More/Profile setting for changing the local traveler later
 - Typed phase, milestone, weather, checklist, alert, and Home view-model data
 - Reusable Home hero, next-milestone, quick-weather, checklist, alert, and cruise
   progress components
@@ -56,9 +57,10 @@ is not stored in the repository.
 ## Architecture
 
 Rendering components live under `src/features/home/` and consume a typed
-`HomeViewModel`. Demo data remains separate from components. Traveler preference
-uses the existing storage repository boundary; UI code does not call browser
-storage directly.
+`HomeViewModel`. Demo data remains separate from components. First-use setup and
+More/Profile live under `src/features/profile/`. Traveler preference uses the
+existing storage repository boundary; UI code does not call browser storage
+directly. Home receives the resolved traveler and contains no profile controls.
 
 This sprint introduces only the minimum Home-specific types required by the
 brief. It does not define the complete trip domain model.
@@ -83,7 +85,9 @@ for review only and does not dominate the production UI.
 - [ ] Home renders all five review states from typed structured demo data.
 - [ ] Greeting changes for morning, afternoon, and evening using local device
       time and the selected traveler.
-- [ ] Traveler selection persists locally and can be changed on Home.
+- [ ] First-use setup appears when no traveler has been saved.
+- [ ] Traveler selection persists locally and can be changed under More/Profile.
+- [ ] Home shows the selected name in the greeting without showing a selector.
 - [ ] Every phase shares the approved common information hierarchy.
 - [ ] Port day shows all-aboard time prominently; sea day does not.
 - [ ] Home shows at most five checklist items and at most one actionable alert.
@@ -96,7 +100,8 @@ for review only and does not dominate the production UI.
 ## Testing
 
 - Greeting boundaries and phase-query parsing
-- Traveler-profile persistence and invalid stored values
+- First-use traveler choice, persistence, and invalid stored values
+- More/Profile traveler changes and the resulting Home greeting
 - Shared component variants and phase-specific Home content
 - Port-day all-aboard and sea-day omission
 - Checklist and alert constraints
@@ -108,7 +113,8 @@ for review only and does not dominate the production UI.
 - [ ] 320px mobile width
 - [ ] Common iPhone portrait viewport
 - [ ] Larger phone, tablet, and desktop widths
-- [ ] Greeting and traveler control readability
+- [ ] Greeting readability and absence of profile controls on Home
+- [ ] First-use setup and More/Profile touch targets
 - [ ] Dominant milestone and secondary card hierarchy
 - [ ] Port-day all-aboard prominence
 - [ ] Sea-day hierarchy without an empty all-aboard state

@@ -1,6 +1,5 @@
 import type {
   HomeContext,
-  TravelerProfile,
   CruiseProgress as CruiseProgressModel,
 } from '../homeTypes'
 import { CruiseProgress } from './CruiseProgress'
@@ -9,37 +8,18 @@ interface HomeHeroProps {
   context: HomeContext
   cruiseProgress?: CruiseProgressModel
   greeting: string
-  onTravelerChange: (traveler: TravelerProfile) => void
-  traveler: TravelerProfile
 }
 
 export function HomeHero({
   context,
   cruiseProgress,
   greeting,
-  onTravelerChange,
-  traveler,
 }: HomeHeroProps) {
   return (
     <header className="home-hero">
-      <div className="home-greeting-row">
-        <div>
-          <p className="home-eyebrow">Home</p>
-          <h1>{greeting}</h1>
-        </div>
-        <label className="traveler-control">
-          <span>Traveler</span>
-          <select
-            aria-label="Traveler profile"
-            value={traveler}
-            onChange={(event) =>
-              onTravelerChange(event.target.value as TravelerProfile)
-            }
-          >
-            <option value="Yoav">Yoav</option>
-            <option value="Isabel">Isabel</option>
-          </select>
-        </label>
+      <div className="home-greeting">
+        <p className="home-eyebrow">Home</p>
+        <h1>{greeting}</h1>
       </div>
 
       <div className="home-context">

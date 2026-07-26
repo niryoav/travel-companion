@@ -1,4 +1,4 @@
-import type { HomeViewModel, TravelerProfile } from './homeTypes'
+import type { HomeViewModel } from './homeTypes'
 import { HomeAlert } from './components/HomeAlert'
 import { HomeHero } from './components/HomeHero'
 import { NextMilestoneCard } from './components/NextMilestoneCard'
@@ -7,15 +7,11 @@ import { QuickWeatherCard } from './components/QuickWeatherCard'
 
 interface HomePhaseViewProps {
   greeting: string
-  onTravelerChange: (traveler: TravelerProfile) => void
-  traveler: TravelerProfile
   viewModel: HomeViewModel
 }
 
 export function HomePhaseView({
   greeting,
-  onTravelerChange,
-  traveler,
   viewModel,
 }: HomePhaseViewProps) {
   return (
@@ -24,8 +20,6 @@ export function HomePhaseView({
         context={viewModel.context}
         cruiseProgress={viewModel.cruiseProgress}
         greeting={greeting}
-        onTravelerChange={onTravelerChange}
-        traveler={traveler}
       />
 
       <div className="home-briefing-grid">
