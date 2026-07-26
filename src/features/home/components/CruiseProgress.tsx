@@ -6,7 +6,7 @@ interface CruiseProgressProps {
 
 export function CruiseProgress({ progress }: CruiseProgressProps) {
   return (
-    <div className="cruise-progress" aria-label="Cruise progress">
+    <div className="cruise-progress">
       <strong>
         Cruise Day {progress.day} of {progress.totalDays}
       </strong>

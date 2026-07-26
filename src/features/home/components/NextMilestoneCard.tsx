@@ -25,7 +25,7 @@ export function NextMilestoneCard({
 
       <div className="milestone-details">
         {milestone.time ? (
-          <p className="milestone-time">{milestone.time}</p>
+          <time className="milestone-time">{milestone.time}</time>
         ) : null}
         <div>
           {milestone.location ? (

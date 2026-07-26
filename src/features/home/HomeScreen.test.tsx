@@ -14,6 +14,26 @@ function renderHome(route: string) {
 }
 
 describe('HomeScreen', () => {
+  it('shows the departure-day heading and next departure milestone', () => {
+    renderHome('/home?phase=departure-day')
+
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Travel to Reykjavík' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Leave home')).toBeInTheDocument()
+  })
+
+  it('shows the final-travel-day heading and transfer milestone', () => {
+    renderHome('/home?phase=final-travel-day')
+
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Southampton → Home' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('Disembark and meet transfer'),
+    ).toBeInTheDocument()
+  })
+
   it('shows the port-day context and prominent all-aboard time', () => {
     renderHome('/home?phase=port-day')
 
