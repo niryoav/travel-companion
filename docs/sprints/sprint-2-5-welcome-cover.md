@@ -43,7 +43,7 @@ Expected implementation areas:
 
 - `docs/design-language.md`
 - `docs/sprints/sprint-2-5-welcome-cover.md`
-- `public/images/oceania-marina-welcome.webp`
+- `public/images/oceania-marina-welcome-hero.webp`
 - `src/app/App.tsx`
 - `src/features/welcome/`
 - `src/styles/index.css`

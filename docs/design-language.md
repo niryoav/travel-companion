@@ -63,7 +63,7 @@ Use local, optimized assets only; production code must not depend on remote imag
 URLs. The approved Sprint 2.5 welcome asset is:
 
 ```text
-public/images/oceania-marina-welcome.webp
+public/images/oceania-marina-welcome-hero.webp
 ```
 
 The image is decorative because all relevant trip information is present as

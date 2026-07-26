@@ -117,7 +117,7 @@ a:focus-visible {
 .welcome-hero {
   z-index: -2;
   object-fit: cover;
-  object-position: center 45%;
+  object-position: 39% center;
 }
 
 .welcome-overlay {
