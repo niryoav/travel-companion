@@ -1,41 +1,44 @@
 import type { IconName } from '../../components/AppIcon'
 
-export interface PlaceholderScreen {
-  path: string
-  title: string
+export interface DestinationDefinition {
   description: string
   icon: IconName
+  path: 'documents' | 'more' | 'today' | 'trip'
+  placeholder: string
+  title: string
 }
 
-export const placeholderScreens: PlaceholderScreen[] = [
+export const destinationDefinitions: DestinationDefinition[] = [
   {
     path: 'today',
     title: 'Today',
-    description: 'Your calm view of what matters right now will live here.',
     icon: 'calendar',
+    description: 'A dependable view of the current travel day.',
+    placeholder:
+      'Timing, plans, and useful current-day context will be introduced in a later sprint.',
   },
   {
     path: 'trip',
     title: 'Trip',
-    description: 'The shape of your journey will become clear here.',
     icon: 'map',
-  },
-  {
-    path: 'discover',
-    title: 'Discover',
-    description: 'Thoughtful ideas for meaningful moments will appear here.',
-    icon: 'compass',
+    description: 'The shared shape of the journey, presented clearly.',
+    placeholder:
+      'Itinerary structure and trip details remain intentionally out of scope for this sprint.',
   },
   {
     path: 'documents',
     title: 'Documents',
-    description: 'Important travel references will be easy to find here.',
     icon: 'document',
+    description: 'A calm home for important travel references.',
+    placeholder:
+      'Document handling and private travel files will be designed in a future sprint.',
   },
   {
     path: 'more',
     title: 'More',
-    description: 'Supporting information and preferences will live here.',
     icon: 'more',
+    description: 'Supporting information and preferences, without clutter.',
+    placeholder:
+      'Additional settings and secondary tools will appear only when they provide clear value.',
   },
 ]

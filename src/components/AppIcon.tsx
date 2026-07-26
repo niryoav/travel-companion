@@ -2,6 +2,7 @@ export type IconName =
   | 'calendar'
   | 'compass'
   | 'document'
+  | 'home'
   | 'map'
   | 'more'
   | 'moon'
@@ -35,6 +36,12 @@ const paths: Record<IconName, React.ReactNode> = {
     <>
       <path d="M6 3h8l4 4v14H6Z" />
       <path d="M14 3v5h4M9 13h6M9 17h6" />
+    </>
+  ),
+  home: (
+    <>
+      <path d="m3 11 9-8 9 8" />
+      <path d="M5 10v11h14V10M9 21v-7h6v7" />
     </>
   ),
   more: (
