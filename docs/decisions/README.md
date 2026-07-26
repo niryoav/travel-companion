@@ -40,3 +40,4 @@ Implementation details belong in code or other documentation.
 | ADR | Status | Decision |
 | --- | --- | --- |
 | [ADR-001](ADR-001-pwa-technology-foundation.md) | Accepted | PWA technology foundation |
+| [ADR-002](ADR-002-trip-data-ownership-and-time.md) | Accepted | Trip data ownership and time representation |
