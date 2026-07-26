@@ -40,6 +40,23 @@ and subordinate to content; it must not place a large ship image behind Home.
 Ocean Day does not follow the system appearance setting and has no manual
 appearance selector or prominent theme toggle in Sprint 3.
 
+The authenticated/main shell uses the approved local background asset:
+
+```text
+public/images/ocean-day-background-with-ship.webp
+```
+
+It is presented as one fixed, non-repeating, full-viewport background with an
+ocean-blue fallback across Home, Today, Trip, Documents, More, and first-use
+profile setup. The crop and position remain consistent between tabs. Home uses
+a lighter ocean-blue overlay for stronger image visibility; other main screens
+and setup use a slightly darker overlay for text and card readability.
+
+The original portrait composition, high horizon, upper-right ship, and calm dark
+water must be preserved. Cards remain the content surfaces, and the image must
+not be repeated inside cards. The welcome cover keeps its separate approved
+photographic treatment.
+
 Champagne is reserved for key times, countdowns, next milestones, active
 navigation, and important actions. Green remains reserved for confirmed or
 completed states, while warning color appears only for genuine actionable

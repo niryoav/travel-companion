@@ -47,6 +47,7 @@ is not stored in the repository.
 - Query-parameter demo control for reviewing every phase
 - Responsive dark ocean-blue Home and bottom-navigation treatment
 - One centralized Ocean Day token system across the existing screens
+- Approved optimized local Ocean Day ship background on Home
 
 ## Out of Scope
 
@@ -68,6 +69,13 @@ Ocean Day is defined through centralized CSS variables for backgrounds, cards,
 text, borders, navigation, and semantic accents. Sprint 3 has no appearance
 provider, system switching, saved appearance preference, More selector, or
 prominent theme toggle.
+
+The main app shell adds the optimized
+`public/images/ocean-day-background-with-ship.webp` as one fixed,
+non-repeating cover background with a solid ocean-blue fallback. Home uses the
+lighter overlay; Today, Trip, Documents, More, and first-use setup use the same
+crop with a darker overlay. It does not change any view model, card, or layout.
+The WebP is included by the existing PWA precache asset pattern.
 
 This sprint introduces only the minimum Home-specific types required by the
 brief. It does not define the complete trip domain model.
@@ -103,8 +111,12 @@ for review only and does not dominate the production UI.
 - [ ] Home is readable and usable from 320px mobile width through desktop.
 - [ ] Existing navigation, Ocean Day theme, welcome cover, tests, and PWA behavior remain
       intact.
-- [ ] Ocean Day retains visible gradient depth and dark translucent cards without
-      using photographic Home backgrounds.
+- [ ] Ocean Day retains dark translucent cards and strong contrast over the Home
+      background.
+- [ ] Home uses the approved local Ocean Day ship background without repetition,
+      visible seams, card duplication, or changes to its content hierarchy.
+- [ ] Main destinations share the same fixed crop; non-Home screens use the
+      darker overlay without redesigning their content.
 - [ ] More contains no appearance selector.
 - [ ] Home has no prominent appearance toggle.
 

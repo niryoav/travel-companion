@@ -49,6 +49,10 @@
   --setup-choice-background: rgb(10 65 95 / 90%);
   --alert-background: rgb(94 66 27 / 50%);
   --timeline-ring: #083e62;
+  --shell-overlay-home:
+    linear-gradient(180deg, rgb(2 23 40 / 6%), rgb(1 18 33 / 18%));
+  --shell-overlay-standard:
+    linear-gradient(180deg, rgb(2 25 43 / 28%), rgb(1 18 33 / 44%));
 }
 
 * {
@@ -247,29 +251,43 @@ a:focus-visible {
 }
 
 .app-shell {
+  --shell-background-overlay: var(--shell-overlay-standard);
+  position: relative;
+  isolation: isolate;
   width: min(100%, 64rem);
   min-height: 100vh;
   min-height: 100dvh;
   margin: 0 auto;
-  background:
-    radial-gradient(circle at 88% 7%, var(--page-glow), transparent 24rem),
-    radial-gradient(
-      ellipse at 48% 46%,
-      var(--horizon-glow),
-      transparent 32rem
-    ),
-    radial-gradient(ellipse at 50% 110%, transparent 18%, var(--water-depth) 72%),
-    linear-gradient(
-      180deg,
-      var(--page-gradient-start),
-      var(--page-gradient-middle) 42%,
-      var(--page-gradient-end)
-    );
+  background-color: var(--page-gradient-end);
   padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
 }
 
 .app-shell-home {
+  --shell-background-overlay: var(--shell-overlay-home);
   color: var(--text);
+}
+
+.app-shell::before,
+.profile-setup::before {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background-color: var(--page-gradient-end);
+  background-image: url("/images/ocean-day-background-with-ship.webp");
+  background-position: 58% top;
+  background-repeat: no-repeat;
+  background-size: cover;
+  content: "";
+}
+
+.app-shell::after,
+.profile-setup::after {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--shell-background-overlay);
+  content: "";
+  pointer-events: none;
 }
 
 .skip-link {
@@ -838,18 +856,14 @@ a:focus-visible {
 }
 
 .profile-setup {
+  --shell-background-overlay: var(--shell-overlay-standard);
+  position: relative;
+  isolation: isolate;
   display: grid;
   min-height: 100vh;
   min-height: 100dvh;
   place-items: center;
-  background:
-    radial-gradient(circle at 80% 12%, var(--page-glow), transparent 24rem),
-    linear-gradient(
-      180deg,
-      var(--page-gradient-start),
-      var(--page-gradient-middle) 55%,
-      var(--page-gradient-end)
-    );
+  background-color: var(--page-gradient-end);
   color: var(--text);
   padding:
     max(1.25rem, env(safe-area-inset-top))
