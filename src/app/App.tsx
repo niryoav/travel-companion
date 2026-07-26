@@ -5,6 +5,7 @@ import { ThemeProvider } from './theme/ThemeProvider'
 import { HomeScreen } from '../features/home/HomeScreen'
 import { DestinationScreen } from '../features/placeholders/DestinationScreen'
 import { destinationDefinitions } from '../features/placeholders/placeholderScreens'
+import { WelcomeCoverScreen } from '../features/welcome/WelcomeCoverScreen'
 import type { PreferencesRepository } from '../storage/PreferencesRepository'
 
 interface AppProps {
@@ -16,8 +17,8 @@ export function App({ preferencesRepository }: AppProps) {
     <ThemeProvider repository={preferencesRepository}>
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<WelcomeCoverScreen />} />
           <Route element={<AppShell />}>
-            <Route index element={<Navigate to="/home" replace />} />
             <Route path="home" element={<HomeScreen />} />
             {destinationDefinitions.map(
               ({ path, title, description, icon, placeholder }) => (
