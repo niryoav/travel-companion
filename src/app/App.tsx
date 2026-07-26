@@ -2,7 +2,9 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 
 import { AppShell } from './AppShell'
 import { ThemeProvider } from './theme/ThemeProvider'
-import { placeholderScreens } from '../features/placeholders/placeholderScreens'
+import { HomeScreen } from '../features/home/HomeScreen'
+import { DestinationScreen } from '../features/placeholders/DestinationScreen'
+import { destinationDefinitions } from '../features/placeholders/placeholderScreens'
 import type { PreferencesRepository } from '../storage/PreferencesRepository'
 
 interface AppProps {
@@ -15,31 +17,25 @@ export function App({ preferencesRepository }: AppProps) {
       <BrowserRouter>
         <Routes>
           <Route element={<AppShell />}>
-            <Route index element={<Navigate to="/today" replace />} />
-            {placeholderScreens.map(({ path, title, description }) => (
-              <Route
-                key={path}
-                path={path}
-                element={
-                  <main className="page-container" id="main-content">
-                    <p className="eyebrow">Sprint 1 foundation</p>
-                    <h1 className="page-title">{title}</h1>
-                    <p className="page-description">{description}</p>
-                    <div className="placeholder-card" role="status">
-                      <span className="placeholder-mark" aria-hidden="true" />
-                      <div>
-                        <h2>Ready for a future sprint</h2>
-                        <p>
-                          This space is intentionally quiet while the travel
-                          experience takes shape.
-                        </p>
-                      </div>
-                    </div>
-                  </main>
-                }
-              />
-            ))}
-            <Route path="*" element={<Navigate to="/today" replace />} />
+            <Route index element={<Navigate to="/home" replace />} />
+            <Route path="home" element={<HomeScreen />} />
+            {destinationDefinitions.map(
+              ({ path, title, description, icon, placeholder }) => (
+                <Route
+                  key={path}
+                  path={path}
+                  element={
+                    <DestinationScreen
+                      title={title}
+                      description={description}
+                      icon={icon}
+                      placeholder={placeholder}
+                    />
+                  }
+                />
+              ),
+            )}
+            <Route path="*" element={<Navigate to="/home" replace />} />
           </Route>
         </Routes>
       </BrowserRouter>

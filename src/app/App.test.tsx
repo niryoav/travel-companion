@@ -25,22 +25,33 @@ describe('App', () => {
     document.documentElement.removeAttribute('data-theme')
   })
 
-  it('shows the five primary destinations and redirects to Today', async () => {
+  it('shows the five primary destinations and redirects to Home', async () => {
     render(<App preferencesRepository={new MemoryPreferencesRepository()} />)
 
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Today' }),
+      await screen.findByRole('heading', { level: 1, name: 'A calm start' }),
     ).toBeInTheDocument()
 
     const navigation = screen.getByRole('navigation', {
       name: 'Primary navigation',
     })
 
+    expect(navigation).toHaveTextContent('Home')
     expect(navigation).toHaveTextContent('Today')
     expect(navigation).toHaveTextContent('Trip')
-    expect(navigation).toHaveTextContent('Discover')
     expect(navigation).toHaveTextContent('Documents')
     expect(navigation).toHaveTextContent('More')
+  })
+
+  it('navigates from Home to the Today placeholder', async () => {
+    render(<App preferencesRepository={new MemoryPreferencesRepository()} />)
+
+    fireEvent.click(await screen.findByRole('link', { name: 'Today' }))
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Today' }),
+    ).toBeInTheDocument()
+    expect(window.location.pathname).toBe('/today')
   })
 
   it('persists an explicit theme choice through the repository', async () => {
