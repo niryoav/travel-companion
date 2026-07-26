@@ -19,7 +19,12 @@ export function App({ preferencesRepository }: AppProps) {
         <Routes>
           <Route path="/" element={<WelcomeCoverScreen />} />
           <Route element={<AppShell />}>
-            <Route path="home" element={<HomeScreen />} />
+            <Route
+              path="home"
+              element={
+                <HomeScreen preferencesRepository={preferencesRepository} />
+              }
+            />
             {destinationDefinitions.map(
               ({ path, title, description, icon, placeholder }) => (
                 <Route

@@ -18,6 +18,24 @@ describe('LocalPreferencesRepository', () => {
     expect(repository.getTheme()).toBeNull()
   })
 
+  it('stores and retrieves a supported traveler profile', () => {
+    const repository = new LocalPreferencesRepository(window.localStorage)
+
+    repository.setTravelerProfile('Isabel')
+
+    expect(repository.getTravelerProfile()).toBe('Isabel')
+  })
+
+  it('ignores an unsupported stored traveler profile', () => {
+    window.localStorage.setItem(
+      'travel-companion:traveler-profile',
+      'Someone else',
+    )
+    const repository = new LocalPreferencesRepository(window.localStorage)
+
+    expect(repository.getTravelerProfile()).toBeNull()
+  })
+
   it('degrades safely when browser storage is unavailable', () => {
     const unavailableStorage = {
       getItem: vi.fn(() => {
@@ -30,6 +48,8 @@ describe('LocalPreferencesRepository', () => {
     const repository = new LocalPreferencesRepository(unavailableStorage)
 
     expect(repository.getTheme()).toBeNull()
+    expect(repository.getTravelerProfile()).toBeNull()
     expect(() => repository.setTheme('light')).not.toThrow()
+    expect(() => repository.setTravelerProfile('Yoav')).not.toThrow()
   })
 })

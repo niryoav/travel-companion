@@ -4,18 +4,28 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import type {
   PreferencesRepository,
   ThemePreference,
+  TravelerProfile,
 } from '../storage/PreferencesRepository'
 import { App } from './App'
 
 class MemoryPreferencesRepository implements PreferencesRepository {
   theme: ThemePreference | null = null
+  traveler: TravelerProfile | null = null
 
   getTheme() {
     return this.theme
   }
 
+  getTravelerProfile() {
+    return this.traveler
+  }
+
   setTheme(theme: ThemePreference) {
     this.theme = theme
+  }
+
+  setTravelerProfile(traveler: TravelerProfile) {
+    this.traveler = traveler
   }
 }
 
@@ -52,7 +62,10 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('link', { name: 'Enter trip' }))
 
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'A calm start' }),
+      await screen.findByRole('heading', {
+        level: 1,
+        name: /Good (morning|afternoon|evening), Yoav/,
+      }),
     ).toBeInTheDocument()
     expect(window.location.pathname).toBe('/home')
 

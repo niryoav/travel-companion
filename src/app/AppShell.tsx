@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router'
+import { Outlet, useLocation } from 'react-router'
 
 import { AppIcon } from '../components/AppIcon'
 import { BottomNavigation } from '../components/BottomNavigation'
@@ -7,9 +7,11 @@ import { useTheme } from './theme/useTheme'
 
 export function AppShell() {
   const { theme, toggleTheme } = useTheme()
+  const { pathname } = useLocation()
+  const isHome = pathname === '/home'
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell${isHome ? ' app-shell-home' : ''}`}>
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
