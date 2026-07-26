@@ -22,9 +22,26 @@
 - Keep AI, APIs, weather, search, notifications, new persistence, expenses, and
   packing outside the sprint.
 
-## Later phases
-- Introduce the first core travel experience and evolve the domain model from
-  concrete user needs.
-- Expand to itinerary logic, briefings, ports, excursions, documents, packing,
-  expenses, and notes.
-- Add offline polish and optional sync or notifications when the core is proven.
+## Sprint 3: Phase-based Home foundation
+- Introduce a concise, phase-aware Home briefing using typed demo data.
+- Support pre-trip, departure day, port day, sea day, and final travel day views.
+- Add a local traveler-profile preference and reusable Home briefing components.
+
+## Sprint 4: Real trip data
+- Replace demo Home content with structured trip data.
+- Evolve the minimum trip model from concrete Home and Today needs.
+
+## Sprint 5: Live weather and travel timing
+- Add carefully scoped weather and travel-timing integrations.
+- Show freshness and retain useful cached states when connectivity is unavailable.
+
+## Sprint 6: Notifications and offline status
+- Introduce actionable notifications and explicit offline/freshness status.
+
+## Sprint 7: Shared and personal profiles/data
+- Separate shared trip context from traveler-owned preferences and actions.
+- Define synchronization and conflict behavior before adding cloud services.
+
+## Later
+- Introduce AI only where it improves an already useful core experience.
+- Add expenses and memories incrementally after the travel foundation is stable.

@@ -1,6 +1,6 @@
-export type ThemePreference = 'light' | 'dark'
+export type TravelerProfile = 'Isabel' | 'Yoav'
 
 export interface PreferencesRepository {
-  getTheme(): ThemePreference | null
-  setTheme(theme: ThemePreference): void
+  getTravelerProfile(): TravelerProfile | null
+  setTravelerProfile(traveler: TravelerProfile): void
 }

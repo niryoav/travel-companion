@@ -22,8 +22,48 @@ page-specific color values:
 - white for primary cover text;
 - champagne gold for small highlights.
 
-The established neutral application surfaces remain available. Deep ocean green
-is not the primary brand color.
+Ocean-blue surfaces remain primary throughout the shell. White or cream must not
+become the primary page background, and deep ocean green is not the brand color.
+
+## Ocean Day
+
+Sprint 3 uses one branded **Ocean Day** appearance. It is neither a flat
+light-blue theme nor a conventional white light mode. Rich deep-to-medium ocean
+blues, subtle sky and water atmosphere, and darker translucent card surfaces
+create depth while preserving strong separation and readability.
+
+Shared root tokens define the page gradient, atmospheric highlights, surfaces,
+text, borders, navigation, status colors, and card treatments. Avoid
+page-specific copies of brand colors. The background remains non-photographic
+and subordinate to content; it must not place a large ship image behind Home.
+
+Ocean Day does not follow the system appearance setting and has no manual
+appearance selector or prominent theme toggle in Sprint 3.
+
+The authenticated/main shell uses the approved local background asset:
+
+```text
+public/images/ocean-day-background-with-ship.webp
+```
+
+It is presented as one fixed, non-repeating, full-viewport background with an
+ocean-blue fallback across Home, Today, Trip, Documents, More, and first-use
+profile setup. The crop and position remain consistent between tabs. Home uses
+a lighter ocean-blue overlay for stronger image visibility; other main screens
+and setup use a slightly darker overlay for text and card readability.
+
+The original portrait composition, high horizon, upper-right ship, and calm dark
+water must be preserved. Cards remain the content surfaces, and the image must
+not be repeated inside cards. The welcome cover keeps its separate approved
+photographic treatment.
+
+Champagne is reserved for key times, countdowns, next milestones, active
+navigation, and important actions. Green remains reserved for confirmed or
+completed states, while warning color appears only for genuine actionable
+alerts.
+
+Ocean Day must preserve readable contrast, visible keyboard focus, large touch
+targets, and the established typography for users aged 55 and 53.
 
 ## Typography
 
@@ -96,3 +136,28 @@ separate pre-trip experience. In a future sprint it should appear before the
 trip, then stop appearing automatically once the trip is underway. During the
 trip, launches should open directly to Home. Remembering dismissal or trip phase
 is not part of Sprint 2.5.
+
+## Phase-based Home
+
+Home uses a dark ocean-blue briefing surface with high-contrast white text and
+soft blue-grey supporting copy. Dark-blue cards form a clear hierarchy:
+
+1. current trip context and personal greeting;
+2. one dominant next milestone;
+3. quick weather;
+4. a contextual checklist of no more than five items;
+5. no more than one actionable alert.
+
+Champagne highlights countdowns, key times, next actions, and active navigation.
+Green is reserved for confirmed or completed states; warning colors appear only
+when the traveler needs to act. Timeline cues should be restrained and reinforce
+sequence without turning Home into a full itinerary.
+
+Home answers “What matters most right now?” and stays distinct from Today, which
+is the detailed chronological view. Home must not repeat the complete daily
+itinerary or add a shortcut to a destination already present in primary
+navigation.
+
+Body copy and secondary labels remain comfortable for travelers aged 55 and 53:
+avoid tiny labels, maintain generous line height, and preserve clear spacing and
+touch targets at 320px width and above.

@@ -3,19 +3,22 @@ import { describe, expect, it, vi } from 'vitest'
 import { LocalPreferencesRepository } from './LocalPreferencesRepository'
 
 describe('LocalPreferencesRepository', () => {
-  it('stores and retrieves a supported theme', () => {
+  it('stores and retrieves a supported traveler profile', () => {
     const repository = new LocalPreferencesRepository(window.localStorage)
 
-    repository.setTheme('dark')
+    repository.setTravelerProfile('Isabel')
 
-    expect(repository.getTheme()).toBe('dark')
+    expect(repository.getTravelerProfile()).toBe('Isabel')
   })
 
-  it('ignores unsupported stored values', () => {
-    window.localStorage.setItem('travel-companion:theme', 'sepia')
+  it('ignores an unsupported stored traveler profile', () => {
+    window.localStorage.setItem(
+      'travel-companion:traveler-profile',
+      'Someone else',
+    )
     const repository = new LocalPreferencesRepository(window.localStorage)
 
-    expect(repository.getTheme()).toBeNull()
+    expect(repository.getTravelerProfile()).toBeNull()
   })
 
   it('degrades safely when browser storage is unavailable', () => {
@@ -29,7 +32,7 @@ describe('LocalPreferencesRepository', () => {
     } as unknown as Storage
     const repository = new LocalPreferencesRepository(unavailableStorage)
 
-    expect(repository.getTheme()).toBeNull()
-    expect(() => repository.setTheme('light')).not.toThrow()
+    expect(repository.getTravelerProfile()).toBeNull()
+    expect(() => repository.setTravelerProfile('Yoav')).not.toThrow()
   })
 })

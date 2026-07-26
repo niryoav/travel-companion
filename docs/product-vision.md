@@ -1,8 +1,18 @@
 # Product vision
 
+> **Canonical source:** This is the authoritative product-vision document for
+> Travel Companion.
+
 Travel Companion is an offline-first travel assistant that reduces stress and
 maximizes enjoyment while travelling. It should quietly surface what matters,
 help people act with confidence, and remain useful when connectivity does not.
+
+Its promise is simple: **Experience more, worry less.**
+
+Travel Companion should understand the traveler, the purpose of the trip, and
+the context of the moment. It should quietly remove friction and enrich the
+experience when that help matters most. The best companion is often the quietest
+one: present when it adds value and invisible when it does not.
 
 ## Experience principles
 
@@ -43,8 +53,19 @@ The approved primary destinations are:
 These destinations are stable product concepts. Their contents will evolve
 incrementally as real travel functionality is introduced.
 
-## Product test
+## Product framework
 
-Features should reduce friction, enrich the experience, or preserve meaningful
-memories. If a feature does not make the journey more useful, enjoyable, or
-memorable, it should not be prioritized.
+Every feature should serve at least one of three purposes:
+
+- **Reduce friction**
+- **Enrich experiences**
+- **Preserve memories**
+
+## The Camera Test
+
+Every feature should pass the Camera Test:
+
+> If this feature did not exist, would the journey become less useful, enjoyable,
+> or memorable?
+
+If the answer is no, it should not be prioritized.
