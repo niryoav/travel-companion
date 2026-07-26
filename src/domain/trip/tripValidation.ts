@@ -54,7 +54,11 @@ export function validateTripData(data: TripData): string[] {
   }
 
   for (const day of data.days) {
-    if (!isValidInstant(day.startsAt) || !isValidInstant(day.endsAt)) {
+    if (
+      !isValidInstant(day.startsAt) ||
+      !isValidInstant(day.endsAt) ||
+      Date.parse(day.startsAt) >= Date.parse(day.endsAt)
+    ) {
       errors.push(`Invalid day window: ${day.id}`)
     }
     if (!isSupportedTimeZone(day.timeZone)) {
@@ -67,6 +71,34 @@ export function validateTripData(data: TripData): string[] {
     }
     if (day.portCallId && !portCallIds.has(day.portCallId)) {
       errors.push(`Unknown port call ${day.portCallId} on day ${day.id}`)
+    }
+  }
+
+  for (let index = 1; index < data.days.length; index += 1) {
+    const previous = data.days[index - 1]
+    const current = data.days[index]
+    const previousStart = Date.parse(previous.startsAt)
+    const previousEnd = Date.parse(previous.endsAt)
+    const currentStart = Date.parse(current.startsAt)
+
+    if (
+      !Number.isFinite(previousStart) ||
+      !Number.isFinite(previousEnd) ||
+      !Number.isFinite(currentStart)
+    ) {
+      continue
+    }
+
+    if (currentStart < previousStart) {
+      errors.push(`Unsorted trip-day window: ${current.id}`)
+      continue
+    }
+    if (currentStart < previousEnd) {
+      errors.push(
+        `Overlapping trip-day windows: ${previous.id} -> ${current.id}`,
+      )
+    } else if (currentStart > previousEnd) {
+      errors.push(`Gap between trip-day windows: ${previous.id} -> ${current.id}`)
     }
   }
 

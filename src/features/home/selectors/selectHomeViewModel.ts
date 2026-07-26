@@ -3,6 +3,7 @@ import { selectCruiseContext } from '../../../domain/trip/selectors/selectCruise
 import { selectNextEvent } from '../../../domain/trip/selectors/selectNextEvent'
 import { selectToday } from '../../../domain/trip/selectors/selectToday'
 import {
+  calendarDateInTimeZone,
   formatDateRange,
   formatLocalDate,
   formatLocalTime,
@@ -21,11 +22,11 @@ import {
 
 function daysUntilTrip(data: TripData, now: Date): number {
   const departure = Date.parse(`${data.trip.startDate}T00:00:00Z`)
-  const today = Date.UTC(
-    now.getUTCFullYear(),
-    now.getUTCMonth(),
-    now.getUTCDate(),
+  const homeCalendarDate = calendarDateInTimeZone(
+    now,
+    data.trip.homeTimeZone,
   )
+  const today = Date.parse(`${homeCalendarDate}T00:00:00Z`)
   return Math.max(0, Math.round((departure - today) / 86_400_000))
 }
 

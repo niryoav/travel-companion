@@ -3,8 +3,11 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 
 import { tripFixture } from '../../test/fixtures/tripFixture'
+import { oceaniaMarina2026TripData } from '../../trips/oceania-marina-2026/tripData'
 import { homeReviewFixtures } from './fixtures/homeReviewFixtures'
+import { HomePhaseView } from './HomePhaseView'
 import { HomeScreen } from './HomeScreen'
+import { selectHomeViewModel } from './selectors/selectHomeViewModel'
 
 function renderHome(route: string) {
   render(
@@ -58,6 +61,25 @@ describe('HomeScreen', () => {
         level: 2,
         name: 'Dinner reservation',
       }),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('All aboard')).not.toBeInTheDocument()
+  })
+
+  it('does not render all aboard for production data without a verified value', () => {
+    const viewModel = selectHomeViewModel(
+      oceaniaMarina2026TripData,
+      new Date('2026-08-24T12:00:00Z'),
+    )
+
+    render(
+      <HomePhaseView
+        greeting="Good afternoon, Traveler"
+        viewModel={viewModel}
+      />,
+    )
+
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Ísafjörður' }),
     ).toBeInTheDocument()
     expect(screen.queryByText('All aboard')).not.toBeInTheDocument()
   })

@@ -26,7 +26,6 @@ export type TripDayKind =
 export interface Trip {
   id: TripId
   title: string
-  familyLabel: string
   startDate: string
   endDate: string
   homeTimeZone: string

@@ -7,7 +7,6 @@ export const tripFixture: TripData = {
   trip: {
     id: 'trip-northern-coast-fixture',
     title: 'Northern Coast Journey',
-    familyLabel: 'The Example Family',
     startDate: '2030-05-10',
     endDate: '2030-05-14',
     homeTimeZone: 'Europe/Brussels',

@@ -48,7 +48,7 @@ describe('App', () => {
       }),
     ).toBeInTheDocument()
     expect(screen.getByText('Travel Companion')).toBeInTheDocument()
-    expect(screen.getByText('The Example Family')).toBeInTheDocument()
+    expect(screen.getByText('Your trip')).toBeInTheDocument()
     expect(screen.getByText('MV Example')).toBeInTheDocument()
     expect(
       screen.getByText('10 May – 14 May 2030'),

@@ -57,3 +57,20 @@ export function formatDateRange(
   }).format(end)
   return `${startLabel} – ${endLabel}`
 }
+
+export function calendarDateInTimeZone(
+  instant: Date,
+  timeZone: string,
+): string {
+  const parts = new Intl.DateTimeFormat('en', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    timeZone,
+  }).formatToParts(instant)
+  const values = Object.fromEntries(
+    parts.map(({ type, value }) => [type, value]),
+  )
+
+  return `${values.year}-${values.month}-${values.day}`
+}

@@ -39,4 +39,22 @@ describe('selectHomeViewModel', () => {
       allAboardTime: '17:30',
     })
   })
+
+  it('changes the countdown at midnight in the trip home time zone', () => {
+    const beforeBrusselsMidnight = selectHomeViewModel(
+      tripFixture,
+      new Date('2030-05-08T21:30:00Z'),
+    )
+    const afterBrusselsMidnight = selectHomeViewModel(
+      tripFixture,
+      new Date('2030-05-08T22:30:00Z'),
+    )
+
+    expect(beforeBrusselsMidnight.context.countdown).toBe(
+      '2 days to departure',
+    )
+    expect(afterBrusselsMidnight.context.countdown).toBe(
+      '1 day to departure',
+    )
+  })
 })

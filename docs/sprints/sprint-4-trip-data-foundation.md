@@ -128,3 +128,8 @@ The real trip covers 22 August through 4 September 2026. The cruise covers
 23 August through 4 September 2026 aboard Oceania Marina. Sprint 4 models only
 the facts required for the current Home and welcome integration; richer domain
 behavior must grow from later concrete workflows.
+
+Known limitation: production port calls do not yet include all-aboard times.
+Those values remain intentionally absent until they can be verified from an
+authoritative trip document or onboard source. The privacy-safe review fixture
+continues to demonstrate the existing all-aboard UI treatment.

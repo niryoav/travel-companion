@@ -32,7 +32,7 @@ export function WelcomeCoverScreen({
 
       <section className="welcome-card" aria-labelledby="welcome-trip-title">
         <p className="welcome-label">Travel Companion</p>
-        <p className="welcome-family">{tripData.trip.familyLabel}</p>
+        <p className="welcome-family">Your trip</p>
         <h1 id="welcome-trip-title">{tripData.trip.title}</h1>
         <p className="welcome-ship">{cruise?.shipName}</p>
         <p className="welcome-dates">

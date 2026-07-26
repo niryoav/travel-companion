@@ -22,6 +22,8 @@ const locations: Location[] = [
   { id: 'location-southampton', name: 'London (Southampton)', city: 'Southampton', country: 'United Kingdom' },
 ]
 
+// All-aboard values are intentionally absent until verified from an
+// authoritative trip document or an onboard source.
 const portCalls: PortCall[] = [
   {
     id: 'port-call-reykjavik',
@@ -307,7 +309,6 @@ export const oceaniaMarina2026TripData: TripData = {
   trip: {
     id: 'trip-oceania-marina-2026',
     title: 'Iceland & British Isles',
-    familyLabel: 'Fam. Nir-Buysse',
     startDate: '2026-08-22',
     endDate: '2026-09-04',
     homeTimeZone: 'Europe/Brussels',
