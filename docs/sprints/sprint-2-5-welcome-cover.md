@@ -11,7 +11,7 @@ ocean-blue visual direction for Travel Companion.
 - Present the approved family, trip, ship, date, and countdown text.
 - Use a compact frosted-glass card anchored near the bottom.
 - Navigate to the existing Home screen through `Enter trip`.
-- Use a temporary local hero image that can be replaced by a licensed asset.
+- Use the approved local Oceania Marina hero image.
 - Preserve every existing Sprint 2 route and component.
 
 ## Out of Scope
@@ -43,7 +43,7 @@ Expected implementation areas:
 
 - `docs/design-language.md`
 - `docs/sprints/sprint-2-5-welcome-cover.md`
-- `public/images/oceania-marina-placeholder.jpg`
+- `public/images/oceania-marina-welcome.webp`
 - `src/app/App.tsx`
 - `src/features/welcome/`
 - `src/styles/index.css`

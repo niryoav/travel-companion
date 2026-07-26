@@ -29,7 +29,9 @@ is not the primary brand color.
 
 - Prefer the existing humanist system font stack for dependable rendering.
 - Use confident display sizing with compact line height for trip names.
-- Keep supporting text concise and comfortably readable.
+- Keep the trip title dominant and the countdown as the second-strongest element.
+- Keep ship and date text comfortably readable without reading glasses; small
+  labels should remain at least 0.8rem on the cover.
 - Use weight, size, and spacing before introducing extra color or decoration.
 
 ## Welcome cover
@@ -58,15 +60,15 @@ when backdrop blur is unavailable.
 ## Image usage
 
 Use local, optimized assets only; production code must not depend on remote image
-URLs. The Sprint 2.5 temporary asset is:
+URLs. The approved Sprint 2.5 welcome asset is:
 
 ```text
-public/images/oceania-marina-placeholder.jpg
+public/images/oceania-marina-welcome.webp
 ```
 
-Replace it with a properly licensed, optimized image of the Oceania Marina while
-keeping the same path or updating the single cover-image reference. The image is
-decorative because all relevant trip information is present as text.
+The image is decorative because all relevant trip information is present as
+text. Any future replacement must remain properly licensed and optimized, and
+should keep the same path or update the single cover-image reference.
 
 ## Safe areas and responsiveness
 
