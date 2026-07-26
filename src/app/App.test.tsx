@@ -25,12 +25,36 @@ describe('App', () => {
     document.documentElement.removeAttribute('data-theme')
   })
 
-  it('shows the five primary destinations and redirects to Home', async () => {
+  it('shows the approved trip welcome content without primary navigation', () => {
     render(<App preferencesRepository={new MemoryPreferencesRepository()} />)
+
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'Iceland & British Isles',
+      }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Travel Companion')).toBeInTheDocument()
+    expect(screen.getByText('Fam. Nir-Buysse')).toBeInTheDocument()
+    expect(screen.getByText('Oceania Marina')).toBeInTheDocument()
+    expect(
+      screen.getByText('22 August – 4 September 2026'),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/\d+ days? to go/)).toBeInTheDocument()
+    expect(
+      screen.queryByRole('navigation', { name: 'Primary navigation' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('opens Home from the welcome cover', async () => {
+    render(<App preferencesRepository={new MemoryPreferencesRepository()} />)
+
+    fireEvent.click(screen.getByRole('link', { name: 'Enter trip' }))
 
     expect(
       await screen.findByRole('heading', { level: 1, name: 'A calm start' }),
     ).toBeInTheDocument()
+    expect(window.location.pathname).toBe('/home')
 
     const navigation = screen.getByRole('navigation', {
       name: 'Primary navigation',
@@ -43,9 +67,10 @@ describe('App', () => {
     expect(navigation).toHaveTextContent('More')
   })
 
-  it('navigates from Home to the Today placeholder', async () => {
+  it('keeps primary navigation working after entering the app', async () => {
     render(<App preferencesRepository={new MemoryPreferencesRepository()} />)
 
+    fireEvent.click(screen.getByRole('link', { name: 'Enter trip' }))
     fireEvent.click(await screen.findByRole('link', { name: 'Today' }))
 
     expect(
@@ -56,6 +81,7 @@ describe('App', () => {
 
   it('persists an explicit theme choice through the repository', async () => {
     const repository = new MemoryPreferencesRepository()
+    window.history.replaceState({}, '', '/home')
     render(<App preferencesRepository={repository} />)
 
     const toggle = await screen.findByRole('button', {
