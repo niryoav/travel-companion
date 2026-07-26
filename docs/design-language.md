@@ -143,10 +143,15 @@ Home uses a dark ocean-blue briefing surface with high-contrast white text and
 soft blue-grey supporting copy. Dark-blue cards form a clear hierarchy:
 
 1. current trip context and personal greeting;
-2. one dominant next milestone;
-3. quick weather;
-4. a contextual checklist of no more than five items;
+2. one dominant next milestone when one is available;
+3. reliable real or cached weather when available;
+4. a contextual checklist of no more than five items when backed by a defined
+   workflow;
 5. no more than one actionable alert.
+
+Sprint 4 production Home hides weather when no reliable weather source exists.
+Deterministic weather, checklist, and alert content is limited to privacy-safe
+visual-review fixtures and must never be presented as production trip data.
 
 Champagne highlights countdowns, key times, next actions, and active navigation.
 Green is reserved for confirmed or completed states; warning colors appear only

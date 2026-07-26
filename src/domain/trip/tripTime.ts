@@ -36,3 +36,24 @@ export function formatLocalDate(
     timeZone,
   }).format(new Date(instant))
 }
+
+export function formatDateRange(
+  startDate: string,
+  endDate: string,
+  locale = 'en-GB',
+): string {
+  const start = new Date(`${startDate}T12:00:00Z`)
+  const end = new Date(`${endDate}T12:00:00Z`)
+  const startLabel = new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'long',
+    timeZone: 'UTC',
+  }).format(start)
+  const endLabel = new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(end)
+  return `${startLabel} – ${endLabel}`
+}

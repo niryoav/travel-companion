@@ -1,13 +1,17 @@
 import {
-  DEFAULT_DEMO_HOME_STATE,
-  homeDemoData,
-  type DemoHomeState,
-} from './homeDemoData'
+  DEFAULT_REVIEW_HOME_STATE,
+  homeReviewFixtures,
+  type ReviewHomeState,
+} from './fixtures/homeReviewFixtures'
 
-export function demoHomeStateFromSearch(search: string): DemoHomeState {
+export function demoHomeStateFromSearch(
+  search: string,
+): ReviewHomeState | null {
   const value = new URLSearchParams(search).get('phase')
 
-  return value && Object.hasOwn(homeDemoData, value)
-    ? (value as DemoHomeState)
-    : DEFAULT_DEMO_HOME_STATE
+  return value && Object.hasOwn(homeReviewFixtures, value)
+    ? (value as ReviewHomeState)
+    : null
 }
+
+export { DEFAULT_REVIEW_HOME_STATE }

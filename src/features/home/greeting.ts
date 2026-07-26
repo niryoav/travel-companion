@@ -1,7 +1,5 @@
-import type { TravelerProfile } from './homeTypes'
-
 export function greetingFor(
-  traveler: TravelerProfile,
+  traveler: string,
   date = new Date(),
 ): string {
   const hour = date.getHours()

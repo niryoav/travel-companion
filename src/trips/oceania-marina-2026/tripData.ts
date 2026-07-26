@@ -5,6 +5,8 @@ import type {
   TripDay,
 } from '../../domain/trip/tripTypes'
 
+// Public cruise dates, ports, and published arrival/departure times:
+// https://www.oceaniacruises.com/cruises/MNA260823/
 const locations: Location[] = [
   { id: 'location-reykjavik', name: 'Reykjavík', city: 'Reykjavík', country: 'Iceland' },
   { id: 'location-isafjordur', name: 'Ísafjörður', city: 'Ísafjörður', country: 'Iceland' },

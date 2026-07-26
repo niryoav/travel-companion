@@ -2,13 +2,14 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 
-import { homeDemoData } from './homeDemoData'
+import { tripFixture } from '../../test/fixtures/tripFixture'
+import { homeReviewFixtures } from './fixtures/homeReviewFixtures'
 import { HomeScreen } from './HomeScreen'
 
 function renderHome(route: string) {
   render(
     <MemoryRouter initialEntries={[route]}>
-      <HomeScreen traveler="Yoav" />
+      <HomeScreen travelerName="Alex" tripData={tripFixture} />
     </MemoryRouter>,
   )
 }
@@ -18,16 +19,16 @@ describe('HomeScreen', () => {
     renderHome('/home?phase=departure-day')
 
     expect(
-      screen.getByRole('heading', { level: 2, name: 'Travel to Reykjavík' }),
+      screen.getByRole('heading', { level: 2, name: 'Travel to Harbor City' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('Leave home')).toBeInTheDocument()
+    expect(screen.getByText('Leave home area')).toBeInTheDocument()
   })
 
   it('shows the final-travel-day heading and transfer milestone', () => {
     renderHome('/home?phase=final-travel-day')
 
     expect(
-      screen.getByRole('heading', { level: 2, name: 'Southampton → Home' }),
+      screen.getByRole('heading', { level: 2, name: 'Harbor City → Home' }),
     ).toBeInTheDocument()
     expect(
       screen.getByText('Disembark and meet transfer'),
@@ -38,12 +39,12 @@ describe('HomeScreen', () => {
     renderHome('/home?phase=port-day')
 
     expect(
-      screen.getByRole('heading', { level: 2, name: 'Belfast' }),
+      screen.getByRole('heading', { level: 2, name: 'Harbor City' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('Cruise Day 7 of 13')).toBeInTheDocument()
+    expect(screen.getByText('Cruise Day 2 of 4')).toBeInTheDocument()
     expect(screen.getByText('All aboard')).toBeInTheDocument()
     expect(screen.getByText('17:30')).toBeInTheDocument()
-    expect(screen.getByText('Giant’s Causeway excursion')).toBeInTheDocument()
+    expect(screen.getByText('Coastal walk')).toBeInTheDocument()
   })
 
   it('shows sea-day essentials without an all-aboard placeholder', () => {
@@ -52,7 +53,12 @@ describe('HomeScreen', () => {
     expect(
       screen.getByRole('heading', { level: 2, name: 'At sea' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('Wine tasting')).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Dinner reservation',
+      }),
+    ).toBeInTheDocument()
     expect(screen.queryByText('All aboard')).not.toBeInTheDocument()
   })
 
@@ -62,16 +68,16 @@ describe('HomeScreen', () => {
     expect(
       screen.getByRole('heading', {
         level: 1,
-        name: /Good (morning|afternoon|evening), Yoav/,
+        name: /Good (morning|afternoon|evening), Alex/,
       }),
     ).toBeInTheDocument()
     expect(screen.queryByLabelText('Traveler profile')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /Isabel/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Sam/ })).not.toBeInTheDocument()
   })
 
-  it('keeps every demo checklist within the five-item Home limit', () => {
-    for (const viewModel of Object.values(homeDemoData)) {
-      expect(viewModel.checklist.length).toBeLessThanOrEqual(5)
+  it('keeps every review checklist within the five-item Home limit', () => {
+    for (const viewModel of Object.values(homeReviewFixtures)) {
+      expect(viewModel.checklist?.length ?? 0).toBeLessThanOrEqual(5)
     }
   })
 })

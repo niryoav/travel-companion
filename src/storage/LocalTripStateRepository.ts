@@ -38,6 +38,8 @@ function parseStoredState(value: string | null): StoredTripState | null {
 }
 
 export class LocalTripStateRepository implements TripStateRepository {
+  private sessionTravelerId: TravelerId | null = null
+
   constructor(
     private readonly storage: Storage,
     private readonly activeTripId: TripId,
@@ -45,6 +47,10 @@ export class LocalTripStateRepository implements TripStateRepository {
   ) {}
 
   getTravelerId(): TravelerId | null {
+    if (this.sessionTravelerId) {
+      return this.sessionTravelerId
+    }
+
     try {
       const state = parseStoredState(this.storage.getItem(TRIP_STATE_KEY))
       if (
@@ -52,6 +58,7 @@ export class LocalTripStateRepository implements TripStateRepository {
         state.travelerId &&
         this.validTravelerIds.has(state.travelerId)
       ) {
+        this.sessionTravelerId = state.travelerId
         return state.travelerId
       }
 
@@ -64,6 +71,7 @@ export class LocalTripStateRepository implements TripStateRepository {
         migratedTravelerId &&
         this.validTravelerIds.has(migratedTravelerId)
       ) {
+        this.sessionTravelerId = migratedTravelerId
         this.writeState({ travelerId: migratedTravelerId })
         return migratedTravelerId
       }
@@ -79,6 +87,7 @@ export class LocalTripStateRepository implements TripStateRepository {
       return
     }
 
+    this.sessionTravelerId = travelerId
     try {
       this.writeState({ travelerId })
     } catch {

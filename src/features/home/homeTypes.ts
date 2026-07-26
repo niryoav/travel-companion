@@ -3,6 +3,7 @@ export const HOME_PHASES = {
   DEPARTURE_DAY: 'DEPARTURE_DAY',
   CRUISE: 'CRUISE',
   FINAL_TRAVEL_DAY: 'FINAL_TRAVEL_DAY',
+  COMPLETED: 'COMPLETED',
 } as const
 
 export type HomePhase = (typeof HOME_PHASES)[keyof typeof HOME_PHASES]
@@ -66,10 +67,9 @@ export interface HomeViewModel {
   cruiseDayType?: CruiseDayType
   context: HomeContext
   cruiseProgress?: CruiseProgress
-  milestone: Milestone
-  weather: QuickWeather
-  checklistTitle: string
-  checklist: QuickChecklistItem[]
+  milestone?: Milestone
+  weather?: QuickWeather
+  checklistTitle?: string
+  checklist?: QuickChecklistItem[]
   alert?: HomeAlert
 }
-export type { TravelerProfile } from '../../storage/PreferencesRepository'

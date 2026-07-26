@@ -87,5 +87,6 @@ describe('LocalTripStateRepository', () => {
 
     expect(repository.getTravelerId()).toBeNull()
     expect(() => repository.setTravelerId('traveler-alex')).not.toThrow()
+    expect(repository.getTravelerId()).toBe('traveler-alex')
   })
 })

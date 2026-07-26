@@ -7,22 +7,33 @@ import { HomeProfileGate } from '../features/profile/HomeProfileGate'
 import { MoreScreen } from '../features/profile/MoreScreen'
 import { TravelerSetupScreen } from '../features/profile/TravelerSetupScreen'
 import { WelcomeCoverScreen } from '../features/welcome/WelcomeCoverScreen'
-import type { PreferencesRepository } from '../storage/PreferencesRepository'
+import type { TripRepository } from '../data/trips/TripRepository'
+import type { TripStateRepository } from '../storage/TripStateRepository'
 
 interface AppProps {
-  preferencesRepository: PreferencesRepository
+  tripRepository: TripRepository
+  tripStateRepository: TripStateRepository
 }
 
-export function App({ preferencesRepository }: AppProps) {
+export function App({
+  tripRepository,
+  tripStateRepository,
+}: AppProps) {
+  const tripData = tripRepository.getActiveTrip()
+
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<WelcomeCoverScreen />} />
+        <Route
+          path="/"
+          element={<WelcomeCoverScreen tripData={tripData} />}
+        />
         <Route
           path="/profile-setup"
           element={
             <TravelerSetupScreen
-              preferencesRepository={preferencesRepository}
+              travelers={tripData.travelers}
+              tripStateRepository={tripStateRepository}
             />
           }
         />
@@ -31,14 +42,18 @@ export function App({ preferencesRepository }: AppProps) {
             path="home"
             element={
               <HomeProfileGate
-                preferencesRepository={preferencesRepository}
+                tripData={tripData}
+                tripStateRepository={tripStateRepository}
               />
             }
           />
           <Route
             path="more"
             element={
-              <MoreScreen preferencesRepository={preferencesRepository} />
+              <MoreScreen
+                travelers={tripData.travelers}
+                tripStateRepository={tripStateRepository}
+              />
             }
           />
           {destinationDefinitions.map(
