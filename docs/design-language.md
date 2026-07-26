@@ -96,3 +96,28 @@ separate pre-trip experience. In a future sprint it should appear before the
 trip, then stop appearing automatically once the trip is underway. During the
 trip, launches should open directly to Home. Remembering dismissal or trip phase
 is not part of Sprint 2.5.
+
+## Phase-based Home
+
+Home uses a dark ocean-blue briefing surface with high-contrast white text and
+soft blue-grey supporting copy. Dark-blue cards form a clear hierarchy:
+
+1. current trip context and personal greeting;
+2. one dominant next milestone;
+3. quick weather;
+4. a contextual checklist of no more than five items;
+5. no more than one actionable alert.
+
+Champagne highlights countdowns, key times, next actions, and active navigation.
+Green is reserved for confirmed or completed states; warning colors appear only
+when the traveler needs to act. Timeline cues should be restrained and reinforce
+sequence without turning Home into a full itinerary.
+
+Home answers “What matters most right now?” and stays distinct from Today, which
+is the detailed chronological view. Home must not repeat the complete daily
+itinerary or add a shortcut to a destination already present in primary
+navigation.
+
+Body copy and secondary labels remain comfortable for travelers aged 55 and 53:
+avoid tiny labels, maintain generous line height, and preserve clear spacing and
+touch targets at 320px width and above.
