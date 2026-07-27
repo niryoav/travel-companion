@@ -80,7 +80,7 @@ const portCalls: PortCall[] = [
     timeZone: 'Europe/London',
     arrivalAt: '2026-08-29T07:00:00+01:00',
     departureAt: '2026-08-29T16:00:00+01:00',
-    eventIds: [],
+    eventIds: ['event-stornoway-isle-of-lewis'],
   },
   {
     id: 'port-call-greenock',
@@ -232,7 +232,7 @@ const days: TripDay[] = [
     kind: 'PORT_DAY',
     title: 'Stornoway',
     summary: 'Scotland',
-    eventIds: [],
+    eventIds: ['event-stornoway-isle-of-lewis'],
     portCallId: 'port-call-stornoway',
   },
   {
@@ -311,7 +311,7 @@ const days: TripDay[] = [
 
 export const oceaniaMarina2026TripData: TripData = {
   schemaVersion: 1,
-  dataVersion: '2026-07-27.2',
+  dataVersion: '2026-07-27.3',
   publishedAt: '2026-07-27T00:00:00Z',
   trip: {
     id: 'trip-oceania-marina-2026',
@@ -412,6 +412,21 @@ export const oceaniaMarina2026TripData: TripData = {
       organizer: 'Oceania Cruises',
       bookingType: 'OCEANIA',
       publicCode: 'TAN-003',
+    },
+    {
+      id: 'event-stornoway-isle-of-lewis',
+      dayId: 'day-2026-08-29',
+      kind: 'EXCURSION',
+      title: 'Isle of Lewis Tour',
+      locationId: 'location-stornoway',
+      organizer: 'Hebridean Isle Tours',
+      bookingType: 'INDEPENDENT',
+      bookingStatus: 'CONFIRMED',
+      scheduleStatus: 'TO_BE_CONFIRMED',
+      operationalNotes: ['Departure and return time to be confirmed.'],
+      // The booking confirmation currently lists 10:00 and six hours. The
+      // operator agreed by phone to an earlier cruise-compatible start and
+      // return, but revised written timing is still pending.
     },
     {
       id: 'event-greenock-loch-lomond',

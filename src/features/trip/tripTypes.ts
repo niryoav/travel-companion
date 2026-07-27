@@ -68,6 +68,8 @@ export interface TripEventViewModel {
   transport?: string
   organizer?: string
   bookingTypeLabel?: string
+  bookingStatusLabel?: string
+  scheduleStatusLabel?: string
   publicCode?: string
   checkInTime?: string
   checkInAt?: string

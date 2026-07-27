@@ -28,13 +28,25 @@ describe('selectTripViewModel', () => {
 
     expect(stornoway).toMatchObject({
       title: 'Stornoway',
-      events: [],
       port: {
         location: 'Stornoway (Hebrides)',
         arrivalTime: '07:00',
         departureTime: '16:00',
       },
     })
+    expect(stornoway?.events).toEqual([
+      expect.objectContaining({
+        id: 'event-stornoway-isle-of-lewis',
+        title: 'Isle of Lewis Tour',
+        organizer: 'Hebridean Isle Tours',
+        bookingTypeLabel: 'Independent excursion',
+        bookingStatusLabel: 'Confirmed',
+        scheduleStatusLabel: 'Time to be confirmed',
+        operationalNotes: ['Departure and return time to be confirmed.'],
+        time: undefined,
+        endTime: undefined,
+      }),
+    ])
     expect(penrhyn).toMatchObject({
       title: 'Penrhyn Castle & Gardens',
       time: '12:30',

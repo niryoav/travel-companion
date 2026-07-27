@@ -125,6 +125,12 @@ export function validateTripData(data: TripData): string[] {
     if (event.timeZone && !isSupportedTimeZone(event.timeZone)) {
       errors.push(`Unsupported event time zone: ${event.id}`)
     }
+    if (
+      event.scheduleStatus === 'TO_BE_CONFIRMED' &&
+      (event.startsAt || event.endsAt)
+    ) {
+      errors.push(`Pending event schedule contains timing: ${event.id}`)
+    }
     if (event.locationId && !locationIds.has(event.locationId)) {
       errors.push(`Unknown location ${event.locationId} on event ${event.id}`)
     }

@@ -72,6 +72,8 @@ interface BaseEvent {
   documentReferenceIds?: DocumentReferenceId[]
   organizer?: string
   bookingType?: 'OCEANIA' | 'INDEPENDENT'
+  bookingStatus?: 'CONFIRMED'
+  scheduleStatus?: 'TO_BE_CONFIRMED'
   publicCode?: string
   checkInAt?: string
   meetingContext?: string

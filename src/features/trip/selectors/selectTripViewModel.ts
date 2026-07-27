@@ -137,6 +137,12 @@ function eventViewModel(
         : event.bookingType === 'INDEPENDENT'
           ? 'Independent excursion'
           : undefined,
+    bookingStatusLabel:
+      event.bookingStatus === 'CONFIRMED' ? 'Confirmed' : undefined,
+    scheduleStatusLabel:
+      event.scheduleStatus === 'TO_BE_CONFIRMED'
+        ? 'Time to be confirmed'
+        : undefined,
     publicCode: event.publicCode,
     checkInTime:
       event.checkInAt && event.timeZone

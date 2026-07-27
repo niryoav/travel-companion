@@ -105,6 +105,8 @@ function TripEventDetail({ event }: { event: TripEventViewModel }) {
       <div className="trip-event-time">
         {event.time ? (
           <time dateTime={event.startsAt}>{event.time}</time>
+        ) : event.scheduleStatusLabel ? (
+          <span>{event.scheduleStatusLabel}</span>
         ) : (
           <span>Any time</span>
         )}
@@ -118,9 +120,15 @@ function TripEventDetail({ event }: { event: TripEventViewModel }) {
         <span className="trip-event-kind">{event.kindLabel}</span>
         <h4>{event.title}</h4>
         {event.organizer ? <p>{event.organizer}</p> : null}
-        {event.bookingTypeLabel || event.publicCode ? (
+        {event.bookingTypeLabel ||
+        event.bookingStatusLabel ||
+        event.publicCode ? (
           <p>
-            {[event.bookingTypeLabel, event.publicCode]
+            {[
+              event.bookingTypeLabel,
+              event.bookingStatusLabel,
+              event.publicCode,
+            ]
               .filter(Boolean)
               .join(' · ')}
           </p>

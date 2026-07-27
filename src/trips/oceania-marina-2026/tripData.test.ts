@@ -18,12 +18,12 @@ describe('canonical active trip data', () => {
     )
   })
 
-  it('keeps the ten confirmed excursions on their operational trip days', () => {
+  it('keeps the eleven confirmed excursions on their operational trip days', () => {
     const excursions = oceaniaMarina2026TripData.events.filter(
       ({ kind }) => kind === 'EXCURSION',
     )
 
-    expect(excursions).toHaveLength(10)
+    expect(excursions).toHaveLength(11)
     expect(
       oceaniaMarina2026TripData.days
         .filter(({ eventIds }) => eventIds.length > 0)
@@ -40,6 +40,7 @@ describe('canonical active trip data', () => {
       ],
       ['day-2026-08-26', ['event-djupivogur-glacier-lagoon']],
       ['day-2026-08-27', ['event-torshavn-vestmanna']],
+      ['day-2026-08-29', ['event-stornoway-isle-of-lewis']],
       ['day-2026-08-30', ['event-greenock-loch-lomond']],
       ['day-2026-08-31', ['event-dublin-river-cruise']],
       ['day-2026-09-01', ['event-holyhead-penrhyn-castle']],
@@ -52,7 +53,7 @@ describe('canonical active trip data', () => {
     ).toHaveLength(8)
     expect(
       excursions.filter(({ bookingType }) => bookingType === 'INDEPENDENT'),
-    ).toHaveLength(2)
+    ).toHaveLength(3)
   })
 
   it('records only verified independent-excursion timing and warnings', () => {
@@ -61,6 +62,9 @@ describe('canonical active trip data', () => {
     )
     const djupivogur = oceaniaMarina2026TripData.events.find(
       ({ id }) => id === 'event-djupivogur-glacier-lagoon',
+    )
+    const stornoway = oceaniaMarina2026TripData.events.find(
+      ({ id }) => id === 'event-stornoway-isle-of-lewis',
     )
 
     expect(husavik).toMatchObject({
@@ -75,6 +79,18 @@ describe('canonical active trip data', () => {
       operationalNotes: ['Early tender coordination required'],
     })
     expect(djupivogur?.endsAt).toBeUndefined()
+    expect(stornoway).toMatchObject({
+      title: 'Isle of Lewis Tour',
+      dayId: 'day-2026-08-29',
+      locationId: 'location-stornoway',
+      organizer: 'Hebridean Isle Tours',
+      bookingType: 'INDEPENDENT',
+      bookingStatus: 'CONFIRMED',
+      scheduleStatus: 'TO_BE_CONFIRMED',
+      operationalNotes: ['Departure and return time to be confirmed.'],
+    })
+    expect(stornoway?.startsAt).toBeUndefined()
+    expect(stornoway?.endsAt).toBeUndefined()
     expect(
       oceaniaMarina2026TripData.portCalls.every(
         ({ allAboardAt }) => allAboardAt === undefined,
@@ -96,7 +112,7 @@ describe('canonical active trip data', () => {
     expect(day).toMatchObject({
       title: 'Stornoway',
       summary: 'Scotland',
-      eventIds: [],
+      eventIds: ['event-stornoway-isle-of-lewis'],
     })
     expect(location).toMatchObject({
       name: 'Stornoway (Hebrides)',
@@ -106,16 +122,17 @@ describe('canonical active trip data', () => {
     expect(portCall).toMatchObject({
       arrivalAt: '2026-08-29T07:00:00+01:00',
       departureAt: '2026-08-29T16:00:00+01:00',
-      eventIds: [],
+      eventIds: ['event-stornoway-isle-of-lewis'],
     })
     expect(
       JSON.stringify(oceaniaMarina2026TripData).toLowerCase(),
     ).not.toContain('portree')
     expect(
       oceaniaMarina2026TripData.events.some(
-        ({ dayId }) => dayId === day?.id,
+        ({ dayId, id }) =>
+          dayId === day?.id && id === 'event-stornoway-isle-of-lewis',
       ),
-    ).toBe(false)
+    ).toBe(true)
   })
 
   it('keeps HOY-003 only at its confirmed 1 September time', () => {
