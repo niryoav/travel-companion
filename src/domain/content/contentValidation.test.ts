@@ -119,4 +119,36 @@ describe('validateTripContent', () => {
       ]),
     )
   })
+
+  it('accepts summary-only excursion content and validates optional sections', () => {
+    const guide = tripContentFixture.excursionGuides[0]
+    const summaryOnly: TripContentBundle = {
+      ...tripContentFixture,
+      excursionGuides: [
+        {
+          ...guide,
+          highlights: undefined,
+          context: undefined,
+        },
+      ],
+    }
+    const invalid: TripContentBundle = {
+      ...tripContentFixture,
+      excursionGuides: [
+        {
+          ...guide,
+          lookOutFor: [''],
+          seasonalNote: ' ',
+        },
+      ],
+    }
+
+    expect(validateTripContent(summaryOnly, tripFixture)).toEqual([])
+    expect(validateTripContent(invalid, tripFixture)).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('Invalid excursion look-out-for items'),
+        expect.stringContaining('Invalid excursion supporting content'),
+      ]),
+    )
+  })
 })
