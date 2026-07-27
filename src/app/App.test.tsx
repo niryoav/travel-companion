@@ -2,9 +2,11 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { BundledTripRepository } from '../data/trips/BundledTripRepository'
+import { BundledTripContentRepository } from '../data/content/BundledTripContentRepository'
 import type { TravelerId } from '../domain/trip/tripTypes'
 import type { TripStateRepository } from '../storage/TripStateRepository'
 import { tripFixture } from '../test/fixtures/tripFixture'
+import { tripContentFixture } from '../test/fixtures/tripContentFixture'
 import { App } from './App'
 
 class MemoryTripStateRepository implements TripStateRepository {
@@ -20,6 +22,10 @@ class MemoryTripStateRepository implements TripStateRepository {
 }
 
 const tripRepository = new BundledTripRepository(tripFixture)
+const tripContentRepository = new BundledTripContentRepository(
+  tripContentFixture,
+  tripFixture,
+)
 
 function renderApp(
   tripStateRepository = new MemoryTripStateRepository(),
@@ -27,6 +33,7 @@ function renderApp(
   render(
     <App
       tripRepository={tripRepository}
+      tripContentRepository={tripContentRepository}
       tripStateRepository={tripStateRepository}
     />,
   )

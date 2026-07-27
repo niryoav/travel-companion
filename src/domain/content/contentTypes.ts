@@ -57,7 +57,11 @@ export interface ExcursionGuide {
   id: string
   eventId: EventId
   summary: string
-  highlights: string[]
+  highlights?: string[]
+  lookOutFor?: string[]
+  funFacts?: string[]
+  preparation?: string[]
+  seasonalNote?: string
   context?: string
   sourceReferences: SourceReference[]
   reviewedAt: string

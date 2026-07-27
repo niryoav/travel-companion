@@ -160,11 +160,30 @@ function validateExcursionGuide(
     errors.push(`Missing excursion content: ${guide.id}`)
   }
   if (
-    guide.highlights.length < 3 ||
-    guide.highlights.length > 5 ||
-    guide.highlights.some((highlight) => !highlight.trim())
+    guide.highlights &&
+    (guide.highlights.length < 3 ||
+      guide.highlights.length > 5 ||
+      guide.highlights.some((highlight) => !highlight.trim()))
   ) {
     errors.push(`Excursion highlights must contain 3–5 items: ${guide.id}`)
+  }
+  for (const [label, items] of [
+    ['look-out-for', guide.lookOutFor],
+    ['fun-facts', guide.funFacts],
+    ['preparation', guide.preparation],
+  ] as const) {
+    if (
+      (items?.length ?? 0) > 5 ||
+      items?.some((item) => !item.trim())
+    ) {
+      errors.push(`Invalid excursion ${label} items: ${guide.id}`)
+    }
+  }
+  if (
+    (guide.context !== undefined && !guide.context.trim()) ||
+    (guide.seasonalNote !== undefined && !guide.seasonalNote.trim())
+  ) {
+    errors.push(`Invalid excursion supporting content: ${guide.id}`)
   }
   if (!isCalendarDate(guide.reviewedAt)) {
     errors.push(`Invalid excursion review date: ${guide.id}`)

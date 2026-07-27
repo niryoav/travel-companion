@@ -1,4 +1,12 @@
 import {
+  selectDestinationGuide,
+  selectExcursionGuide,
+} from '../../../domain/content/contentSelectors'
+import type {
+  SourceReference,
+  TripContentBundle,
+} from '../../../domain/content/contentTypes'
+import {
   classifyTripDayState,
   type TripDayState,
 } from '../../../domain/trip/selectors/classifyTripDayState'
@@ -24,6 +32,15 @@ import type {
   TripProgressViewModel,
   TripViewModel,
 } from '../tripTypes'
+
+function sourceViewModel(source: SourceReference) {
+  return {
+    id: source.id,
+    name: source.name,
+    url: source.url,
+    reviewedAt: source.reviewedAt,
+  }
+}
 
 function formatCalendarDate(
   localDate: string,
@@ -84,6 +101,7 @@ function eventKindLabel(event: TripEvent): string {
 
 function eventViewModel(
   data: TripData,
+  content: TripContentBundle,
   event: TripEvent,
 ): TripEventViewModel {
   const location = data.locations.find(({ id }) => id === event.locationId)
@@ -94,6 +112,7 @@ function eventViewModel(
   const relatedDocumentCount = new Set(
     event.documentReferenceIds ?? [],
   ).size
+  const guide = selectExcursionGuide(content, event.id)
 
   return {
     id: event.id,
@@ -111,6 +130,34 @@ function eventViewModel(
     endsAt: event.endsAt,
     location: location?.name,
     transport: transport?.label,
+    organizer: event.organizer,
+    bookingTypeLabel:
+      event.bookingType === 'OCEANIA'
+        ? 'Oceania excursion'
+        : event.bookingType === 'INDEPENDENT'
+          ? 'Independent excursion'
+          : undefined,
+    publicCode: event.publicCode,
+    checkInTime:
+      event.checkInAt && event.timeZone
+        ? formatLocalTime(event.checkInAt, event.timeZone)
+        : undefined,
+    checkInAt: event.checkInAt,
+    meetingContext: event.meetingContext,
+    operationalNotes: event.operationalNotes,
+    experience: guide
+      ? {
+          summary: guide.summary,
+          highlights: guide.highlights,
+          lookOutFor: guide.lookOutFor,
+          funFacts: guide.funFacts,
+          preparation: guide.preparation,
+          context: guide.context,
+          seasonalNote: guide.seasonalNote,
+          sources: guide.sourceReferences.map(sourceViewModel),
+          reviewedAt: guide.reviewedAt,
+        }
+      : undefined,
     relatedDocumentCount,
   }
 }
@@ -178,14 +225,24 @@ function progressViewModel(
 
 function dayViewModel(
   data: TripData,
+  content: TripContentBundle,
   day: TripDay,
   dayNumber: number,
   now: Date,
 ): TripDayViewModel {
   const state = classifyTripDayState(day, now)
   const domainEvents = selectDayEvents(data, day)
-  const events = domainEvents.map((event) => eventViewModel(data, event))
+  const events = domainEvents.map((event) =>
+    eventViewModel(data, content, event),
+  )
   const portCall = selectDayPortCall(data, day)
+  const destinationGuide = selectDestinationGuide(
+    content,
+    portCall?.portLocationId,
+  )
+  const destinationLocation = data.locations.find(
+    ({ id }) => id === destinationGuide?.locationId,
+  )
   const showAllAboardInSummary =
     Boolean(portCall?.allAboardAt) && state !== 'PAST'
   const documentCount = selectDayDocuments(data, domainEvents).length
@@ -214,6 +271,26 @@ function dayViewModel(
     summaryAllAboardAt:
       showAllAboardInSummary ? portCall?.allAboardAt : undefined,
     relatedDocumentCount: documentCount,
+    destination: destinationGuide
+      ? {
+          title: destinationLocation?.name ?? day.title,
+          introduction: destinationGuide.introduction,
+          highlights: destinationGuide.highlights,
+          practicalFacts: destinationGuide.practicalFacts,
+          goodToKnow: destinationGuide.goodToKnow,
+          sources: destinationGuide.sourceReferences.map(sourceViewModel),
+          reviewedAt: destinationGuide.reviewedAt,
+          image: destinationGuide.image
+            ? {
+                src: destinationGuide.image.src,
+                alt: destinationGuide.image.alt,
+                width: destinationGuide.image.width,
+                height: destinationGuide.image.height,
+                credit: destinationGuide.image.credit,
+              }
+            : undefined,
+        }
+      : undefined,
     emptyMessage:
       events.length === 0
         ? day.kind === 'SEA_DAY'
@@ -226,10 +303,17 @@ function dayViewModel(
 export function selectTripViewModel(
   data: TripData,
   now = new Date(),
+  content: TripContentBundle = {
+    schemaVersion: 1,
+    contentVersion: 'empty',
+    tripId: data.trip.id,
+    destinationGuides: [],
+    excursionGuides: [],
+  },
 ): TripViewModel {
   const cruise = data.cruises.find(({ id }) => id === data.trip.cruiseId)
   const days = selectTripDays(data).map((day, index) =>
-    dayViewModel(data, day, index + 1, now),
+    dayViewModel(data, content, day, index + 1, now),
   )
 
   return {

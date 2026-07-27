@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { TripData } from '../../../domain/trip/tripTypes'
 import { tripFixture } from '../../../test/fixtures/tripFixture'
+import { tripContentFixture } from '../../../test/fixtures/tripContentFixture'
 import {
   TRIP_REVIEW_STATES,
   tripReviewFixtures,
@@ -9,6 +10,23 @@ import {
 import { selectTripViewModel } from './selectTripViewModel'
 
 describe('selectTripViewModel', () => {
+  it('resolves display-ready destination and excursion content separately', () => {
+    const result = selectTripViewModel(
+      tripFixture,
+      new Date('2030-05-11T12:00:00Z'),
+      tripContentFixture,
+    )
+    const portDay = result.days.find(({ id }) => id === 'day-2030-05-11')
+
+    expect(portDay?.destination?.title).toBe('Harbor Terminal')
+    expect(portDay?.events[0].experience?.summary).toContain(
+      'fictional guided walk',
+    )
+    expect(
+      result.days.find(({ id }) => id === 'day-2030-05-12')
+        ?.destination,
+    ).toBeUndefined()
+  })
   it('maps verified trip identity and cruise context', () => {
     const result = selectTripViewModel(
       tripFixture,

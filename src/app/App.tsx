@@ -10,18 +10,28 @@ import { TripScreen } from '../features/trip/TripScreen'
 import { TravelerSetupScreen } from '../features/profile/TravelerSetupScreen'
 import { WelcomeCoverScreen } from '../features/welcome/WelcomeCoverScreen'
 import type { TripRepository } from '../data/trips/TripRepository'
+import type { TripContentRepository } from '../data/content/TripContentRepository'
 import type { TripStateRepository } from '../storage/TripStateRepository'
 
 interface AppProps {
   tripRepository: TripRepository
+  tripContentRepository: TripContentRepository
   tripStateRepository: TripStateRepository
 }
 
 export function App({
   tripRepository,
+  tripContentRepository,
   tripStateRepository,
 }: AppProps) {
   const tripData = tripRepository.getActiveTrip()
+  const tripContent = tripContentRepository.getContentForTrip(
+    tripData.trip.id,
+  )
+
+  if (!tripContent) {
+    throw new Error(`Missing bundled content for trip ${tripData.trip.id}`)
+  }
 
   return (
     <BrowserRouter>
@@ -64,7 +74,12 @@ export function App({
           />
           <Route
             path="trip"
-            element={<TripScreen tripData={tripData} />}
+            element={
+              <TripScreen
+                tripData={tripData}
+                tripContent={tripContent}
+              />
+            }
           />
           {destinationDefinitions.map(
             ({ path, title, description, icon, placeholder }) => (

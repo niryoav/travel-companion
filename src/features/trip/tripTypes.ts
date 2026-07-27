@@ -5,6 +5,42 @@ import type {
   TripDayState,
 } from '../../domain/trip/selectors/classifyTripDayState'
 
+export interface TripContentSourceViewModel {
+  id: string
+  name: string
+  url?: string
+  reviewedAt: string
+}
+
+export interface TripDestinationViewModel {
+  title: string
+  introduction: string
+  highlights: string[]
+  practicalFacts: { label: string; value: string }[]
+  goodToKnow?: string[]
+  sources: TripContentSourceViewModel[]
+  reviewedAt: string
+  image?: {
+    src: string
+    alt: string
+    width: number
+    height: number
+    credit?: string
+  }
+}
+
+export interface TripExcursionContentViewModel {
+  summary: string
+  highlights?: string[]
+  lookOutFor?: string[]
+  funFacts?: string[]
+  preparation?: string[]
+  context?: string
+  seasonalNote?: string
+  sources: TripContentSourceViewModel[]
+  reviewedAt: string
+}
+
 export interface TripHeaderViewModel {
   title: string
   dateRange: string
@@ -30,7 +66,16 @@ export interface TripEventViewModel {
   endsAt?: string
   location?: string
   transport?: string
+  organizer?: string
+  bookingTypeLabel?: string
+  publicCode?: string
+  checkInTime?: string
+  checkInAt?: string
+  meetingContext?: string
+  operationalNotes?: string[]
+  experience?: TripExcursionContentViewModel
   relatedDocumentCount: number
+  destination?: TripDestinationViewModel
 }
 
 export interface TripPortViewModel {
