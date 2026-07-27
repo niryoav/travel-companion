@@ -22,6 +22,10 @@ operational view of the current travel day.
 - Intentional rendering for sparse and quiet days
 - Deterministic privacy-safe visual-review fixtures
 - Offline availability through the existing bundled trip-data architecture
+- A separate bundled editorial-content foundation for concise destination and
+  future confirmed-excursion background
+- One Reykjavík destination prototype after its source-based text and optional
+  licensed image are explicitly approved
 
 ## Deliverables
 
@@ -31,6 +35,9 @@ operational view of the current travel day.
 - Trip screen and focused presentation components
 - Explicit `/trip` route replacing only the Trip placeholder
 - Roadmap and design-language alignment
+- Destination-content contracts, validation, repository, selectors, and
+  privacy-safe fixtures
+- A collapsed destination disclosure inside expanded day details
 
 ## Acceptance Criteria
 
@@ -58,6 +65,13 @@ operational view of the current travel day.
 - [ ] No generic links are added between primary-navigation destinations.
 - [ ] Existing Home, Today, welcome, profile, navigation, and PWA behavior
       remains unchanged.
+- [ ] Editorial content remains separate from operational `TripData`.
+- [ ] Destination guides resolve by `locationId`; future excursion guides
+      resolve by `eventId`.
+- [ ] Destination enrichment remains collapsed by default and follows all
+      operational day information.
+- [ ] Guides record source provenance, verification, and review date.
+- [ ] A missing guide or image leaves no empty presentation.
 
 ## Technical Notes
 
@@ -73,6 +87,10 @@ operational view of the current travel day.
 - Preserve the canonical bundled itinerary unchanged. A future update-resolution
   layer may sit between the repository and selectors without changing Trip
   components; do not implement that layer now.
+- Keep editorial content behind a bundled `TripContentRepository`. Do not add
+  guide fields to `Location`, `TripDay`, `TripEvent`, `PortCall`, or `TripData`.
+- Bundle guide text and approved local assets with the PWA; do not fetch them at
+  runtime.
 
 ## UX Notes
 
@@ -85,6 +103,14 @@ operational view of the current travel day.
 - Keep focus styling visible and disclosure targets at least 44 CSS pixels.
 - Do not reduce existing readable typography to shorten the page.
 - Retain only actions tied to a concrete event or document.
+- Place a nested native `About [destination]` disclosure after port, event, and
+  transport content. Keep it closed by default, including on Today.
+- Limit each destination to approximately 100–160 words: a 50–80 word
+  introduction, three to five highlights, two to four practical facts, and no
+  more than three good-to-know items.
+- An optional destination image remains inside the nested disclosure, reserves
+  a 16:9 aspect ratio, uses descriptive alternative text and lazy loading, and
+  must have approved reuse rights.
 
 ## Out of Scope
 
@@ -96,6 +122,12 @@ operational view of the current travel day.
 - Speculative domain entities or unverified operational information
 - Home, Today, Documents, More, or global-navigation redesign
 - Daily Love Messages implementation
+- Research or population of every itinerary destination
+- Unconfirmed excursion background
+- Unlicensed destination images, runtime image fetching, or image generation
+- Changing prices, opening hours, closures, weather, availability, or
+  disruptions
+- Multilingual destination content
 
 ## Testing
 
@@ -113,6 +145,9 @@ operational view of the current travel day.
 - Navigation and existing feature regressions
 - Offline production build and PWA precache
 - Privacy scan for production and fixture data
+- Content validation, unknown relationships, missing guides, and source metadata
+- Destination disclosure ordering, default state, semantics, and optional-image
+  behavior
 
 ## Review Checklist
 
@@ -140,3 +175,7 @@ operational view of the current travel day.
 Daily Love Messages remains an unnumbered later personal-experience feature.
 Future storage, privacy, authoring under More, traveler-specific visibility, and
 optional photo support require product review before implementation.
+
+The destination foundation and fictional fixture are implemented before any
+real Reykjavík copy. Reykjavík text and its optional image require separate
+source and licensing approval before population.
