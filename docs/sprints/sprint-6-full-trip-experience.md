@@ -207,12 +207,11 @@ confirmation. External ticket assets remain pending and are not represented by
 placeholders. Bilingual interface and editorial content remain a later,
 separate step.
 
-The image audit used pragmatic Commons fallbacks where the approved candidate
-was misleading, weak, or low resolution: a harbour view for Holyhead, the
-actual Ringaskiddy terminal instead of Cobh, and a higher-resolution
-Southampton cruise-terminal view. Verified source metadata supersedes the
-initial suggestions, including Chensiyuan as the Húsavík photographer and
-CC BY 2.5 for the Stornoway panorama.
+Nine destination images were subsequently replaced with user-selected local
+sources for private family use. Their metadata identifies them as
+user-supplied without inventing photographer or license details. The Day 6
+Tórshavn and Day 13 Falmouth assets and metadata remain unchanged, as does the
+Southampton image because no unambiguous Day 14 replacement was supplied.
 
 Oceania confirmed that Stornoway (Hebrides), Scotland replaced the former
 Portree call on 29 August because of improvement plans in Portree. Stornoway is

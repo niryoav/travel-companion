@@ -117,22 +117,13 @@ operational content. Reserve its 16:9 space with intrinsic dimensions or CSS,
 use `loading="lazy"`, and omit the entire image treatment when no approved asset
 exists. Do not generate, download, or add an unlicensed image.
 
-All twelve production destination guides now use locally bundled 1200 × 675
-WebP images. Credits, Commons source pages, and verified Creative Commons
-licenses are retained in the editorial metadata. Three pragmatic fallbacks
-avoid misleading or weak approved candidates:
-
-- Holyhead uses Oliver Mills’s Holyhead Harbour view instead of the
-  railway-dominant station image;
-- Ringaskiddy uses Andrew Wood’s Ringaskiddy Terminal view instead of a Cobh
-  image that could imply the wrong cruise port;
-- Southampton uses Lewis Clarke’s cruise-liner-terminal view instead of the
-  lower-resolution Ocean Terminal candidate.
-
-The source audit also corrected the Húsavík credit to Chensiyuan and the
-Stornoway license to CC BY 2.5. External ticket and document assets remain
-pending. Bilingual interface and editorial content remain a later, separate
-step.
+All twelve production destination guides use locally bundled 1200 × 675 WebP
+images. Nine were selected and supplied directly by the user for private family
+use; they carry a simple user-supplied designation without invented
+photographer, license, or source metadata. The existing Tórshavn, Falmouth, and
+Southampton Commons images retain their verified source and license metadata.
+External ticket and document assets remain pending. Bilingual interface and
+editorial content remain a later, separate step.
 
 ## Privacy
 
