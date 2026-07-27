@@ -1,22 +1,38 @@
 import { Link } from 'react-router'
 
+import { DailyLoveMessage } from '../../components/DailyLoveMessage'
+import {
+  selectDailyLoveMessage,
+  type DailyLoveMessageSchedule,
+} from '../../domain/content/dailyLoveMessage'
+import { selectCurrentLocalDate } from '../../domain/trip/selectors/selectCurrentLocalDate'
 import { formatDateRange } from '../../domain/trip/tripTime'
 import type { TripData } from '../../domain/trip/tripTypes'
 import { daysUntilDeparture, formatDaysToGo } from './countdown'
 
 interface WelcomeCoverScreenProps {
+  loveMessageSchedule: DailyLoveMessageSchedule
+  now: Date
   tripData: TripData
 }
 
 export function WelcomeCoverScreen({
+  loveMessageSchedule,
+  now,
   tripData,
 }: WelcomeCoverScreenProps) {
   const cruise = tripData.cruises.find(
     ({ id }) => id === tripData.trip.cruiseId,
   )
+  const localDate = selectCurrentLocalDate(tripData, now)
+  const loveMessage =
+    localDate < tripData.trip.startDate
+      ? selectDailyLoveMessage(loveMessageSchedule, localDate)
+      : null
   const countdown = formatDaysToGo(
     daysUntilDeparture(
       new Date(`${tripData.trip.startDate}T00:00:00`),
+      now,
     ),
   )
 
@@ -42,6 +58,9 @@ export function WelcomeCoverScreen({
           )}
         </p>
         <p className="welcome-countdown">{countdown}</p>
+        {loveMessage ? (
+          <DailyLoveMessage message={loveMessage} variant="welcome" />
+        ) : null}
         <Link className="welcome-enter" to="/home">
           Enter trip
         </Link>

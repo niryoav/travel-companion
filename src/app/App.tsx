@@ -45,11 +45,23 @@ export function App({
         <Routes>
           <Route
             path="/"
-            element={<WelcomeCoverScreen tripData={tripData} />}
+            element={
+              <WelcomeCoverScreen
+                loveMessageSchedule={loveMessageSchedule}
+                now={now}
+                tripData={tripData}
+              />
+            }
           />
           <Route
             path="/welcome"
-            element={<WelcomeCoverScreen tripData={tripData} />}
+            element={
+              <WelcomeCoverScreen
+                loveMessageSchedule={loveMessageSchedule}
+                now={now}
+                tripData={tripData}
+              />
+            }
           />
           <Route
             path="/profile-setup"

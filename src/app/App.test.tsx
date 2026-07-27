@@ -3,11 +3,11 @@ import { beforeEach, describe, expect, it } from 'vitest'
 
 import { BundledTripRepository } from '../data/trips/BundledTripRepository'
 import { BundledTripContentRepository } from '../data/content/BundledTripContentRepository'
+import type { DailyLoveMessageSchedule } from '../domain/content/dailyLoveMessage'
 import type { TravelerId } from '../domain/trip/tripTypes'
 import type { TripStateRepository } from '../storage/TripStateRepository'
 import { tripFixture } from '../test/fixtures/tripFixture'
 import { tripContentFixture } from '../test/fixtures/tripContentFixture'
-import { oceaniaMarina2026DailyLoveMessages } from '../content/oceania-marina-2026/dailyLoveMessages'
 import { App } from './App'
 
 class MemoryTripStateRepository implements TripStateRepository {
@@ -27,6 +27,26 @@ const tripContentRepository = new BundledTripContentRepository(
   tripContentFixture,
   tripFixture,
 )
+const dailyLoveMessageFixture: DailyLoveMessageSchedule = {
+  startsOn: '2030-05-01',
+  endsOn: '2030-05-14',
+  messages: [
+    {
+      localDate: '2030-05-01',
+      body: 'A calm fictional message for the Welcome review fixture.',
+    },
+    {
+      localDate: '2030-05-09',
+      body: 'The fictional journey begins tomorrow.',
+    },
+    {
+      localDate: '2030-05-11',
+      body: 'A fictional active-trip message for the Home review fixture.',
+    },
+  ],
+  postTripBody:
+    'The journey may be behind us, but the memories we created together will stay with me. Thank you for sharing every beautiful moment with me.',
+}
 
 function renderApp(
   tripStateRepository = new MemoryTripStateRepository(),
@@ -34,7 +54,7 @@ function renderApp(
 ) {
   render(
     <App
-      loveMessageSchedule={oceaniaMarina2026DailyLoveMessages}
+      loveMessageSchedule={dailyLoveMessageFixture}
       now={now}
       tripRepository={tripRepository}
       tripContentRepository={tripContentRepository}
@@ -66,6 +86,12 @@ describe('App', () => {
       screen.getByText('10 May – 14 May 2030'),
     ).toBeInTheDocument()
     expect(screen.getByText(/\d+ days? to go/)).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'A calm fictional message for the Welcome review fixture.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Mon amour pour toujours,')).toBeInTheDocument()
     expect(
       screen.queryByRole('navigation', { name: 'Primary navigation' }),
     ).not.toBeInTheDocument()
@@ -251,6 +277,10 @@ describe('App', () => {
       }),
     ).toBeInTheDocument()
     expect(screen.getByText(/\d+ days? to go/)).toBeInTheDocument()
+    expect(
+      screen.getByText('The fictional journey begins tomorrow.'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Mon amour pour toujours,')).toBeInTheDocument()
     expect(
       screen.queryByRole('navigation', { name: 'Primary navigation' }),
     ).not.toBeInTheDocument()

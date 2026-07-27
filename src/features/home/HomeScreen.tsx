@@ -8,6 +8,7 @@ import { demoHomeStateFromSearch } from './demoPhase'
 import { homeReviewFixtures } from './fixtures/homeReviewFixtures'
 import { greetingFor } from './greeting'
 import { HomePhaseView } from './HomePhaseView'
+import { HOME_PHASES } from './homeTypes'
 import { selectHomeViewModel } from './selectors/selectHomeViewModel'
 
 interface HomeScreenProps {
@@ -32,12 +33,14 @@ export function HomeScreen({
     loveMessageSchedule,
     selectCurrentLocalDate(tripData, now),
   )
+  const visibleLoveMessage =
+    viewModel.phase === HOME_PHASES.PRE_TRIP ? null : loveMessage
 
   return (
     <main className="home-screen" id="main-content">
       <HomePhaseView
         greeting={greetingFor(travelerName, now)}
-        loveMessage={loveMessage}
+        loveMessage={visibleLoveMessage}
         viewModel={viewModel}
       />
     </main>

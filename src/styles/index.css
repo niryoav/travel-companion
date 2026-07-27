@@ -1159,7 +1159,8 @@ a:focus-visible {
 }
 
 .home-eyebrow,
-.home-card-label {
+.home-card-label,
+.daily-love-message-label {
   margin: 0;
   color: var(--champagne);
   font-size: 0.78rem;
@@ -1237,7 +1238,7 @@ a:focus-visible {
   gap: 1rem;
 }
 
-.home-love-message {
+.daily-love-message-home {
   padding: 1rem 1.15rem;
   border: 1px solid
     color-mix(in srgb, var(--champagne) 28%, var(--border));
@@ -1251,29 +1252,51 @@ a:focus-visible {
   box-shadow: inset 0 1px rgb(255 255 255 / 5%);
 }
 
-.home-love-message h2 {
+.daily-love-message h2 {
   margin: 0.4rem 0 0;
   color: var(--text);
   font-size: clamp(1.15rem, 4.5vw, 1.4rem);
   line-height: 1.3;
 }
 
-.home-love-message-body {
+.daily-love-message-body {
   margin: 0.65rem 0 0;
   color: var(--text);
   font-size: 1rem;
   line-height: 1.55;
 }
 
-.home-love-message-signature {
+.daily-love-message-signature {
   margin-top: 0.75rem;
   color: var(--champagne);
   font-size: 0.9rem;
   line-height: 1.45;
 }
 
-.home-love-message-signature p {
+.daily-love-message-signature p {
   margin: 0;
+}
+
+.daily-love-message-welcome {
+  margin-top: 0.9rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgb(255 255 255 / 20%);
+}
+
+.daily-love-message-welcome h2 {
+  font-size: 1.05rem;
+}
+
+.daily-love-message-welcome .daily-love-message-body {
+  margin-top: 0.45rem;
+  color: rgb(255 255 255 / 90%);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.daily-love-message-welcome .daily-love-message-signature {
+  margin-top: 0.55rem;
+  font-size: 0.82rem;
 }
 
 .home-card {

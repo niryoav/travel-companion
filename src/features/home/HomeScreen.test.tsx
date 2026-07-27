@@ -25,7 +25,7 @@ function renderHome(route: string) {
 
 describe('HomeScreen', () => {
   it('shows the dated love message in the fixed readable format', () => {
-    renderHome('/home')
+    renderHome('/home?phase=departure-day')
 
     expect(screen.getByText('Mon amour pour toujours,')).toBeInTheDocument()
     expect(
@@ -49,6 +49,9 @@ describe('HomeScreen', () => {
         'Two weeks to explore, enjoy, and create beautiful memories together.',
       ),
     ).toBeInTheDocument()
+    expect(
+      screen.queryByText('Mon amour pour toujours,'),
+    ).not.toBeInTheDocument()
   })
 
   it('shows the departure-day heading and next departure milestone', () => {

@@ -1,6 +1,6 @@
 import type { DailyLoveMessageViewModel } from '../../domain/content/dailyLoveMessage'
+import { DailyLoveMessage } from '../../components/DailyLoveMessage'
 import type { HomeViewModel } from './homeTypes'
-import { DailyLoveMessage } from './components/DailyLoveMessage'
 import { HomeAlert } from './components/HomeAlert'
 import { HomeHero } from './components/HomeHero'
 import { NextMilestoneCard } from './components/NextMilestoneCard'
@@ -26,7 +26,9 @@ export function HomePhaseView({
         greeting={greeting}
       />
 
-      {loveMessage ? <DailyLoveMessage message={loveMessage} /> : null}
+      {loveMessage ? (
+        <DailyLoveMessage message={loveMessage} variant="home" />
+      ) : null}
 
       <div className="home-briefing-grid">
         {viewModel.milestone ? (
