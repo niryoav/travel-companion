@@ -38,8 +38,14 @@
   information from bundled trip data.
 - Keep the experience read-only, mobile-first, offline-first, and deterministic.
 
-## Sprint 6: Notifications and offline status
-- Introduce actionable notifications and explicit offline/freshness status.
+## Sprint 6: Full Trip experience
+- Replace the Trip placeholder with the complete chronological journey.
+- Show every configured travel day with explicit past, today, and upcoming
+  status.
+- Add accessible day details for verified events, transport, port context, and
+  document references.
+- Keep the experience read-only, repository-backed, mobile-first, and fully
+  available offline.
 
 ## Sprint 7: Shared and personal profiles/data
 - Separate shared trip context from traveler-owned preferences and actions.
@@ -48,5 +54,13 @@
 ## Later
 - Add carefully scoped live weather, provider status, and travel-timing
   integrations with visible freshness and useful cached states.
+- Introduce actionable notifications and explicit offline/freshness status only
+  after their product workflows and data sources are defined.
 - Introduce AI only where it improves an already useful core experience.
 - Add expenses and memories incrementally after the travel foundation is stable.
+- Add **Daily Love Messages** as a private personal-experience feature after
+  Home, Today, Trip, Documents, and More are stable. It may show Isabel one
+  different offline-first message per honeymoon day on Home, written in advance
+  by Yoav, with a subtle love symbol. Future storage, privacy, traveler-specific
+  visibility, authoring under More, and optional photo support require product
+  review before implementation.

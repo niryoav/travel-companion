@@ -187,3 +187,32 @@ Missing information produces calm omission or an intentional empty state.
 Never manufacture weather, delays, provider status, alerts, all-aboard values,
 or free-time blocks. Production and privacy-safe visual-review data remain
 strictly separated.
+
+## Trip
+
+Trip is the complete chronological overview of the journey. It uses the shared
+Ocean Day background and readable card hierarchy while remaining distinct from
+Home's briefing and Today's operational timeline.
+
+Present the verified trip title, date range, ship context, and day-count
+progress before a single vertical list of travel days. Each day summary shows
+its local date, day type, title, explicit Completed, Today, or Upcoming status,
+and no more than one lead event plus an additional-event count. Use visible
+words and structure as well as color to communicate status.
+
+Day cards use native `details` and `summary` disclosure. During an active trip,
+Today is visually distinct and open by default, but the page does not
+automatically scroll. Expanded content may show configured events, local times,
+locations, transport, port context, verified all-aboard, and concrete
+event-related document actions. Touch targets and focus indicators remain
+clearly visible.
+
+Verified all-aboard may appear in the collapsed summary for Today or a relevant
+upcoming port day. Historical values belong in expanded detail. Do not repeat
+the same all-aboard value in both parts of an open card, and never infer a
+missing value.
+
+Quiet and incomplete days use calm intentional messaging rather than invented
+activities or operational facts. A dense calendar grid, generic
+cross-navigation actions, filters, editing, and update controls do not belong
+in the Sprint 6 Trip experience.
