@@ -248,6 +248,8 @@ describe('App', () => {
         name: 'Our journey begins soon',
       }),
     ).toBeInTheDocument()
+    expect(screen.getByText(/\d+ days? to departure/)).toBeInTheDocument()
+    expect(screen.getByText('Mon amour pour toujours,')).toBeInTheDocument()
     expect(window.location.pathname).toBe('/home')
   })
 
@@ -273,7 +275,14 @@ describe('App', () => {
         name: /Good (morning|afternoon|evening), Alex/,
       }),
     ).toBeInTheDocument()
+    expect(screen.getByText('Mon amour pour toujours,')).toBeInTheDocument()
     expect(window.location.pathname).toBe('/home')
+
+    fireEvent.click(screen.getByRole('link', { name: 'Trip' }))
+    expect(
+      await screen.findByText('Aboard MV Example'),
+    ).toBeInTheDocument()
+    expect(window.location.pathname).toBe('/trip')
   })
 
   it('opens Home on a fresh launch after the trip', async () => {
@@ -288,6 +297,11 @@ describe('App', () => {
         level: 2,
         name: 'Northern Coast Journey',
       }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /The journey may be behind us, but the memories we created together/,
+      ),
     ).toBeInTheDocument()
     expect(window.location.pathname).toBe('/home')
   })
