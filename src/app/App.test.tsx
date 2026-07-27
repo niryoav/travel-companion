@@ -234,4 +234,99 @@ describe('App', () => {
       screen.queryByRole('button', { name: /Day Ocean|Night Ocean|Follow system/ }),
     ).not.toBeInTheDocument()
   })
+
+  it('opens Home on a fresh launch before the trip', async () => {
+    const repository = new MemoryTripStateRepository()
+    repository.travelerId = 'traveler-alex'
+    window.history.replaceState({}, '', '/trip')
+
+    renderApp(repository, new Date('2030-05-09T21:59:59Z'))
+
+    expect(
+      await screen.findByRole('heading', {
+        level: 2,
+        name: 'Our journey begins soon',
+      }),
+    ).toBeInTheDocument()
+    expect(window.location.pathname).toBe('/home')
+  })
+
+  it('opens Today during the trip and does not redirect later navigation', async () => {
+    const repository = new MemoryTripStateRepository()
+    repository.travelerId = 'traveler-alex'
+    window.history.replaceState({}, '', '/more')
+
+    renderApp(repository, new Date('2030-05-11T10:00:00Z'))
+
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'Harbor City',
+      }),
+    ).toBeInTheDocument()
+    expect(window.location.pathname).toBe('/today')
+
+    fireEvent.click(screen.getByRole('link', { name: 'Home' }))
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: /Good (morning|afternoon|evening), Alex/,
+      }),
+    ).toBeInTheDocument()
+    expect(window.location.pathname).toBe('/home')
+  })
+
+  it('opens Home on a fresh launch after the trip', async () => {
+    const repository = new MemoryTripStateRepository()
+    repository.travelerId = 'traveler-alex'
+    window.history.replaceState({}, '', '/today')
+
+    renderApp(repository, new Date('2030-05-14T22:00:00Z'))
+
+    expect(
+      await screen.findByRole('heading', {
+        level: 2,
+        name: 'Northern Coast Journey',
+      }),
+    ).toBeInTheDocument()
+    expect(window.location.pathname).toBe('/home')
+  })
+
+  it('preserves an explicit Today review-state route at startup', async () => {
+    const repository = new MemoryTripStateRepository()
+    repository.travelerId = 'traveler-alex'
+    window.history.replaceState(
+      {},
+      '',
+      '/today?state=port-day-late',
+    )
+
+    renderApp(repository, new Date('2030-05-01T12:00:00Z'))
+
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'Harbor City',
+      }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('All aboard')).toBeInTheDocument()
+    expect(window.location.pathname).toBe('/today')
+    expect(window.location.search).toBe('?state=port-day-late')
+  })
+
+  it('preserves an explicit Home phase route at startup', async () => {
+    const repository = new MemoryTripStateRepository()
+    repository.travelerId = 'traveler-alex'
+    window.history.replaceState({}, '', '/home?phase=sea-day')
+
+    renderApp(repository, new Date('2030-05-01T12:00:00Z'))
+
+    expect(
+      await screen.findByRole('heading', {
+        level: 2,
+        name: 'At sea',
+      }),
+    ).toBeInTheDocument()
+    expect(window.location.search).toBe('?phase=sea-day')
+  })
 })
