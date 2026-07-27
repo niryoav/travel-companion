@@ -26,7 +26,7 @@ describe('Oceania Marina bundled editorial content', () => {
     ).toEqual([])
   })
 
-  it('contains editorial enrichment for all ten confirmed excursions', () => {
+  it('contains editorial enrichment for all eleven confirmed excursions', () => {
     expect(
       oceaniaMarina2026TripContent.excursionGuides.map(
         ({ eventId }) => eventId,
@@ -35,12 +35,16 @@ describe('Oceania Marina bundled editorial content', () => {
       ...oceaniaGuides.map(([, eventId]) => eventId),
       'event-husavik-big-whale-safari',
       'event-djupivogur-glacier-lagoon',
+      'event-stornoway-isle-of-lewis',
     ])
     expect(
-      oceaniaMarina2026TripContent.excursionGuides.every(
+      oceaniaMarina2026TripContent.excursionGuides.slice(0, 10).every(
         ({ verification }) => verification === 'PRIMARY_SOURCE_REVIEWED',
       ),
     ).toBe(true)
+    expect(
+      oceaniaMarina2026TripContent.excursionGuides.at(-1)?.verification,
+    ).toBe('USER_DOCUMENT_CONFIRMED')
   })
 
   it('records both official Gentle Giants source pages', () => {
@@ -49,6 +53,31 @@ describe('Oceania Marina bundled editorial content', () => {
         ({ eventId }) => eventId === 'event-husavik-big-whale-safari',
       )?.sourceReferences,
     ).toHaveLength(2)
+  })
+
+  it('keeps the Isle of Lewis guide modest while its schedule is pending', () => {
+    const guide = oceaniaMarina2026TripContent.excursionGuides.find(
+      ({ eventId }) => eventId === 'event-stornoway-isle-of-lewis',
+    )
+
+    expect(guide).toMatchObject({
+      verification: 'USER_DOCUMENT_CONFIRMED',
+      highlights: expect.arrayContaining([
+        'Local orientation across the Isle of Lewis',
+      ]),
+      context:
+        'The excursion is confirmed, but the revised departure and return times are still awaiting written confirmation from the operator.',
+      sourceReferences: [
+        expect.objectContaining({
+          name: 'Hebridean Isle Tours booking confirmation',
+          type: 'USER_DOCUMENT',
+          reviewedAt: '2026-07-27',
+        }),
+      ],
+    })
+    expect(JSON.stringify(guide)).not.toMatch(
+      /Calanais|Gearrannan|Carloway|Butt of Lewis|10:00|16:00/,
+    )
   })
 
   it('attaches each Oceania guide to the correct excursion and date', () => {

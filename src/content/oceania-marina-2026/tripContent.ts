@@ -2,7 +2,7 @@ import type { TripContentBundle } from '../../domain/content/contentTypes'
 
 export const oceaniaMarina2026TripContent: TripContentBundle = {
   schemaVersion: 1,
-  contentVersion: '2026-07-27.2',
+  contentVersion: '2026-07-27.3',
   tripId: 'trip-oceania-marina-2026',
   destinationGuides: [],
   excursionGuides: [
@@ -381,6 +381,34 @@ export const oceaniaMarina2026TripContent: TripContentBundle = {
       ],
       reviewedAt: '2026-07-27',
       verification: 'PRIMARY_SOURCE_REVIEWED',
+    },
+    {
+      id: 'excursion-guide-stornoway-isle-of-lewis',
+      eventId: 'event-stornoway-isle-of-lewis',
+      summary:
+        'Explore the Isle of Lewis with a local operator, using Stornoway as the starting point for a broad introduction to the island’s Hebridean landscapes and cultural character. The exact route will be confirmed by the operator, so this guide remains intentionally modest while still preparing travelers for a day shaped by coastal scenery, local history and changing weather.',
+      highlights: [
+        'Local orientation across the Isle of Lewis',
+        'Hebridean landscapes and coastal character',
+        'Context from a local island operator',
+      ],
+      preparation: [
+        'Dress in warm, adaptable layers',
+        'Bring a waterproof outer layer',
+        'Wear comfortable walking shoes',
+      ],
+      context:
+        'The excursion is confirmed, but the revised departure and return times are still awaiting written confirmation from the operator.',
+      sourceReferences: [
+        {
+          id: 'source-hebridean-isle-tours-confirmation',
+          name: 'Hebridean Isle Tours booking confirmation',
+          type: 'USER_DOCUMENT',
+          reviewedAt: '2026-07-27',
+        },
+      ],
+      reviewedAt: '2026-07-27',
+      verification: 'USER_DOCUMENT_CONFIRMED',
     },
   ],
 }

@@ -5,6 +5,8 @@ import { describe, expect, it } from 'vitest'
 import { tripFixture } from '../../test/fixtures/tripFixture'
 import { tripContentFixture } from '../../test/fixtures/tripContentFixture'
 import type { TripContentBundle } from '../../domain/content/contentTypes'
+import { oceaniaMarina2026TripContent } from '../../content/oceania-marina-2026/tripContent'
+import { oceaniaMarina2026TripData } from '../../trips/oceania-marina-2026/tripData'
 import { reviewStateFromSearch } from './fixtures/reviewStateFromSearch'
 import { TripScreen } from './TripScreen'
 
@@ -197,6 +199,33 @@ describe('TripScreen', () => {
     expect(
       screen.queryByRole('link', { name: /view trip|view more/i }),
     ).not.toBeInTheDocument()
+  })
+
+  it('shows the confirmed Stornoway excursion without inventing its schedule', () => {
+    const { container } = render(
+      <MemoryRouter initialEntries={['/trip']}>
+        <TripScreen
+          tripData={oceaniaMarina2026TripData}
+          tripContent={oceaniaMarina2026TripContent}
+          now={new Date('2026-08-29T12:00:00Z')}
+        />
+      </MemoryRouter>,
+    )
+    const eventTitle = screen.getAllByText('Isle of Lewis Tour').at(-1)
+    const event = eventTitle?.closest('.trip-event') as HTMLElement
+    const experience = within(event).getByText('About this experience')
+
+    expect(within(event).getByText('Hebridean Isle Tours')).toBeInTheDocument()
+    expect(
+      within(event).getByText('Independent excursion · Confirmed'),
+    ).toBeInTheDocument()
+    expect(
+      within(event).getByText('Departure and return time to be confirmed.'),
+    ).toBeInTheDocument()
+    expect(within(event).getByText('Time to be confirmed')).toBeInTheDocument()
+    expect(event.querySelector('time')).toBeNull()
+    expect(experience.closest('details')).not.toHaveAttribute('open')
+    expect(container).not.toHaveTextContent('Portree')
   })
 
   it('uses semantic progress, lists, times, and native disclosure', () => {
