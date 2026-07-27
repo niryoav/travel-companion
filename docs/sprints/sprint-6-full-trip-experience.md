@@ -25,7 +25,7 @@ operational view of the current travel day.
 - A separate bundled editorial-content foundation for concise destination and
   future confirmed-excursion background
 - Source-reviewed editorial guides for all twelve canonical destinations
-- Destination images reserved for a separate licensing and integration step
+- One licensed, locally bundled image for each canonical destination
 - Eleven confirmed excursion events represented operationally, with editorial
   enrichment limited to source-reviewed guides
 
@@ -40,6 +40,8 @@ operational view of the current travel day.
 - Destination-content contracts, validation, repository, selectors, and
   privacy-safe fixtures
 - Twelve collapsed destination disclosures inside their expanded day details
+- Twelve optimized 1200 × 675 WebP destination images with source, credit, and
+  license metadata
 
 ## Acceptance Criteria
 
@@ -74,6 +76,8 @@ operational view of the current travel day.
       operational day information.
 - [ ] Guides record source provenance, verification, and review date.
 - [ ] A missing guide or image leaves no empty presentation.
+- [ ] Every production destination guide has one local, offline-capable WebP
+      image with descriptive alt text and verified attribution metadata.
 - [ ] Confirmed excursion events show organizer, booking type, public code,
       check-in, meeting context, and warnings only when configured.
 - [ ] Excursion enrichment is attached by `eventId`, remains collapsed by
@@ -155,6 +159,8 @@ operational view of the current travel day.
 - Content validation, unknown relationships, missing guides, and source metadata
 - Destination disclosure ordering, default state, semantics, and optional-image
   behavior
+- Production image dimensions, local paths, attribution metadata, lazy loading,
+  and PWA precache coverage
 - Multi-excursion days, summary-only guides, missing enrichment, operational
   warnings, source links, and seasonal notes
 
@@ -188,16 +194,25 @@ optional photo support require product review before implementation.
 All twelve production destinations now have concise editorial guides reviewed
 against official tourism, local-government, or other public primary sources.
 They contain stable orientation only; no live or rapidly changing destination
-data is included. Destination images and external ticket assets remain pending,
-and image selection and integration will be handled as a separate step.
+data is included. Each guide now has one licensed local 1200 × 675 WebP image
+for offline use. Source, credit, and license metadata are retained in the
+editorial bundle.
 
 The canonical itinerary includes eleven confirmed excursion events with concise
 editorial enrichment. Eight guides were reviewed against official Oceania shore
 excursion material; three are independent bookings. The Gentle Giants and
 Arctic Shorex guides were reviewed against official operator sources, while the
 Hebridean Isle Tours guide was confirmed from the user-supplied booking
-confirmation. Destination images and external ticket assets remain pending and
-are not represented by placeholders.
+confirmation. External ticket assets remain pending and are not represented by
+placeholders. Bilingual interface and editorial content remain a later,
+separate step.
+
+The image audit used pragmatic Commons fallbacks where the approved candidate
+was misleading, weak, or low resolution: a harbour view for Holyhead, the
+actual Ringaskiddy terminal instead of Cobh, and a higher-resolution
+Southampton cruise-terminal view. Verified source metadata supersedes the
+initial suggestions, including Chensiyuan as the Húsavík photographer and
+CC BY 2.5 for the Stornoway panorama.
 
 Oceania confirmed that Stornoway (Hebrides), Scotland replaced the former
 Portree call on 29 August because of improvement plans in Portree. Stornoway is

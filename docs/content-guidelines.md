@@ -101,8 +101,8 @@ rapidly changing destination data.
 
 ## Images
 
-A destination guide may contain one optional local image. For the initial
-image-integration step:
+A destination guide may contain one optional local image. For production
+images:
 
 - use WebP;
 - target 1200 × 675 pixels;
@@ -117,9 +117,22 @@ operational content. Reserve its 16:9 space with intrinsic dimensions or CSS,
 use `loading="lazy"`, and omit the entire image treatment when no approved asset
 exists. Do not generate, download, or add an unlicensed image.
 
-No production destination image is currently bundled. Image selection,
-licensing, optimization, and integration remain a separate review step, as do
-any external ticket or document assets.
+All twelve production destination guides now use locally bundled 1200 × 675
+WebP images. Credits, Commons source pages, and verified Creative Commons
+licenses are retained in the editorial metadata. Three pragmatic fallbacks
+avoid misleading or weak approved candidates:
+
+- Holyhead uses Oliver Mills’s Holyhead Harbour view instead of the
+  railway-dominant station image;
+- Ringaskiddy uses Andrew Wood’s Ringaskiddy Terminal view instead of a Cobh
+  image that could imply the wrong cruise port;
+- Southampton uses Lewis Clarke’s cruise-liner-terminal view instead of the
+  lower-resolution Ocean Terminal candidate.
+
+The source audit also corrected the Húsavík credit to Chensiyuan and the
+Stornoway license to CC BY 2.5. External ticket and document assets remain
+pending. Bilingual interface and editorial content remain a later, separate
+step.
 
 ## Privacy
 
