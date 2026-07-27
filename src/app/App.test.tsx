@@ -92,6 +92,8 @@ describe('App', () => {
       ),
     ).toBeInTheDocument()
     expect(screen.getByText('Mon amour pour toujours,')).toBeInTheDocument()
+    expect(screen.getByText('With all my love,')).toBeInTheDocument()
+    expect(screen.getByText('Yoav ❤️')).toBeInTheDocument()
     expect(
       screen.queryByRole('navigation', { name: 'Primary navigation' }),
     ).not.toBeInTheDocument()
@@ -284,6 +286,12 @@ describe('App', () => {
     expect(
       screen.queryByRole('navigation', { name: 'Primary navigation' }),
     ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', {
+        level: 2,
+        name: 'Our journey begins soon',
+      }),
+    ).not.toBeInTheDocument()
     expect(window.location.pathname).toBe('/welcome')
 
     fireEvent.click(screen.getByRole('link', { name: 'Enter trip' }))
@@ -294,6 +302,25 @@ describe('App', () => {
       }),
     ).toBeInTheDocument()
     expect(window.location.pathname).toBe('/home')
+  })
+
+  it('keeps Welcome manually reachable during the active trip', () => {
+    const repository = new MemoryTripStateRepository()
+    repository.travelerId = 'traveler-alex'
+    window.history.replaceState({}, '', '/welcome')
+
+    renderApp(repository, new Date('2030-05-11T10:00:00Z'))
+
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'Northern Coast Journey',
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText('Mon amour pour toujours,'),
+    ).not.toBeInTheDocument()
+    expect(window.location.pathname).toBe('/welcome')
   })
 
   it('opens Today during the trip and does not redirect later navigation', async () => {
