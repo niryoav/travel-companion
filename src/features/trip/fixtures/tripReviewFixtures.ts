@@ -94,6 +94,8 @@ const baseDays: TripDayViewModel[] = [
           'A concise fictional experience summary used to review offline enrichment.',
         highlights: ['Coastal views', 'Local history', 'A gentle walking route'],
         preparation: ['Wear comfortable shoes'],
+        seasonalNote:
+          'Wildlife remains unpredictable and sightings are never guaranteed.',
         sources: [
           {
             id: 'review-source-experience',
@@ -104,6 +106,7 @@ const baseDays: TripDayViewModel[] = [
         ],
         reviewedAt: '2029-01-02',
       },
+      operationalNotes: ['Early launch coordination required'],
       relatedDocumentCount: 0,
     },
     additionalEventCount: 1,
@@ -124,6 +127,8 @@ const baseDays: TripDayViewModel[] = [
             'A concise fictional experience summary used to review offline enrichment.',
           highlights: ['Coastal views', 'Local history', 'A gentle walking route'],
           preparation: ['Wear comfortable shoes'],
+          seasonalNote:
+            'Wildlife remains unpredictable and sightings are never guaranteed.',
           sources: [
             {
               id: 'review-source-experience',
@@ -134,6 +139,7 @@ const baseDays: TripDayViewModel[] = [
           ],
           reviewedAt: '2029-01-02',
         },
+        operationalNotes: ['Early launch coordination required'],
         relatedDocumentCount: 0,
       },
       {
@@ -142,6 +148,22 @@ const baseDays: TripDayViewModel[] = [
         title: 'Harbor viewpoints',
         time: '12:30',
         startsAt: '2030-05-11T12:30:00+02:00',
+        organizer: 'Example Voyages',
+        bookingTypeLabel: 'Oceania excursion',
+        publicCode: 'EXP-101',
+        experience: {
+          summary:
+            'A summary-only fictional experience used to verify optional sections.',
+          sources: [
+            {
+              id: 'review-source-summary-only',
+              name: 'Example Voyages',
+              url: 'https://example.com/review-summary',
+              reviewedAt: '2029-01-02',
+            },
+          ],
+          reviewedAt: '2029-01-02',
+        },
         relatedDocumentCount: 0,
       },
     ],

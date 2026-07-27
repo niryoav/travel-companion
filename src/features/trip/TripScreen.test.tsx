@@ -26,12 +26,12 @@ function renderTrip(
 
 describe('TripScreen', () => {
   it('keeps operational details before collapsed editorial disclosures', () => {
-    const { container } = renderTrip('/trip')
+    const { container } = renderTrip('/trip?state=content')
     const portDay = container.querySelector(
       '.trip-day-card-today',
     ) as HTMLElement
-    const destination = within(portDay).getByText('About Harbor Terminal')
-    const experience = within(portDay).getByText('About this experience')
+    const destination = within(portDay).getByText('About Harbor City')
+    const experience = within(portDay).getAllByText('About this experience')[0]
     const eventTitle = within(portDay).getAllByText('Coastal walk').at(-1)
 
     expect(eventTitle).toBeDefined()
@@ -46,6 +46,22 @@ describe('TripScreen', () => {
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy()
     expect(portDay).toHaveAttribute('open')
+    expect(
+      within(portDay).getAllByText('Example Excursion Company').length,
+    ).toBeGreaterThan(0)
+    expect(within(portDay).getByText('Independent excursion')).toBeInTheDocument()
+    expect(within(portDay).getAllByText('Example Voyages').length).toBeGreaterThan(0)
+    expect(
+      within(portDay).getByText('Oceania excursion · EXP-101'),
+    ).toBeInTheDocument()
+    expect(
+      within(portDay).getByText('Early launch coordination required'),
+    ).toBeInTheDocument()
+    expect(
+      within(portDay).getByText(/sightings are never guaranteed/i),
+    ).toBeInTheDocument()
+    expect(within(portDay).getAllByText('About Harbor City')).toHaveLength(1)
+    expect(within(portDay).getAllByText('About this experience')).toHaveLength(2)
   })
 
   it('omits absent guides and reserves lazy destination image space', () => {
