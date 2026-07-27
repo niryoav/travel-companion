@@ -255,7 +255,12 @@ describe('TripScreen', () => {
     expect(
       within(destination).getByText('Sources · reviewed 2026-07-27'),
     ).toBeInTheDocument()
-    expect(within(destination).queryByRole('img')).not.toBeInTheDocument()
+    const image = within(destination).getByRole('img')
+    expect(image).toHaveAttribute('src', '/images/destinations/greenock.webp')
+    expect(image).toHaveAttribute('loading', 'lazy')
+    expect(image).toHaveAttribute('width', '1200')
+    expect(image).toHaveAttribute('height', '675')
+    expect(image.closest('figure')).toHaveStyle('aspect-ratio: 1200 / 675')
     expect(
       eventTitle.compareDocumentPosition(destinationSummary) &
         Node.DOCUMENT_POSITION_FOLLOWING,

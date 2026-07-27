@@ -1,3 +1,6 @@
+import { existsSync } from 'node:fs'
+import { resolve } from 'node:path'
+
 import { describe, expect, it } from 'vitest'
 
 import { selectDestinationGuide } from '../../domain/content/contentSelectors'
@@ -66,7 +69,24 @@ describe('Oceania Marina bundled editorial content', () => {
           ({ reviewedAt }) => reviewedAt === '2026-07-27',
         ),
       ).toBe(true)
-      expect(guide?.image).toBeUndefined()
+      expect(guide?.image).toMatchObject({
+        src: expect.stringMatching(/^\/images\/destinations\/.+[.]webp$/),
+        alt: expect.any(String),
+        width: 1200,
+        height: 675,
+        credit: expect.any(String),
+        sourceUrl: expect.stringMatching(
+          /^https:\/\/commons[.]wikimedia[.]org\/wiki\/File:/,
+        ),
+      })
+      expect(guide?.image?.alt.trim()).not.toBe('')
+      expect(guide?.image?.credit?.trim()).not.toBe('')
+      expect(guide?.image?.src).not.toMatch(/^https?:/)
+      expect(
+        existsSync(
+          resolve(process.cwd(), 'public', guide?.image?.src.slice(1) ?? ''),
+        ),
+      ).toBe(true)
     }
   })
 
@@ -93,6 +113,32 @@ describe('Oceania Marina bundled editorial content', () => {
         .filter(({ kind }) => kind === 'SEA_DAY')
         .every(({ destination }) => destination === undefined),
     ).toBe(true)
+  })
+
+  it('uses port-specific imagery without making misleading ship or port claims', () => {
+    const imageFor = (locationId: string) =>
+      selectDestinationGuide(
+        oceaniaMarina2026TripContent,
+        locationId,
+      )?.image
+
+    expect(imageFor('location-greenock')?.src).toContain('/greenock.webp')
+    expect(imageFor('location-dun-laoghaire')?.src).toContain(
+      '/dun-laoghaire.webp',
+    )
+    expect(imageFor('location-ringaskiddy')).toMatchObject({
+      src: '/images/destinations/ringaskiddy-cork.webp',
+      sourceUrl: expect.stringContaining('Ringaskiddy_Terminal'),
+    })
+    expect(imageFor('location-southampton')?.alt).not.toMatch(
+      /Oceania|Marina/i,
+    )
+    expect(
+      selectDestinationGuide(
+        oceaniaMarina2026TripContent,
+        'location-portree',
+      ),
+    ).toBeNull()
   })
 
   it('keeps port and regional-city identities distinct', () => {
