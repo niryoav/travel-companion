@@ -18,8 +18,9 @@ export const homeReviewFixtures: Record<ReviewHomeState, HomeViewModel> = {
     phase: HOME_PHASES.PRE_TRIP,
     context: {
       eyebrow: 'Before your trip',
-      title: 'Northern Coast Journey',
-      summary: 'MV Example',
+      title: 'Our journey begins soon',
+      summary:
+        'Two weeks to explore, enjoy, and create beautiful memories together.',
       tripDates: '10–14 May 2030',
       countdown: '27 days to departure',
     },

@@ -9,12 +9,14 @@ import { TodayScreen } from '../features/today/TodayScreen'
 import { TripScreen } from '../features/trip/TripScreen'
 import { TravelerSetupScreen } from '../features/profile/TravelerSetupScreen'
 import { WelcomeCoverScreen } from '../features/welcome/WelcomeCoverScreen'
+import type { DailyLoveMessageSchedule } from '../domain/content/dailyLoveMessage'
 import type { TripRepository } from '../data/trips/TripRepository'
 import type { TripContentRepository } from '../data/content/TripContentRepository'
 import type { TripStateRepository } from '../storage/TripStateRepository'
 import { StartupRouteGate } from './StartupRouteGate'
 
 interface AppProps {
+  loveMessageSchedule: DailyLoveMessageSchedule
   tripRepository: TripRepository
   tripContentRepository: TripContentRepository
   tripStateRepository: TripStateRepository
@@ -22,6 +24,7 @@ interface AppProps {
 }
 
 export function App({
+  loveMessageSchedule,
   tripRepository,
   tripContentRepository,
   tripStateRepository,
@@ -62,6 +65,7 @@ export function App({
               path="home"
               element={
                 <HomeProfileGate
+                  loveMessageSchedule={loveMessageSchedule}
                   now={now}
                   tripData={tripData}
                   tripStateRepository={tripStateRepository}

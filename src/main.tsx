@@ -8,6 +8,7 @@ import { BundledTripContentRepository } from './data/content/BundledTripContentR
 import { LocalTripStateRepository } from './storage/LocalTripStateRepository'
 import { oceaniaMarina2026TripData } from './trips/oceania-marina-2026/tripData'
 import { oceaniaMarina2026TripContent } from './content/oceania-marina-2026/tripContent'
+import { oceaniaMarina2026DailyLoveMessages } from './content/oceania-marina-2026/dailyLoveMessages'
 import './styles/index.css'
 
 const tripRepository = new BundledTripRepository(
@@ -29,6 +30,7 @@ registerSW({ immediate: true })
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App
+      loveMessageSchedule={oceaniaMarina2026DailyLoveMessages}
       tripRepository={tripRepository}
       tripContentRepository={tripContentRepository}
       tripStateRepository={tripStateRepository}

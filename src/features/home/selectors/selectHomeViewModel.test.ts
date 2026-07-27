@@ -5,7 +5,7 @@ import { selectHomeViewModel } from './selectHomeViewModel'
 
 describe('selectHomeViewModel', () => {
   it.each([
-    ['2030-05-01T12:00:00Z', 'PRE_TRIP', 'Northern Coast Journey'],
+    ['2030-05-01T12:00:00Z', 'PRE_TRIP', 'Our journey begins soon'],
     ['2030-05-10T12:00:00Z', 'DEPARTURE_DAY', 'Travel to Harbor City'],
     ['2030-05-11T12:00:00Z', 'CRUISE', 'Harbor City'],
     ['2030-05-12T12:00:00Z', 'CRUISE', 'At sea'],

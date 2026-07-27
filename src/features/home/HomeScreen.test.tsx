@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 
 import { tripFixture } from '../../test/fixtures/tripFixture'
 import { oceaniaMarina2026TripData } from '../../trips/oceania-marina-2026/tripData'
+import { oceaniaMarina2026DailyLoveMessages } from '../../content/oceania-marina-2026/dailyLoveMessages'
 import { homeReviewFixtures } from './fixtures/homeReviewFixtures'
 import { HomePhaseView } from './HomePhaseView'
 import { HomeScreen } from './HomeScreen'
@@ -12,12 +13,44 @@ import { selectHomeViewModel } from './selectors/selectHomeViewModel'
 function renderHome(route: string) {
   render(
     <MemoryRouter initialEntries={[route]}>
-      <HomeScreen travelerName="Alex" tripData={tripFixture} />
+      <HomeScreen
+        loveMessageSchedule={oceaniaMarina2026DailyLoveMessages}
+        now={new Date('2026-07-27T12:00:00Z')}
+        travelerName="Alex"
+        tripData={tripFixture}
+      />
     </MemoryRouter>,
   )
 }
 
 describe('HomeScreen', () => {
+  it('shows the dated love message in the fixed readable format', () => {
+    renderHome('/home')
+
+    expect(screen.getByText('Mon amour pour toujours,')).toBeInTheDocument()
+    expect(
+      screen.getByText(/Every day brings us a little closer/),
+    ).toBeInTheDocument()
+    expect(screen.getByText('With all my love,')).toBeInTheDocument()
+    expect(screen.getByText('Yoav ❤️')).toBeInTheDocument()
+  })
+
+  it('uses the approved pre-trip heading and supporting line', () => {
+    renderHome('/home?phase=pre-trip')
+
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Our journey begins soon',
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Two weeks to explore, enjoy, and create beautiful memories together.',
+      ),
+    ).toBeInTheDocument()
+  })
+
   it('shows the departure-day heading and next departure milestone', () => {
     renderHome('/home?phase=departure-day')
 

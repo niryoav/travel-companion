@@ -78,8 +78,6 @@ export function selectHomeViewModel(
   const phase = resolveTripPhase(data, now)
   const today = selectToday(data, now)
   const cruiseContext = selectCruiseContext(data, today)
-  const cruise = cruiseContext?.cruise ??
-    data.cruises.find(({ id }) => id === data.trip.cruiseId)
 
   if (phase === 'COMPLETED') {
     return {
@@ -99,8 +97,9 @@ export function selectHomeViewModel(
       phase: HOME_PHASES.PRE_TRIP,
       context: {
         eyebrow: 'Before your trip',
-        title: data.trip.title,
-        summary: cruise?.shipName ?? 'Upcoming journey',
+        title: 'Our journey begins soon',
+        summary:
+          'Two weeks to explore, enjoy, and create beautiful memories together.',
         tripDates: formatDateRange(data.trip.startDate, data.trip.endDate),
         countdown: `${days} ${days === 1 ? 'day' : 'days'} to departure`,
       },

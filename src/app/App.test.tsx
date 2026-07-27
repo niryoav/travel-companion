@@ -7,6 +7,7 @@ import type { TravelerId } from '../domain/trip/tripTypes'
 import type { TripStateRepository } from '../storage/TripStateRepository'
 import { tripFixture } from '../test/fixtures/tripFixture'
 import { tripContentFixture } from '../test/fixtures/tripContentFixture'
+import { oceaniaMarina2026DailyLoveMessages } from '../content/oceania-marina-2026/dailyLoveMessages'
 import { App } from './App'
 
 class MemoryTripStateRepository implements TripStateRepository {
@@ -33,6 +34,7 @@ function renderApp(
 ) {
   render(
     <App
+      loveMessageSchedule={oceaniaMarina2026DailyLoveMessages}
       now={now}
       tripRepository={tripRepository}
       tripContentRepository={tripContentRepository}

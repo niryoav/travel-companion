@@ -1237,6 +1237,45 @@ a:focus-visible {
   gap: 1rem;
 }
 
+.home-love-message {
+  padding: 1rem 1.15rem;
+  border: 1px solid
+    color-mix(in srgb, var(--champagne) 28%, var(--border));
+  border-radius: 1.15rem;
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--home-card-start) 88%, transparent),
+      color-mix(in srgb, var(--home-card-end) 94%, transparent)
+    );
+  box-shadow: inset 0 1px rgb(255 255 255 / 5%);
+}
+
+.home-love-message h2 {
+  margin: 0.4rem 0 0;
+  color: var(--text);
+  font-size: clamp(1.15rem, 4.5vw, 1.4rem);
+  line-height: 1.3;
+}
+
+.home-love-message-body {
+  margin: 0.65rem 0 0;
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.home-love-message-signature {
+  margin-top: 0.75rem;
+  color: var(--champagne);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.home-love-message-signature p {
+  margin: 0;
+}
+
 .home-card {
   overflow: hidden;
   border: 1px solid var(--border);

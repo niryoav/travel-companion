@@ -1,4 +1,6 @@
+import type { DailyLoveMessageViewModel } from '../../domain/content/dailyLoveMessage'
 import type { HomeViewModel } from './homeTypes'
+import { DailyLoveMessage } from './components/DailyLoveMessage'
 import { HomeAlert } from './components/HomeAlert'
 import { HomeHero } from './components/HomeHero'
 import { NextMilestoneCard } from './components/NextMilestoneCard'
@@ -7,11 +9,13 @@ import { QuickWeatherCard } from './components/QuickWeatherCard'
 
 interface HomePhaseViewProps {
   greeting: string
+  loveMessage?: DailyLoveMessageViewModel | null
   viewModel: HomeViewModel
 }
 
 export function HomePhaseView({
   greeting,
+  loveMessage,
   viewModel,
 }: HomePhaseViewProps) {
   return (
@@ -21,6 +25,8 @@ export function HomePhaseView({
         cruiseProgress={viewModel.cruiseProgress}
         greeting={greeting}
       />
+
+      {loveMessage ? <DailyLoveMessage message={loveMessage} /> : null}
 
       <div className="home-briefing-grid">
         {viewModel.milestone ? (
