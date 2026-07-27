@@ -13,6 +13,8 @@ export const TRIP_REVIEW_STATES = [
   'completed',
   'cross-zone',
   'missing-data',
+  'content',
+  'no-content',
 ] as const
 
 export type TripReviewState = (typeof TRIP_REVIEW_STATES)[number]
@@ -83,6 +85,25 @@ const baseDays: TripDayViewModel[] = [
       time: '09:30',
       startsAt: '2030-05-11T09:30:00+02:00',
       location: 'Harbor Terminal',
+      organizer: 'Example Excursion Company',
+      bookingTypeLabel: 'Independent excursion',
+      checkInTime: '09:00',
+      checkInAt: '2030-05-11T09:00:00+02:00',
+      experience: {
+        summary:
+          'A concise fictional experience summary used to review offline enrichment.',
+        highlights: ['Coastal views', 'Local history', 'A gentle walking route'],
+        preparation: ['Wear comfortable shoes'],
+        sources: [
+          {
+            id: 'review-source-experience',
+            name: 'Example Excursion Company',
+            url: 'https://example.com/review-experience',
+            reviewedAt: '2029-01-02',
+          },
+        ],
+        reviewedAt: '2029-01-02',
+      },
       relatedDocumentCount: 0,
     },
     additionalEventCount: 1,
@@ -94,12 +115,31 @@ const baseDays: TripDayViewModel[] = [
         time: '09:30',
         startsAt: '2030-05-11T09:30:00+02:00',
         location: 'Harbor Terminal',
+        organizer: 'Example Excursion Company',
+        bookingTypeLabel: 'Independent excursion',
+        checkInTime: '09:00',
+        checkInAt: '2030-05-11T09:00:00+02:00',
+        experience: {
+          summary:
+            'A concise fictional experience summary used to review offline enrichment.',
+          highlights: ['Coastal views', 'Local history', 'A gentle walking route'],
+          preparation: ['Wear comfortable shoes'],
+          sources: [
+            {
+              id: 'review-source-experience',
+              name: 'Example Excursion Company',
+              url: 'https://example.com/review-experience',
+              reviewedAt: '2029-01-02',
+            },
+          ],
+          reviewedAt: '2029-01-02',
+        },
         relatedDocumentCount: 0,
       },
       {
         id: 'review-lunch',
-        kindLabel: 'Meal',
-        title: 'Lunch near the harbor',
+        kindLabel: 'Excursion',
+        title: 'Harbor viewpoints',
         time: '12:30',
         startsAt: '2030-05-11T12:30:00+02:00',
         relatedDocumentCount: 0,
@@ -115,6 +155,25 @@ const baseDays: TripDayViewModel[] = [
     summaryAllAboardTime: '17:30',
     summaryAllAboardAt: '2030-05-11T17:30:00+02:00',
     relatedDocumentCount: 0,
+    destination: {
+      title: 'Harbor City',
+      introduction:
+        'A fictional destination introduction for deterministic visual review.',
+      highlights: ['Historic harbor', 'Coastal views', 'Compact center'],
+      practicalFacts: [
+        { label: 'Language', value: 'Example language' },
+        { label: 'Currency', value: 'Example crown' },
+      ],
+      sources: [
+        {
+          id: 'review-source-destination',
+          name: 'Example Tourism Authority',
+          url: 'https://example.com/review-destination',
+          reviewedAt: '2029-01-02',
+        },
+      ],
+      reviewedAt: '2029-01-02',
+    },
   },
   {
     id: 'review-day-sea',
@@ -283,4 +342,15 @@ export const tripReviewFixtures: Record<
     totalDays: 1,
     percentage: 0,
   }),
+  content: fixture(baseDays),
+  'no-content': fixture(
+    baseDays.map((day) => ({
+      ...day,
+      destination: undefined,
+      events: day.events.map((event) => ({
+        ...event,
+        experience: undefined,
+      })),
+    })),
+  ),
 }

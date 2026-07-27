@@ -3,21 +3,94 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 
 import { tripFixture } from '../../test/fixtures/tripFixture'
+import { tripContentFixture } from '../../test/fixtures/tripContentFixture'
+import type { TripContentBundle } from '../../domain/content/contentTypes'
 import { reviewStateFromSearch } from './fixtures/reviewStateFromSearch'
 import { TripScreen } from './TripScreen'
 
 function renderTrip(
   route: string,
   now = new Date('2030-05-11T12:00:00Z'),
+  tripContent: TripContentBundle = tripContentFixture,
 ) {
   return render(
     <MemoryRouter initialEntries={[route]}>
-      <TripScreen tripData={tripFixture} now={now} />
+      <TripScreen
+        tripData={tripFixture}
+        tripContent={tripContent}
+        now={now}
+      />
     </MemoryRouter>,
   )
 }
 
 describe('TripScreen', () => {
+  it('keeps operational details before collapsed editorial disclosures', () => {
+    const { container } = renderTrip('/trip')
+    const portDay = container.querySelector(
+      '.trip-day-card-today',
+    ) as HTMLElement
+    const destination = within(portDay).getByText('About Harbor Terminal')
+    const experience = within(portDay).getByText('About this experience')
+    const eventTitle = within(portDay).getAllByText('Coastal walk').at(-1)
+
+    expect(destination.closest('details')).not.toHaveAttribute('open')
+    expect(experience.closest('details')).not.toHaveAttribute('open')
+    expect(
+      eventTitle?.compareDocumentPosition(experience) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    expect(
+      experience.compareDocumentPosition(destination) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    expect(portDay).toHaveAttribute('open')
+  })
+
+  it('omits absent guides and reserves lazy destination image space', () => {
+    const withImage: TripContentBundle = {
+      ...tripContentFixture,
+      destinationGuides: tripContentFixture.destinationGuides.map(
+        (guide) => ({
+          ...guide,
+          image: {
+            src: '/images/fictional-harbor.webp',
+            alt: 'Fictional harbor beneath a clear sky',
+            width: 1200,
+            height: 675,
+          },
+        }),
+      ),
+    }
+    const { rerender } = renderTrip(
+      '/trip',
+      new Date('2030-05-11T12:00:00Z'),
+      withImage,
+    )
+    const image = screen.getByRole('img', {
+      name: 'Fictional harbor beneath a clear sky',
+    })
+
+    expect(image).toHaveAttribute('loading', 'lazy')
+    expect(image).toHaveAttribute('width', '1200')
+    expect(image.closest('figure')).toHaveStyle('aspect-ratio: 1200 / 675')
+
+    rerender(
+      <MemoryRouter initialEntries={['/trip']}>
+        <TripScreen
+          tripData={tripFixture}
+          tripContent={{
+            ...tripContentFixture,
+            destinationGuides: [],
+            excursionGuides: [],
+          }}
+          now={new Date('2030-05-11T12:00:00Z')}
+        />
+      </MemoryRouter>,
+    )
+    expect(screen.queryByText(/^About Harbor Terminal$/)).not.toBeInTheDocument()
+    expect(screen.queryByText('About this experience')).not.toBeInTheDocument()
+  })
   it('renders the active full journey in chronological order', () => {
     const { container } = renderTrip('/trip?state=active')
     const dayList = container.querySelector('.trip-day-list')
@@ -116,7 +189,9 @@ describe('TripScreen', () => {
       screen.getByRole('progressbar', { name: 'Completed travel days' }),
     ).toHaveAttribute('aria-valuenow', '1')
     expect(screen.getAllByRole('list').length).toBeGreaterThan(0)
-    expect(document.querySelectorAll('details > summary')).toHaveLength(3)
+    expect(
+      document.querySelectorAll('.trip-day-list > li > details > summary'),
+    ).toHaveLength(3)
     expect(document.querySelector('time[datetime="2030-05-11"]')).not.toBeNull()
 
     const summary = screen
@@ -148,6 +223,8 @@ describe('TripScreen', () => {
     'completed',
     'cross-zone',
     'missing-data',
+    'content',
+    'no-content',
   ])('renders the %s review state', (state) => {
     renderTrip(`/trip?state=${state}`)
 

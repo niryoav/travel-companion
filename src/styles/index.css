@@ -1053,6 +1053,106 @@ a:focus-visible {
   text-underline-offset: 0.2rem;
 }
 
+.trip-operational-note {
+  color: var(--champagne) !important;
+  font-weight: 750;
+}
+
+.trip-enrichment {
+  margin-top: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--surface-raised) 72%, transparent);
+}
+
+.trip-enrichment > summary,
+.trip-content-sources > summary {
+  min-height: 2.75rem;
+  padding: 0.75rem;
+  color: var(--champagne);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.trip-enrichment > summary:focus-visible,
+.trip-content-sources > summary:focus-visible {
+  outline: 3px solid var(--champagne);
+  outline-offset: 2px;
+}
+
+.trip-enrichment-body {
+  display: grid;
+  gap: 0.85rem;
+  padding: 0 0.8rem 0.9rem;
+}
+
+.trip-enrichment-body p,
+.trip-enrichment-body ul,
+.trip-enrichment-body dl {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.trip-enrichment-body h5 {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.trip-enrichment-body ul {
+  padding-left: 1.2rem;
+}
+
+.trip-enrichment-body dl div {
+  display: grid;
+  grid-template-columns: minmax(5rem, auto) 1fr;
+  gap: 0.6rem;
+}
+
+.trip-enrichment-body dt {
+  color: var(--text);
+  font-weight: 750;
+}
+
+.trip-enrichment-body dd {
+  margin: 0;
+}
+
+.trip-seasonal-note {
+  border-left: 3px solid var(--champagne);
+  padding-left: 0.75rem;
+}
+
+.trip-destination-image {
+  overflow: hidden;
+  margin: 0;
+  border-radius: 0.75rem;
+  background: var(--surface-muted);
+}
+
+.trip-destination-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.trip-destination-image figcaption {
+  padding: 0.35rem 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+
+.trip-content-sources {
+  border-top: 1px solid var(--border);
+}
+
+.trip-content-sources a {
+  color: var(--champagne);
+}
+
 
 .home-hero {
   display: grid;
