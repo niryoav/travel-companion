@@ -75,7 +75,6 @@ export interface TripEventViewModel {
   operationalNotes?: string[]
   experience?: TripExcursionContentViewModel
   relatedDocumentCount: number
-  destination?: TripDestinationViewModel
 }
 
 export interface TripPortViewModel {
@@ -108,6 +107,7 @@ export interface TripDayViewModel {
   summaryAllAboardTime?: string
   summaryAllAboardAt?: string
   relatedDocumentCount: number
+  destination?: TripDestinationViewModel
   emptyMessage?: string
 }
 

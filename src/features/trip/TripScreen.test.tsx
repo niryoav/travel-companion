@@ -34,10 +34,11 @@ describe('TripScreen', () => {
     const experience = within(portDay).getByText('About this experience')
     const eventTitle = within(portDay).getAllByText('Coastal walk').at(-1)
 
+    expect(eventTitle).toBeDefined()
     expect(destination.closest('details')).not.toHaveAttribute('open')
     expect(experience.closest('details')).not.toHaveAttribute('open')
     expect(
-      eventTitle?.compareDocumentPosition(experience) &
+      eventTitle!.compareDocumentPosition(experience) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy()
     expect(
