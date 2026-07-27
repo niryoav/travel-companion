@@ -1,14 +1,9 @@
 import type { PortCall, TripData, TripDay } from '../tripTypes'
+import { selectDayPortCall } from './selectDayPortCall'
 
 export function selectTodayPortCall(
   data: TripData,
   day: TripDay | null,
 ): PortCall | null {
-  if (!day?.portCallId) {
-    return null
-  }
-
-  return (
-    data.portCalls.find(({ id }) => id === day.portCallId) ?? null
-  )
+  return selectDayPortCall(data, day)
 }

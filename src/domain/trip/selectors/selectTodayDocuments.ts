@@ -3,14 +3,11 @@ import type {
   TripData,
   TripEvent,
 } from '../tripTypes'
+import { selectDayDocuments } from './selectDayDocuments'
 
 export function selectTodayDocuments(
   data: TripData,
   events: TripEvent[],
 ): DocumentReference[] {
-  const referenceIds = new Set(
-    events.flatMap(({ documentReferenceIds = [] }) => documentReferenceIds),
-  )
-
-  return data.documentReferences.filter(({ id }) => referenceIds.has(id))
+  return selectDayDocuments(data, events)
 }
