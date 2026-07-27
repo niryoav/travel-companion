@@ -207,6 +207,12 @@ locations, transport, port context, verified all-aboard, and concrete
 event-related document actions. Touch targets and focus indicators remain
 clearly visible.
 
+Optional editorial enrichment stays subordinate to operational information.
+Use closed nested disclosures labelled `About this experience` beneath a
+matching excursion and `About [destination]` once per day. Sources and review
+dates remain compact, missing content leaves no placeholder, and an approved
+destination image reserves 16:9 space and loads lazily inside its disclosure.
+
 Verified all-aboard may appear in the collapsed summary for Today or a relevant
 upcoming port day. Historical values belong in expanded detail. Do not repeat
 the same all-aboard value in both parts of an open card, and never infer a

@@ -46,6 +46,12 @@ An excursion guide may be added only for a confirmed excursion event. It may
 describe the public itinerary, operator, stable context, and likely highlights,
 but must not include private confirmation details.
 
+An excursion guide may contain a concise summary, three to five highlights,
+optional look-out-for items, fun facts, preparation guidance, stable context,
+and a clearly labelled seasonal note. Optional sections are omitted cleanly.
+Wildlife, weather-dependent routes, and seasonal inclusions must never be
+presented as guaranteed.
+
 ## Sources and writing
 
 Use:
@@ -120,12 +126,13 @@ Inside an expanded Trip day, preserve this order:
 1. operational day information;
 2. port and critical information;
 3. events and transport;
-4. a nested `About [destination]` disclosure;
-5. background attached to a later confirmed excursion event;
+4. source-reviewed experience background directly under its matching event;
+5. one nested `About [destination]` disclosure for the day;
 6. concrete document references.
 
 The destination disclosure remains closed by default, including when the outer
-Today card is open. Missing content produces no empty guide block.
+Today card is open. Experience disclosures are also closed by default. Missing
+content produces no empty guide block.
 
 ## Review checklist
 

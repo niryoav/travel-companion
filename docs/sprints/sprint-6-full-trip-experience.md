@@ -26,6 +26,8 @@ operational view of the current travel day.
   future confirmed-excursion background
 - One Reykjavík destination prototype after its source-based text and optional
   licensed image are explicitly approved
+- Ten confirmed excursion events represented operationally, with editorial
+  enrichment limited to source-reviewed guides
 
 ## Deliverables
 
@@ -72,6 +74,10 @@ operational view of the current travel day.
       operational day information.
 - [ ] Guides record source provenance, verification, and review date.
 - [ ] A missing guide or image leaves no empty presentation.
+- [ ] Confirmed excursion events show organizer, booking type, public code,
+      check-in, meeting context, and warnings only when configured.
+- [ ] Excursion enrichment is attached by `eventId`, remains collapsed by
+      default, and never repeats operational times or meeting instructions.
 
 ## Technical Notes
 
@@ -105,6 +111,8 @@ operational view of the current travel day.
 - Retain only actions tied to a concrete event or document.
 - Place a nested native `About [destination]` disclosure after port, event, and
   transport content. Keep it closed by default, including on Today.
+- Place a nested native `About this experience` disclosure directly under a
+  matching excursion event. Omit it when no reviewed guide exists.
 - Limit each destination to approximately 100–160 words: a 50–80 word
   introduction, three to five highlights, two to four practical facts, and no
   more than three good-to-know items.
@@ -148,6 +156,8 @@ operational view of the current travel day.
 - Content validation, unknown relationships, missing guides, and source metadata
 - Destination disclosure ordering, default state, semantics, and optional-image
   behavior
+- Multi-excursion days, summary-only guides, missing enrichment, operational
+  warnings, source links, and seasonal notes
 
 ## Review Checklist
 
@@ -179,3 +189,15 @@ optional photo support require product review before implementation.
 The destination foundation and fictional fixture are implemented before any
 real Reykjavík copy. Reykjavík text and its optional image require separate
 source and licensing approval before population.
+
+The canonical itinerary now includes ten confirmed excursion events: eight
+Oceania excursions and two independent excursions. Rich editorial guides are
+currently bundled only for the Gentle Giants Húsavík and Arctic Shorex
+Djúpivogur excursions because those two have approved primary-source material.
+The eight Oceania events remain complete operational entries without empty
+editorial wrappers until official source copy is approved.
+
+Known limitation: the approved content inventory refers to Portree on 29 August,
+while the canonical official itinerary currently contains Stornoway. Sprint 6
+does not replace the canonical port or add Portree activity without an
+authoritative itinerary decision.
