@@ -74,11 +74,13 @@ Source names and the guide review date appear compactly in the interface. Public
 links may appear inside a small Sources disclosure, while all useful guide
 content remains available without connectivity.
 
-The initial excursion inventory contains ten reviewed guides: eight based on
-official Oceania shore excursion material and two based on official independent
-operator sources. A source without an approved stable public URL keeps its
-public source name and review date but does not expose a private local document
-path.
+The initial excursion inventory contains eleven reviewed guides: eight based on
+official Oceania shore excursion material and three for independent bookings.
+Two independent guides use official operator sources; the Isle of Lewis guide
+uses the user-supplied Hebridean Isle Tours booking confirmation while revised
+written timing remains pending. A source without an approved stable public URL
+keeps its source name and review date but does not expose a private local
+document path.
 
 ## Stable and changing information
 

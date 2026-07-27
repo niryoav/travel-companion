@@ -26,7 +26,7 @@ operational view of the current travel day.
   future confirmed-excursion background
 - One Reykjavík destination prototype after its source-based text and optional
   licensed image are explicitly approved
-- Ten confirmed excursion events represented operationally, with editorial
+- Eleven confirmed excursion events represented operationally, with editorial
   enrichment limited to source-reviewed guides
 
 ## Deliverables
@@ -190,18 +190,25 @@ The destination foundation and fictional fixture are implemented before any
 real Reykjavík copy. Reykjavík text and its optional image require separate
 source and licensing approval before population.
 
-The canonical itinerary includes ten confirmed excursion events with concise
+The canonical itinerary includes eleven confirmed excursion events with concise
 editorial enrichment. Eight guides were reviewed against official Oceania shore
-excursion material; the two independent guides were reviewed against the
-official Gentle Giants and Arctic Shorex operator sources. Destination guides,
-destination images, and external ticket assets remain pending and are not
-represented by placeholders.
+excursion material; three are independent bookings. The Gentle Giants and
+Arctic Shorex guides were reviewed against official operator sources, while the
+Hebridean Isle Tours guide was confirmed from the user-supplied booking
+confirmation. Destination guides, destination images, and external ticket
+assets remain pending and are not represented by placeholders.
 
 Oceania confirmed that Stornoway (Hebrides), Scotland replaced the former
 Portree call on 29 August because of improvement plans in Portree. Stornoway is
 the current canonical port, scheduled for 07:00–16:00, with no booked excursion
 configured. The former Portree entry is retained here only as superseded
 historical context.
+
+The independent Isle of Lewis Tour is confirmed for Stornoway. Its current
+booking confirmation still shows the superseded provisional schedule, while an
+earlier cruise-compatible departure and return were agreed by phone. The app
+therefore omits start and end times and shows that revised written timing is
+still pending.
 
 Oceania also confirmed that `HOY-003`, Penrhyn Castle & Gardens, moved from its
 superseded 07:30 start to the final 12:30–16:30 schedule on 1 September.
