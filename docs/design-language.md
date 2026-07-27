@@ -166,3 +166,24 @@ navigation.
 Body copy and secondary labels remain comfortable for travelers aged 55 and 53:
 avoid tiny labels, maintain generous line height, and preserve clear spacing and
 touch targets at 320px width and above.
+
+## Today
+
+Today is the complete operational view of the current travel day. It uses the
+shared Ocean Day background and card hierarchy without copying Home's briefing
+composition.
+
+Present the day title, local date and time-zone context first. Follow with
+verified critical information, the next event, a chronological timeline, port
+context, and supporting document navigation. Critical all-aboard, embarkation,
+and disembarkation information uses restrained champagne emphasis and explicit
+text; color alone must never communicate urgency or status.
+
+Timeline times remain prominent and readable. Completed, current, next, future,
+and untimed states use visible words as well as visual treatment. Use semantic
+time elements and an ordered list rather than a dense calendar grid.
+
+Missing information produces calm omission or an intentional empty state.
+Never manufacture weather, delays, provider status, alerts, all-aboard values,
+or free-time blocks. Production and privacy-safe visual-review data remain
+strictly separated.

@@ -31,9 +31,12 @@
 - Replace demo Home content with structured trip data.
 - Evolve the minimum trip model from concrete Home and Today needs.
 
-## Sprint 5: Live weather and travel timing
-- Add carefully scoped weather and travel-timing integrations.
-- Show freshness and retain useful cached states when connectivity is unavailable.
+## Sprint 5: Today experience
+- Replace the Today placeholder with the complete operational view of the
+  current travel day.
+- Derive a readable chronological timeline, next event, and verified critical
+  information from bundled trip data.
+- Keep the experience read-only, mobile-first, offline-first, and deterministic.
 
 ## Sprint 6: Notifications and offline status
 - Introduce actionable notifications and explicit offline/freshness status.
@@ -43,5 +46,7 @@
 - Define synchronization and conflict behavior before adding cloud services.
 
 ## Later
+- Add carefully scoped live weather, provider status, and travel-timing
+  integrations with visible freshness and useful cached states.
 - Introduce AI only where it improves an already useful core experience.
 - Add expenses and memories incrementally after the travel foundation is stable.

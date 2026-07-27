@@ -5,6 +5,7 @@ import { DestinationScreen } from '../features/placeholders/DestinationScreen'
 import { destinationDefinitions } from '../features/placeholders/placeholderScreens'
 import { HomeProfileGate } from '../features/profile/HomeProfileGate'
 import { MoreScreen } from '../features/profile/MoreScreen'
+import { TodayScreen } from '../features/today/TodayScreen'
 import { TravelerSetupScreen } from '../features/profile/TravelerSetupScreen'
 import { WelcomeCoverScreen } from '../features/welcome/WelcomeCoverScreen'
 import type { TripRepository } from '../data/trips/TripRepository'
@@ -55,6 +56,10 @@ export function App({
                 tripStateRepository={tripStateRepository}
               />
             }
+          />
+          <Route
+            path="today"
+            element={<TodayScreen tripData={tripData} />}
           />
           {destinationDefinitions.map(
             ({ path, title, description, icon, placeholder }) => (

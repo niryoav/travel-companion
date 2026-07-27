@@ -1,0 +1,41 @@
+import { Link } from 'react-router'
+
+import type { TodayEventViewModel } from '../todayTypes'
+
+interface TimelineEventProps {
+  event: TodayEventViewModel
+}
+
+export function TimelineEvent({ event }: TimelineEventProps) {
+  return (
+    <li className={`timeline-event timeline-event-${event.state.toLowerCase()}`}>
+      <div className="timeline-marker" aria-hidden="true" />
+      <div className="timeline-time">
+        {event.time ? (
+          <time dateTime={event.startsAt}>{event.time}</time>
+        ) : (
+          <span>Any time</span>
+        )}
+        {event.endTime ? (
+          <span>
+            to <time dateTime={event.endsAt}>{event.endTime}</time>
+          </span>
+        ) : null}
+      </div>
+      <div className="timeline-copy">
+        <div className="timeline-meta">
+          <span>{event.kindLabel}</span>
+          <span className="timeline-state">{event.stateLabel}</span>
+        </div>
+        <h3>{event.title}</h3>
+        {event.location ? <p>{event.location}</p> : null}
+        {event.transport ? <p>{event.transport}</p> : null}
+        {event.hasRelatedDocuments ? (
+          <Link className="today-event-document-link" to="/documents">
+            View related documents
+          </Link>
+        ) : null}
+      </div>
+    </li>
+  )
+}
