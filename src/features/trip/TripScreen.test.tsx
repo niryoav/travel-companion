@@ -228,6 +228,40 @@ describe('TripScreen', () => {
     expect(container).not.toHaveTextContent('Portree')
   })
 
+  it('keeps production destination sources collapsed below operations', () => {
+    render(
+      <MemoryRouter initialEntries={['/trip']}>
+        <TripScreen
+          tripData={oceaniaMarina2026TripData}
+          tripContent={oceaniaMarina2026TripContent}
+          now={new Date('2026-08-30T12:00:00Z')}
+        />
+      </MemoryRouter>,
+    )
+    const today = screen.getByText('Today').closest('details') as HTMLElement
+    const destinationSummary = within(today).getByText(
+      'About Glasgow (Greenock)',
+    )
+    const destination = destinationSummary.closest('details') as HTMLElement
+    const eventTitle = within(today)
+      .getAllByText('Loch Lomond and the Glengoyne Distillery')
+      .at(-1) as HTMLElement
+
+    expect(today).toHaveAttribute('open')
+    expect(destination).not.toHaveAttribute('open')
+    expect(
+      within(destination).getByText('Discover Inverclyde — Cruise Visitors'),
+    ).toBeInTheDocument()
+    expect(
+      within(destination).getByText('Sources · reviewed 2026-07-27'),
+    ).toBeInTheDocument()
+    expect(within(destination).queryByRole('img')).not.toBeInTheDocument()
+    expect(
+      eventTitle.compareDocumentPosition(destinationSummary) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+  })
+
   it('uses semantic progress, lists, times, and native disclosure', () => {
     renderTrip('/trip?state=active')
 
