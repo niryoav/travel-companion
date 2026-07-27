@@ -70,6 +70,12 @@ interface BaseEvent {
   locationId?: LocationId
   bookingReferenceIds?: BookingReferenceId[]
   documentReferenceIds?: DocumentReferenceId[]
+  organizer?: string
+  bookingType?: 'OCEANIA' | 'INDEPENDENT'
+  publicCode?: string
+  checkInAt?: string
+  meetingContext?: string
+  operationalNotes?: string[]
 }
 
 export interface TransportEvent extends BaseEvent {

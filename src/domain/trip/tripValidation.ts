@@ -112,6 +112,16 @@ export function validateTripData(data: TripData): string[] {
     if (event.endsAt && !isValidInstant(event.endsAt)) {
       errors.push(`Invalid event end: ${event.id}`)
     }
+    if (
+      event.startsAt &&
+      event.endsAt &&
+      Date.parse(event.startsAt) >= Date.parse(event.endsAt)
+    ) {
+      errors.push(`Invalid event window: ${event.id}`)
+    }
+    if (event.checkInAt && !isValidInstant(event.checkInAt)) {
+      errors.push(`Invalid event check-in: ${event.id}`)
+    }
     if (event.timeZone && !isSupportedTimeZone(event.timeZone)) {
       errors.push(`Unsupported event time zone: ${event.id}`)
     }
@@ -120,6 +130,14 @@ export function validateTripData(data: TripData): string[] {
     }
     if ('transportId' in event && !transportIds.has(event.transportId)) {
       errors.push(`Unknown transport ${event.transportId} on event ${event.id}`)
+    }
+    if (
+      event.operationalNotes?.some((note) => !note.trim()) ||
+      (event.organizer !== undefined && !event.organizer.trim()) ||
+      (event.publicCode !== undefined && !event.publicCode.trim()) ||
+      (event.meetingContext !== undefined && !event.meetingContext.trim())
+    ) {
+      errors.push(`Invalid event operational content: ${event.id}`)
     }
   }
 
