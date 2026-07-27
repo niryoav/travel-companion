@@ -81,4 +81,56 @@ describe('canonical active trip data', () => {
       ),
     ).toBe(true)
   })
+
+  it('uses confirmed Stornoway in place of the superseded Portree call', () => {
+    const day = oceaniaMarina2026TripData.days.find(
+      ({ localDate }) => localDate === '2026-08-29',
+    )
+    const portCall = oceaniaMarina2026TripData.portCalls.find(
+      ({ id }) => id === day?.portCallId,
+    )
+    const location = oceaniaMarina2026TripData.locations.find(
+      ({ id }) => id === portCall?.portLocationId,
+    )
+
+    expect(day).toMatchObject({
+      title: 'Stornoway',
+      summary: 'Scotland',
+      eventIds: [],
+    })
+    expect(location).toMatchObject({
+      name: 'Stornoway (Hebrides)',
+      city: 'Stornoway',
+      country: 'Scotland',
+    })
+    expect(portCall).toMatchObject({
+      arrivalAt: '2026-08-29T07:00:00+01:00',
+      departureAt: '2026-08-29T16:00:00+01:00',
+      eventIds: [],
+    })
+    expect(
+      JSON.stringify(oceaniaMarina2026TripData).toLowerCase(),
+    ).not.toContain('portree')
+    expect(
+      oceaniaMarina2026TripData.events.some(
+        ({ dayId }) => dayId === day?.id,
+      ),
+    ).toBe(false)
+  })
+
+  it('keeps HOY-003 only at its confirmed 1 September time', () => {
+    const excursion = oceaniaMarina2026TripData.events.find(
+      ({ publicCode }) => publicCode === 'HOY-003',
+    )
+
+    expect(excursion).toMatchObject({
+      dayId: 'day-2026-09-01',
+      title: 'Penrhyn Castle & Gardens',
+      startsAt: '2026-09-01T12:30:00+01:00',
+      endsAt: '2026-09-01T16:30:00+01:00',
+    })
+    expect(JSON.stringify(oceaniaMarina2026TripData)).not.toContain(
+      '2026-09-01T07:30',
+    )
+  })
 })

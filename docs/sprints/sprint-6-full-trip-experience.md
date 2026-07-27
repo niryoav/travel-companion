@@ -197,7 +197,11 @@ Djúpivogur excursions because those two have approved primary-source material.
 The eight Oceania events remain complete operational entries without empty
 editorial wrappers until official source copy is approved.
 
-Known limitation: the approved content inventory refers to Portree on 29 August,
-while the canonical official itinerary currently contains Stornoway. Sprint 6
-does not replace the canonical port or add Portree activity without an
-authoritative itinerary decision.
+Oceania confirmed that Stornoway (Hebrides), Scotland replaced the former
+Portree call on 29 August because of improvement plans in Portree. Stornoway is
+the current canonical port, scheduled for 07:00–16:00, with no booked excursion
+configured. The former Portree entry is retained here only as superseded
+historical context.
+
+Oceania also confirmed that `HOY-003`, Penrhyn Castle & Gardens, moved from its
+superseded 07:30 start to the final 12:30–16:30 schedule on 1 September.

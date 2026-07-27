@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import type { TripData } from '../../../domain/trip/tripTypes'
 import { tripFixture } from '../../../test/fixtures/tripFixture'
 import { tripContentFixture } from '../../../test/fixtures/tripContentFixture'
+import { oceaniaMarina2026TripData } from '../../../trips/oceania-marina-2026/tripData'
 import {
   TRIP_REVIEW_STATES,
   tripReviewFixtures,
@@ -10,6 +11,37 @@ import {
 import { selectTripViewModel } from './selectTripViewModel'
 
 describe('selectTripViewModel', () => {
+  it('renders the confirmed Stornoway and HOY-003 local schedule', () => {
+    const result = selectTripViewModel(
+      oceaniaMarina2026TripData,
+      new Date('2026-08-01T12:00:00Z'),
+    )
+    const stornoway = result.days.find(
+      ({ dateTime }) => dateTime === '2026-08-29',
+    )
+    const holyhead = result.days.find(
+      ({ dateTime }) => dateTime === '2026-09-01',
+    )
+    const penrhyn = holyhead?.events.find(
+      ({ publicCode }) => publicCode === 'HOY-003',
+    )
+
+    expect(stornoway).toMatchObject({
+      title: 'Stornoway',
+      events: [],
+      port: {
+        location: 'Stornoway (Hebrides)',
+        arrivalTime: '07:00',
+        departureTime: '16:00',
+      },
+    })
+    expect(penrhyn).toMatchObject({
+      title: 'Penrhyn Castle & Gardens',
+      time: '12:30',
+      endTime: '16:30',
+    })
+  })
+
   it('resolves display-ready destination and excursion content separately', () => {
     const result = selectTripViewModel(
       tripFixture,

@@ -13,7 +13,7 @@ const locations: Location[] = [
   { id: 'location-husavik', name: 'Húsavík', city: 'Húsavík', country: 'Iceland' },
   { id: 'location-djupivogur', name: 'Djúpivogur', city: 'Djúpivogur', country: 'Iceland' },
   { id: 'location-torshavn', name: 'Tórshavn', city: 'Tórshavn', country: 'Faroe Islands' },
-  { id: 'location-stornoway', name: 'Stornoway', city: 'Stornoway', country: 'United Kingdom' },
+  { id: 'location-stornoway', name: 'Stornoway (Hebrides)', city: 'Stornoway', country: 'Scotland' },
   { id: 'location-greenock', name: 'Glasgow (Greenock)', city: 'Greenock', country: 'United Kingdom' },
   { id: 'location-dun-laoghaire', name: 'Dublin (Dún Laoghaire)', city: 'Dún Laoghaire', country: 'Ireland' },
   { id: 'location-holyhead', name: 'Holyhead', city: 'Holyhead', country: 'United Kingdom' },
@@ -23,7 +23,8 @@ const locations: Location[] = [
 ]
 
 // All-aboard values are intentionally absent until verified from an
-// authoritative trip document or an onboard source.
+// authoritative trip document or an onboard source. Oceania confirmed that
+// Stornoway replaced the former Portree call on 29 August 2026.
 const portCalls: PortCall[] = [
   {
     id: 'port-call-reykjavik',
@@ -230,7 +231,7 @@ const days: TripDay[] = [
     timeZone: 'Europe/London',
     kind: 'PORT_DAY',
     title: 'Stornoway',
-    summary: 'United Kingdom',
+    summary: 'Scotland',
     eventIds: [],
     portCallId: 'port-call-stornoway',
   },
@@ -310,7 +311,7 @@ const days: TripDay[] = [
 
 export const oceaniaMarina2026TripData: TripData = {
   schemaVersion: 1,
-  dataVersion: '2026-07-27.1',
+  dataVersion: '2026-07-27.2',
   publishedAt: '2026-07-27T00:00:00Z',
   trip: {
     id: 'trip-oceania-marina-2026',
