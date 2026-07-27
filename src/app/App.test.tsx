@@ -101,7 +101,10 @@ describe('App', () => {
     fireEvent.click(await screen.findByRole('link', { name: 'Today' }))
 
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Today' }),
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'Today starts when the journey begins',
+      }),
     ).toBeInTheDocument()
     expect(window.location.pathname).toBe('/today')
   })

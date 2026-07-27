@@ -368,6 +368,312 @@ a:focus-visible {
   animation: page-in 240ms ease-out both;
 }
 
+.today-screen {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  width: 100%;
+  max-width: 48rem;
+  margin: 0 auto;
+  animation: page-in 240ms ease-out both;
+}
+
+.today-header {
+  padding-bottom: 0.35rem;
+}
+
+.today-eyebrow,
+.today-card-label {
+  margin: 0;
+  color: var(--champagne);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.today-header h1 {
+  max-width: 38rem;
+  margin: 0.35rem 0 0;
+  font-size: clamp(2.25rem, 9vw, 4rem);
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  line-height: 1.02;
+  text-wrap: balance;
+}
+
+.today-header-summary {
+  margin: 0.55rem 0 0;
+  color: var(--text);
+  font-size: 1.05rem;
+  line-height: 1.45;
+}
+
+.today-date-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  margin-top: 0.65rem;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.today-date-context span {
+  overflow-wrap: anywhere;
+}
+
+.today-card,
+.today-critical {
+  border: 1px solid var(--border);
+  border-radius: 1.35rem;
+  background:
+    linear-gradient(145deg, var(--home-card-start), var(--home-card-end));
+  box-shadow: var(--shadow), inset 0 1px rgb(255 255 255 / 5%);
+  padding: 1.15rem;
+}
+
+.today-card h2,
+.today-critical h2 {
+  margin: 0.3rem 0 0;
+  color: var(--text);
+  font-size: clamp(1.2rem, 4.8vw, 1.55rem);
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+}
+
+.today-critical {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.85rem;
+  border-color: color-mix(in srgb, var(--attention) 48%, transparent);
+  background: var(--alert-background);
+}
+
+.today-critical-marker {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--champagne);
+  color: var(--ocean-950);
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+.today-critical-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem 1rem;
+}
+
+.today-critical-heading time {
+  color: var(--champagne);
+  font-size: clamp(1.65rem, 7vw, 2.25rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.today-critical p:last-child,
+.today-event-detail,
+.today-supporting-copy,
+.today-empty p,
+.today-direction p {
+  margin: 0.45rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.today-next-event {
+  border-color: color-mix(in srgb, var(--champagne) 38%, transparent);
+}
+
+.today-event-heading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.85rem;
+  align-items: start;
+  margin-top: 0.75rem;
+}
+
+.today-event-heading > time {
+  min-width: 3.35rem;
+  color: var(--champagne);
+  font-size: clamp(1.35rem, 5.5vw, 1.75rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.today-event-kind {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.today-event-heading h2 {
+  margin-top: 0.15rem;
+}
+
+.today-timeline > h2 {
+  margin-bottom: 0.9rem;
+}
+
+.today-timeline ol {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timeline-event {
+  position: relative;
+  display: grid;
+  grid-template-columns: 0.85rem 3.75rem minmax(0, 1fr);
+  gap: 0.65rem;
+  min-width: 0;
+  padding: 0 0 1.15rem;
+}
+
+.timeline-event:last-child {
+  padding-bottom: 0;
+}
+
+.timeline-event:not(:last-child)::before {
+  position: absolute;
+  top: 0.85rem;
+  bottom: 0;
+  left: 0.38rem;
+  width: 1px;
+  background: var(--border);
+  content: "";
+}
+
+.timeline-marker {
+  position: relative;
+  z-index: 1;
+  width: 0.8rem;
+  height: 0.8rem;
+  margin-top: 0.28rem;
+  border: 2px solid var(--accent);
+  border-radius: 999px;
+  background: var(--timeline-ring);
+}
+
+.timeline-event-completed .timeline-marker {
+  border-color: var(--positive);
+  background: var(--positive);
+}
+
+.timeline-event-current .timeline-marker,
+.timeline-event-next .timeline-marker {
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+.timeline-time {
+  display: grid;
+  align-content: start;
+  color: var(--champagne);
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.timeline-time span {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  font-weight: 650;
+}
+
+.timeline-copy {
+  min-width: 0;
+}
+
+.timeline-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.25rem 0.65rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+
+.timeline-state {
+  color: var(--accent);
+}
+
+.timeline-event-completed .timeline-state {
+  color: var(--positive);
+}
+
+.timeline-copy h3 {
+  margin: 0.2rem 0 0;
+  color: var(--text);
+  font-size: 1.02rem;
+  line-height: 1.35;
+}
+
+.timeline-copy p {
+  margin: 0.25rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.today-port dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0.9rem 0 0;
+}
+
+.today-port dl div {
+  border-top: 1px solid var(--border);
+  padding-top: 0.7rem;
+}
+
+.today-port dt {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.today-port dd {
+  margin: 0.2rem 0 0;
+  color: var(--champagne);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.today-action-link {
+  display: inline-flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--champagne) 55%, transparent);
+  border-radius: 1rem;
+  background: var(--accent-soft);
+  color: var(--champagne);
+  padding: 0.75rem 1rem;
+  font-weight: 800;
+  text-align: center;
+  text-decoration: none;
+}
+
+.today-direction {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.today-direction p {
+  margin-top: 0;
+}
+
 .home-hero {
   display: grid;
   gap: 1rem;
