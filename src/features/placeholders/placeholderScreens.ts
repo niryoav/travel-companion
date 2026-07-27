@@ -3,20 +3,12 @@ import type { IconName } from '../../components/AppIcon'
 export interface DestinationDefinition {
   description: string
   icon: IconName
-  path: 'documents' | 'trip'
+  path: 'documents'
   placeholder: string
   title: string
 }
 
 export const destinationDefinitions: DestinationDefinition[] = [
-  {
-    path: 'trip',
-    title: 'Trip',
-    icon: 'map',
-    description: 'The shared shape of the journey, presented clearly.',
-    placeholder:
-      'Itinerary structure and trip details remain intentionally out of scope for this sprint.',
-  },
   {
     path: 'documents',
     title: 'Documents',

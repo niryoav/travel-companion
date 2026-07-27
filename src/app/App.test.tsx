@@ -109,6 +109,26 @@ describe('App', () => {
     expect(window.location.pathname).toBe('/today')
   })
 
+  it('opens the full Trip experience from primary navigation', async () => {
+    const repository = new MemoryTripStateRepository()
+    repository.travelerId = 'traveler-alex'
+    window.history.replaceState({}, '', '/home')
+    renderApp(repository)
+
+    fireEvent.click(
+      await screen.findByRole('link', { name: 'Trip' }),
+    )
+
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'Northern Coast Journey',
+      }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Aboard MV Example')).toBeInTheDocument()
+    expect(window.location.pathname).toBe('/trip')
+  })
+
   it('does not show a prominent appearance toggle on Home', async () => {
     const repository = new MemoryTripStateRepository()
     repository.travelerId = 'traveler-alex'

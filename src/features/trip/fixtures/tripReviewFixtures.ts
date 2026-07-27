@@ -206,14 +206,25 @@ export const tripReviewFixtures: Record<
     percentage: 0,
   }),
   completed: fixture(
-    baseDays.map((day) => ({
-      ...day,
-      state: 'PAST',
-      stateLabel: 'Completed',
-      isOpenByDefault: false,
-      summaryAllAboardTime: undefined,
-      summaryAllAboardAt: undefined,
-    })),
+    baseDays.map((day) => {
+      const isPortDay = day.id === 'review-day-port'
+      return {
+        ...day,
+        state: 'PAST',
+        stateLabel: 'Completed',
+        isOpenByDefault: false,
+        port:
+          isPortDay && day.port
+            ? {
+                ...day.port,
+                allAboardTime: '17:30',
+                allAboardAt: '2030-05-11T17:30:00+02:00',
+              }
+            : day.port,
+        summaryAllAboardTime: undefined,
+        summaryAllAboardAt: undefined,
+      }
+    }),
     {
       state: 'COMPLETED',
       label: 'Trip complete',
