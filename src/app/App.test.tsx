@@ -126,7 +126,7 @@ describe('App', () => {
   it('opens the full Trip experience from primary navigation', async () => {
     const repository = new MemoryTripStateRepository()
     repository.travelerId = 'traveler-alex'
-    window.history.replaceState({}, '', '/home')
+    window.history.replaceState({}, '', '/home?phase=pre-trip')
     renderApp(repository)
 
     fireEvent.click(
@@ -146,7 +146,7 @@ describe('App', () => {
   it('does not show a prominent appearance toggle on Home', async () => {
     const repository = new MemoryTripStateRepository()
     repository.travelerId = 'traveler-alex'
-    window.history.replaceState({}, '', '/home')
+    window.history.replaceState({}, '', '/home?phase=pre-trip')
     renderApp(repository)
 
     await screen.findByRole('heading', {
@@ -159,9 +159,10 @@ describe('App', () => {
   })
 
   it('shows first-use traveler choice when no profile is saved', async () => {
-    window.history.replaceState({}, '', '/home')
+    window.history.replaceState({}, '', '/welcome')
     renderApp()
 
+    fireEvent.click(screen.getByRole('link', { name: 'Enter trip' }))
     expect(
       await screen.findByRole('heading', {
         level: 1,
@@ -177,9 +178,10 @@ describe('App', () => {
 
   it('persists Sam from first-use setup and greets them on Home', async () => {
     const repository = new MemoryTripStateRepository()
-    window.history.replaceState({}, '', '/home')
+    window.history.replaceState({}, '', '/welcome')
     renderApp(repository)
 
+    fireEvent.click(screen.getByRole('link', { name: 'Enter trip' }))
     fireEvent.click(await screen.findByRole('button', { name: /Sam/ }))
 
     expect(repository.travelerId).toBe('traveler-sam')
@@ -195,7 +197,7 @@ describe('App', () => {
   it('changes the traveler later under More and updates Home', async () => {
     const repository = new MemoryTripStateRepository()
     repository.travelerId = 'traveler-alex'
-    window.history.replaceState({}, '', '/home')
+    window.history.replaceState({}, '', '/home?phase=pre-trip')
     renderApp(repository)
 
     fireEvent.click(await screen.findByRole('link', { name: 'More' }))
@@ -221,7 +223,7 @@ describe('App', () => {
   it('does not show an appearance selector under More', async () => {
     const repository = new MemoryTripStateRepository()
     repository.travelerId = 'traveler-alex'
-    window.history.replaceState({}, '', '/home')
+    window.history.replaceState({}, '', '/home?phase=pre-trip')
     renderApp(repository)
 
     fireEvent.click(await screen.findByRole('link', { name: 'More' }))
@@ -235,7 +237,7 @@ describe('App', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('opens Home on a fresh launch before the trip', async () => {
+  it('opens Welcome on a fresh launch before the trip and preserves later navigation', async () => {
     const repository = new MemoryTripStateRepository()
     repository.travelerId = 'traveler-alex'
     window.history.replaceState({}, '', '/trip')
@@ -244,12 +246,23 @@ describe('App', () => {
 
     expect(
       await screen.findByRole('heading', {
-        level: 2,
-        name: 'Our journey begins soon',
+        level: 1,
+        name: 'Northern Coast Journey',
       }),
     ).toBeInTheDocument()
-    expect(screen.getByText(/\d+ days? to departure/)).toBeInTheDocument()
-    expect(screen.getByText('Mon amour pour toujours,')).toBeInTheDocument()
+    expect(screen.getByText(/\d+ days? to go/)).toBeInTheDocument()
+    expect(
+      screen.queryByRole('navigation', { name: 'Primary navigation' }),
+    ).not.toBeInTheDocument()
+    expect(window.location.pathname).toBe('/welcome')
+
+    fireEvent.click(screen.getByRole('link', { name: 'Enter trip' }))
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: /Good (morning|afternoon|evening), Alex/,
+      }),
+    ).toBeInTheDocument()
     expect(window.location.pathname).toBe('/home')
   })
 
