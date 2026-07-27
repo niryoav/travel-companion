@@ -74,6 +74,12 @@ Source names and the guide review date appear compactly in the interface. Public
 links may appear inside a small Sources disclosure, while all useful guide
 content remains available without connectivity.
 
+The production itinerary has twelve destination guides, one for each canonical
+port location. They were reviewed against official tourism, local-government,
+or other public primary sources on 27 July 2026. Dual-name destinations keep
+the cruise port distinct from the wider regional city. Sea days, superseded
+ports, and excursion-only stops do not receive destination guides.
+
 The initial excursion inventory contains eleven reviewed guides: eight based on
 official Oceania shore excursion material and three for independent bookings.
 Two independent guides use official operator sources; the Isle of Lewis guide
@@ -90,12 +96,13 @@ context, major landmarks, language, currency, and stable landscape context.
 Do not bundle changing opening hours, prices, closures, availability, weather,
 transport disruptions, excursion changes, gangway information, or unverified
 all-aboard values as editorial facts. These require a future freshness and
-update workflow.
+update workflow. The twelve production destination guides contain no live or
+rapidly changing destination data.
 
 ## Images
 
 A destination guide may contain one optional local image. For the initial
-Reykjavík prototype:
+image-integration step:
 
 - use WebP;
 - target 1200 × 675 pixels;
@@ -109,6 +116,10 @@ Place the image inside the closed-by-default destination disclosure, below all
 operational content. Reserve its 16:9 space with intrinsic dimensions or CSS,
 use `loading="lazy"`, and omit the entire image treatment when no approved asset
 exists. Do not generate, download, or add an unlicensed image.
+
+No production destination image is currently bundled. Image selection,
+licensing, optimization, and integration remain a separate review step, as do
+any external ticket or document assets.
 
 ## Privacy
 

@@ -24,8 +24,8 @@ operational view of the current travel day.
 - Offline availability through the existing bundled trip-data architecture
 - A separate bundled editorial-content foundation for concise destination and
   future confirmed-excursion background
-- One Reykjavík destination prototype after its source-based text and optional
-  licensed image are explicitly approved
+- Source-reviewed editorial guides for all twelve canonical destinations
+- Destination images reserved for a separate licensing and integration step
 - Eleven confirmed excursion events represented operationally, with editorial
   enrichment limited to source-reviewed guides
 
@@ -39,7 +39,7 @@ operational view of the current travel day.
 - Roadmap and design-language alignment
 - Destination-content contracts, validation, repository, selectors, and
   privacy-safe fixtures
-- A collapsed destination disclosure inside expanded day details
+- Twelve collapsed destination disclosures inside their expanded day details
 
 ## Acceptance Criteria
 
@@ -130,7 +130,6 @@ operational view of the current travel day.
 - Speculative domain entities or unverified operational information
 - Home, Today, Documents, More, or global-navigation redesign
 - Daily Love Messages implementation
-- Research or population of every itinerary destination
 - Unconfirmed excursion background
 - Unlicensed destination images, runtime image fetching, or image generation
 - Changing prices, opening hours, closures, weather, availability, or
@@ -186,23 +185,24 @@ Daily Love Messages remains an unnumbered later personal-experience feature.
 Future storage, privacy, authoring under More, traveler-specific visibility, and
 optional photo support require product review before implementation.
 
-The destination foundation and fictional fixture are implemented before any
-real Reykjavík copy. Reykjavík text and its optional image require separate
-source and licensing approval before population.
+All twelve production destinations now have concise editorial guides reviewed
+against official tourism, local-government, or other public primary sources.
+They contain stable orientation only; no live or rapidly changing destination
+data is included. Destination images and external ticket assets remain pending,
+and image selection and integration will be handled as a separate step.
 
 The canonical itinerary includes eleven confirmed excursion events with concise
 editorial enrichment. Eight guides were reviewed against official Oceania shore
 excursion material; three are independent bookings. The Gentle Giants and
 Arctic Shorex guides were reviewed against official operator sources, while the
 Hebridean Isle Tours guide was confirmed from the user-supplied booking
-confirmation. Destination guides, destination images, and external ticket
-assets remain pending and are not represented by placeholders.
+confirmation. Destination images and external ticket assets remain pending and
+are not represented by placeholders.
 
 Oceania confirmed that Stornoway (Hebrides), Scotland replaced the former
 Portree call on 29 August because of improvement plans in Portree. Stornoway is
-the current canonical port, scheduled for 07:00–16:00, with no booked excursion
-configured. The former Portree entry is retained here only as superseded
-historical context.
+the current canonical port, scheduled for 07:00–16:00. The former Portree entry
+is retained here only as superseded historical context.
 
 The independent Isle of Lewis Tour is confirmed for Stornoway. Its current
 booking confirmation still shows the superseded provisional schedule, while an
