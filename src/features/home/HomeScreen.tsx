@@ -12,14 +12,14 @@ import { selectHomeViewModel } from './selectors/selectHomeViewModel'
 
 interface HomeScreenProps {
   loveMessageSchedule: DailyLoveMessageSchedule
-  now?: Date
+  now: Date
   travelerName: string
   tripData: TripData
 }
 
 export function HomeScreen({
   loveMessageSchedule,
-  now = new Date(),
+  now,
   travelerName,
   tripData,
 }: HomeScreenProps) {

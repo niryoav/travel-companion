@@ -7,7 +7,7 @@ import { HomeScreen } from '../home/HomeScreen'
 
 interface HomeProfileGateProps {
   loveMessageSchedule: DailyLoveMessageSchedule
-  now?: Date
+  now: Date
   tripData: TripData
   tripStateRepository: TripStateRepository
 }
