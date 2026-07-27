@@ -134,6 +134,8 @@ function eventViewModel(
     endsAt: event.endsAt,
     location: location?.name,
     transport: transport?.label,
+    hasRelatedDocuments:
+      selectTodayDocuments(data, [event]).length > 0,
   }
 }
 
@@ -164,11 +166,17 @@ function portViewModel(
 function criticalInfo(
   portCall: PortCall | null,
   events: TripEvent[],
+  nextEvent: TripEvent | null,
 ): TodayCriticalInfoViewModel | undefined {
   if (portCall?.allAboardAt) {
+    const hasEarlierEvent =
+      nextEvent?.startsAt &&
+      Date.parse(nextEvent.startsAt) < Date.parse(portCall.allAboardAt)
+
     return {
       label: 'Critical time',
       title: 'All aboard',
+      prominence: hasEarlierEvent ? 'SUPPORTING' : 'PRIMARY',
       time: formatLocalTime(portCall.allAboardAt, portCall.timeZone),
       dateTime: portCall.allAboardAt,
       detail: 'Be back on board before this verified time.',
@@ -185,6 +193,7 @@ function criticalInfo(
   return {
     label: 'Important today',
     title: criticalEvent.title,
+    prominence: 'PRIMARY',
     time:
       criticalEvent.startsAt && criticalEvent.timeZone
         ? formatLocalTime(criticalEvent.startsAt, criticalEvent.timeZone)
@@ -214,8 +223,6 @@ function preTripViewModel(data: TripData, now: Date): TodayViewModel {
       ? eventViewModel(data, nextEvent, 'NEXT')
       : undefined,
     timeline: [],
-    hasRelatedDocuments: false,
-    tripDirection: 'View Trip for the full itinerary.',
   }
 }
 
@@ -236,8 +243,6 @@ export function selectTodayViewModel(
         summary: 'This journey has ended.',
       },
       timeline: [],
-      hasRelatedDocuments: false,
-      tripDirection: 'View Trip for the journey overview.',
     }
   }
 
@@ -251,7 +256,6 @@ export function selectTodayViewModel(
         summary: 'The bundled trip plan has no day for this moment.',
       },
       timeline: [],
-      hasRelatedDocuments: false,
       emptyMessage: 'No itinerary information is available for this day.',
     }
   }
@@ -279,18 +283,15 @@ export function selectTodayViewModel(
       dateTime: today.localDate,
       timeZoneLabel: today.timeZone,
     },
-    criticalInfo: criticalInfo(portCall, events),
+    criticalInfo: criticalInfo(portCall, events, nextEvent),
     port: portViewModel(data, portCall),
     nextEvent:
       timeline.find(({ state }) => state === 'CURRENT') ??
       timeline.find(({ state }) => state === 'NEXT'),
     timeline,
-    hasRelatedDocuments:
-      selectTodayDocuments(data, events).length > 0,
     emptyMessage:
       events.length === 0
         ? 'No timed plans are configured for today.'
         : undefined,
   }
 }
-

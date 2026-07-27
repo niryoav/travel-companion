@@ -14,7 +14,6 @@ describe('selectTodayViewModel', () => {
     expect(result.state).toBe('PRE_TRIP')
     expect(result.header.date).toContain('10 May 2030')
     expect(result.nextEvent?.title).toBe('Flight to Harbor City')
-    expect(result.tripDirection).toContain('View Trip')
   })
 
   it('maps a departure day and its next event', () => {
@@ -46,8 +45,58 @@ describe('selectTodayViewModel', () => {
     })
     expect(result.criticalInfo).toMatchObject({
       title: 'All aboard',
+      prominence: 'SUPPORTING',
       time: '17:30',
     })
+  })
+
+  it('makes all aboard primary after the outbound event has passed', () => {
+    const result = selectTodayViewModel(
+      tripFixture,
+      new Date('2030-05-11T10:00:00Z'),
+    )
+
+    expect(result.nextEvent).toBeUndefined()
+    expect(result.criticalInfo).toMatchObject({
+      title: 'All aboard',
+      prominence: 'PRIMARY',
+      time: '17:30',
+    })
+  })
+
+  it('makes all aboard primary on a port day without an excursion', () => {
+    const data: TripData = {
+      ...tripFixture,
+      days: tripFixture.days.map((day, index) =>
+        index === 1 ? { ...day, eventIds: [] } : day,
+      ),
+    }
+    const result = selectTodayViewModel(
+      data,
+      new Date('2030-05-11T06:00:00Z'),
+    )
+
+    expect(result.nextEvent).toBeUndefined()
+    expect(result.criticalInfo).toMatchObject({
+      title: 'All aboard',
+      prominence: 'PRIMARY',
+    })
+  })
+
+  it('does not invent all aboard when the port value is unverified', () => {
+    const data: TripData = {
+      ...tripFixture,
+      portCalls: tripFixture.portCalls.map((portCall, index) =>
+        index === 0 ? { ...portCall, allAboardAt: undefined } : portCall,
+      ),
+    }
+    const result = selectTodayViewModel(
+      data,
+      new Date('2030-05-11T10:00:00Z'),
+    )
+
+    expect(result.criticalInfo).toBeUndefined()
+    expect(result.port?.departureTime).toBe('18:00')
   })
 
   it('does not create port or all-aboard context for a sea day', () => {
@@ -160,13 +209,16 @@ describe('selectTodayViewModel', () => {
     }
 
     expect(
-      selectTodayViewModel(data, new Date('2030-05-10T06:00:00Z'))
-        .hasRelatedDocuments,
+      selectTodayViewModel(
+        data,
+        new Date('2030-05-10T06:00:00Z'),
+      ).timeline[0]?.hasRelatedDocuments,
     ).toBe(true)
     expect(
-      selectTodayViewModel(data, new Date('2030-05-12T06:00:00Z'))
-        .hasRelatedDocuments,
+      selectTodayViewModel(
+        data,
+        new Date('2030-05-12T06:00:00Z'),
+      ).timeline[0]?.hasRelatedDocuments,
     ).toBe(false)
   })
 })
-

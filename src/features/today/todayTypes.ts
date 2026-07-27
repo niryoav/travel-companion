@@ -34,11 +34,13 @@ export interface TodayEventViewModel {
   endsAt?: string
   location?: string
   transport?: string
+  hasRelatedDocuments: boolean
 }
 
 export interface TodayCriticalInfoViewModel {
   label: string
   title: string
+  prominence: 'PRIMARY' | 'SUPPORTING'
   time?: string
   dateTime?: string
   detail?: string
@@ -60,8 +62,5 @@ export interface TodayViewModel {
   port?: TodayPortViewModel
   nextEvent?: TodayEventViewModel
   timeline: TodayEventViewModel[]
-  hasRelatedDocuments: boolean
   emptyMessage?: string
-  tripDirection?: string
 }
-

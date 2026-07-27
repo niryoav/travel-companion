@@ -3,6 +3,9 @@ import type { TodayViewModel } from '../todayTypes'
 export const TODAY_REVIEW_STATES = [
   'departure-day',
   'port-day',
+  'port-day-late',
+  'port-day-no-excursion',
+  'port-day-unverified',
   'sea-day',
   'final-travel-day',
   'minimal-day',
@@ -37,6 +40,7 @@ export const todayReviewFixtures: Record<
       startsAt: '2030-05-10T09:00:00+02:00',
       location: 'Central Airport',
       transport: 'Example Air',
+      hasRelatedDocuments: true,
     },
     timeline: [
       {
@@ -47,6 +51,7 @@ export const todayReviewFixtures: Record<
         stateLabel: 'Completed',
         time: '06:30',
         startsAt: '2030-05-10T06:30:00+02:00',
+        hasRelatedDocuments: false,
       },
       {
         id: 'review-flight',
@@ -58,9 +63,9 @@ export const todayReviewFixtures: Record<
         startsAt: '2030-05-10T09:00:00+02:00',
         location: 'Central Airport',
         transport: 'Example Air',
+        hasRelatedDocuments: true,
       },
     ],
-    hasRelatedDocuments: true,
   },
   'port-day': {
     state: 'ACTIVE_DAY',
@@ -76,6 +81,7 @@ export const todayReviewFixtures: Record<
     criticalInfo: {
       label: 'Critical time',
       title: 'All aboard',
+      prominence: 'SUPPORTING',
       time: '17:30',
       dateTime: '2030-05-11T17:30:00+02:00',
       detail: 'Be back on board before this verified time.',
@@ -96,6 +102,7 @@ export const todayReviewFixtures: Record<
       time: '09:30',
       startsAt: '2030-05-11T09:30:00+02:00',
       location: 'Harbor Terminal',
+      hasRelatedDocuments: false,
     },
     timeline: [
       {
@@ -107,9 +114,95 @@ export const todayReviewFixtures: Record<
         time: '09:30',
         startsAt: '2030-05-11T09:30:00+02:00',
         location: 'Harbor Terminal',
+        hasRelatedDocuments: false,
       },
     ],
-    hasRelatedDocuments: false,
+  },
+  'port-day-late': {
+    state: 'ACTIVE_DAY',
+    dayKind: 'PORT_DAY',
+    header: {
+      eyebrow: 'Port day',
+      title: 'Harbor City',
+      summary: 'Example Country',
+      date: 'Saturday, 11 May 2030',
+      dateTime: '2030-05-11',
+      timeZoneLabel: 'Europe/Brussels',
+    },
+    criticalInfo: {
+      label: 'Critical time',
+      title: 'All aboard',
+      prominence: 'PRIMARY',
+      time: '17:30',
+      dateTime: '2030-05-11T17:30:00+02:00',
+      detail: 'Be back on board before this verified time.',
+    },
+    port: {
+      location: 'Harbor Terminal',
+      arrivalTime: '07:00',
+      arrivalAt: '2030-05-11T07:00:00+02:00',
+      departureTime: '18:00',
+      departureAt: '2030-05-11T18:00:00+02:00',
+    },
+    timeline: [
+      {
+        id: 'review-excursion-complete',
+        kindLabel: 'Excursion',
+        title: 'Coastal walk',
+        state: 'COMPLETED',
+        stateLabel: 'Completed',
+        time: '09:30',
+        startsAt: '2030-05-11T09:30:00+02:00',
+        location: 'Harbor Terminal',
+        hasRelatedDocuments: false,
+      },
+    ],
+  },
+  'port-day-no-excursion': {
+    state: 'ACTIVE_DAY',
+    dayKind: 'PORT_DAY',
+    header: {
+      eyebrow: 'Port day',
+      title: 'Quiet Harbor',
+      summary: 'Example Country',
+      date: 'Saturday, 11 May 2030',
+      dateTime: '2030-05-11',
+      timeZoneLabel: 'Europe/Brussels',
+    },
+    criticalInfo: {
+      label: 'Critical time',
+      title: 'All aboard',
+      prominence: 'PRIMARY',
+      time: '17:30',
+      dateTime: '2030-05-11T17:30:00+02:00',
+      detail: 'Be back on board before this verified time.',
+    },
+    port: {
+      location: 'Quiet Harbor Terminal',
+      departureTime: '18:00',
+      departureAt: '2030-05-11T18:00:00+02:00',
+    },
+    timeline: [],
+    emptyMessage: 'No timed plans are configured for today.',
+  },
+  'port-day-unverified': {
+    state: 'ACTIVE_DAY',
+    dayKind: 'PORT_DAY',
+    header: {
+      eyebrow: 'Port day',
+      title: 'Open Harbor',
+      summary: 'Example Country',
+      date: 'Saturday, 11 May 2030',
+      dateTime: '2030-05-11',
+      timeZoneLabel: 'Europe/Brussels',
+    },
+    port: {
+      location: 'Open Harbor Terminal',
+      departureTime: '18:00',
+      departureAt: '2030-05-11T18:00:00+02:00',
+    },
+    timeline: [],
+    emptyMessage: 'No timed plans are configured for today.',
   },
   'sea-day': {
     state: 'ACTIVE_DAY',
@@ -130,6 +223,7 @@ export const todayReviewFixtures: Record<
       stateLabel: 'Next',
       time: '19:00',
       startsAt: '2030-05-12T19:00:00+02:00',
+      hasRelatedDocuments: false,
     },
     timeline: [
       {
@@ -140,9 +234,9 @@ export const todayReviewFixtures: Record<
         stateLabel: 'Next',
         time: '19:00',
         startsAt: '2030-05-12T19:00:00+02:00',
+        hasRelatedDocuments: false,
       },
     ],
-    hasRelatedDocuments: false,
   },
   'final-travel-day': {
     state: 'ACTIVE_DAY',
@@ -158,6 +252,7 @@ export const todayReviewFixtures: Record<
     criticalInfo: {
       label: 'Important today',
       title: 'Disembark the ship',
+      prominence: 'PRIMARY',
       time: '08:00',
       dateTime: '2030-05-14T08:00:00+02:00',
       detail: 'Follow the configured disembarkation plan.',
@@ -170,6 +265,7 @@ export const todayReviewFixtures: Record<
       stateLabel: 'Next',
       time: '08:30',
       startsAt: '2030-05-14T08:30:00+02:00',
+      hasRelatedDocuments: false,
     },
     timeline: [
       {
@@ -180,9 +276,9 @@ export const todayReviewFixtures: Record<
         stateLabel: 'Next',
         time: '08:30',
         startsAt: '2030-05-14T08:30:00+02:00',
+        hasRelatedDocuments: false,
       },
     ],
-    hasRelatedDocuments: false,
   },
   'minimal-day': {
     state: 'ACTIVE_DAY',
@@ -199,7 +295,6 @@ export const todayReviewFixtures: Record<
       location: 'Coast Town Port',
     },
     timeline: [],
-    hasRelatedDocuments: false,
     emptyMessage: 'No timed plans are configured for today.',
   },
   'pre-trip': {
@@ -220,10 +315,9 @@ export const todayReviewFixtures: Record<
       stateLabel: 'Next',
       time: '09:00',
       startsAt: '2030-05-10T09:00:00+02:00',
+      hasRelatedDocuments: false,
     },
     timeline: [],
-    hasRelatedDocuments: false,
-    tripDirection: 'View Trip for the full itinerary.',
   },
   completed: {
     state: 'COMPLETED',
@@ -233,8 +327,5 @@ export const todayReviewFixtures: Record<
       summary: 'This journey has ended.',
     },
     timeline: [],
-    hasRelatedDocuments: false,
-    tripDirection: 'View Trip for the journey overview.',
   },
 }
-

@@ -1,10 +1,16 @@
+import { Link } from 'react-router'
+
 import type { TodayEventViewModel } from '../todayTypes'
 
 interface NextEventCardProps {
   event: TodayEventViewModel
+  showDocumentAction?: boolean
 }
 
-export function NextEventCard({ event }: NextEventCardProps) {
+export function NextEventCard({
+  event,
+  showDocumentAction = false,
+}: NextEventCardProps) {
   return (
     <section className="today-card today-next-event" aria-labelledby="next-event-title">
       <p className="today-card-label">
@@ -30,7 +36,11 @@ export function NextEventCard({ event }: NextEventCardProps) {
       {event.transport ? (
         <p className="today-event-detail">{event.transport}</p>
       ) : null}
+      {showDocumentAction && event.hasRelatedDocuments ? (
+        <Link className="today-event-document-link" to="/documents">
+          View related documents
+        </Link>
+      ) : null}
     </section>
   )
 }
-

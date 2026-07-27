@@ -1,5 +1,3 @@
-import { Link } from 'react-router'
-
 import type { TodayViewModel } from './todayTypes'
 import { CriticalInfoBanner } from './components/CriticalInfoBanner'
 import { DayTimeline } from './components/DayTimeline'
@@ -13,16 +11,32 @@ interface TodayViewProps {
 }
 
 export function TodayView({ viewModel }: TodayViewProps) {
+  const primaryCriticalInfo =
+    viewModel.criticalInfo?.prominence === 'PRIMARY'
+      ? viewModel.criticalInfo
+      : undefined
+  const supportingCriticalInfo =
+    viewModel.criticalInfo?.prominence === 'SUPPORTING'
+      ? viewModel.criticalInfo
+      : undefined
+
   return (
     <main className="today-screen" id="main-content">
       <TodayHeader header={viewModel.header} />
 
-      {viewModel.criticalInfo ? (
-        <CriticalInfoBanner information={viewModel.criticalInfo} />
+      {primaryCriticalInfo ? (
+        <CriticalInfoBanner information={primaryCriticalInfo} />
       ) : null}
 
       {viewModel.nextEvent ? (
-        <NextEventCard event={viewModel.nextEvent} />
+        <NextEventCard
+          event={viewModel.nextEvent}
+          showDocumentAction={viewModel.timeline.length === 0}
+        />
+      ) : null}
+
+      {supportingCriticalInfo ? (
+        <CriticalInfoBanner information={supportingCriticalInfo} />
       ) : null}
 
       {viewModel.timeline.length > 0 ? (
@@ -33,21 +47,6 @@ export function TodayView({ viewModel }: TodayViewProps) {
 
       {viewModel.port ? <PortDaySummary port={viewModel.port} /> : null}
 
-      {viewModel.hasRelatedDocuments ? (
-        <Link className="today-action-link" to="/documents">
-          View related documents
-        </Link>
-      ) : null}
-
-      {viewModel.tripDirection ? (
-        <section className="today-card today-direction">
-          <p>{viewModel.tripDirection}</p>
-          <Link className="today-action-link" to="/trip">
-            View Trip
-          </Link>
-        </section>
-      ) : null}
     </main>
   )
 }
-

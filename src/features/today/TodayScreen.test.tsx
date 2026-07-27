@@ -28,6 +28,44 @@ describe('TodayScreen', () => {
       screen.getAllByText('09:30').every(({ tagName }) => tagName === 'TIME'),
     ).toBe(true)
     expect(screen.getByRole('list')).toBeInTheDocument()
+    const nextEvent = screen.getByText('Next event').closest('section')
+    const allAboard = screen.getByText('All aboard').closest('section')
+    expect(
+      nextEvent!.compareDocumentPosition(allAboard!) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+  })
+
+  it('maps port-day-late without falling back to the pre-trip state', () => {
+    renderToday('/today?state=port-day-late')
+
+    expect(screen.getByText('Port day')).toBeInTheDocument()
+    expect(screen.getByText('Coastal walk')).toBeInTheDocument()
+    expect(screen.getByText('Completed')).toBeInTheDocument()
+    expect(screen.getAllByText('All aboard')).toHaveLength(1)
+    expect(screen.queryByText('Next event')).not.toBeInTheDocument()
+    expect(screen.getByText('17:30')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', {
+        level: 1,
+        name: 'Today starts when the journey begins',
+      }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('keeps verified all aboard prominent without an excursion', () => {
+    renderToday('/today?state=port-day-no-excursion')
+
+    expect(screen.getByText('All aboard')).toBeInTheDocument()
+    expect(screen.queryByText('Next event')).not.toBeInTheDocument()
+  })
+
+  it('omits unverified all aboard without inferring shore availability', () => {
+    renderToday('/today?state=port-day-unverified')
+
+    expect(screen.queryByText('All aboard')).not.toBeInTheDocument()
+    expect(screen.queryByText(/gangway|go ashore|leave the ship/i)).not.toBeInTheDocument()
+    expect(screen.getByText('Departure')).toBeInTheDocument()
   })
 
   it('renders a sea day without port or all-aboard content', () => {
@@ -62,10 +100,7 @@ describe('TodayScreen', () => {
       }),
     ).toBeInTheDocument()
     expect(screen.getByText(/Departure: Friday, 10 May 2030/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'View Trip' })).toHaveAttribute(
-      'href',
-      '/trip',
-    )
+    expect(screen.queryByRole('link', { name: 'View Trip' })).not.toBeInTheDocument()
   })
 
   it('renders the neutral completed state', () => {
