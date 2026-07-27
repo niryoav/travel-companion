@@ -190,12 +190,12 @@ The destination foundation and fictional fixture are implemented before any
 real Reykjavík copy. Reykjavík text and its optional image require separate
 source and licensing approval before population.
 
-The canonical itinerary now includes ten confirmed excursion events: eight
-Oceania excursions and two independent excursions. Rich editorial guides are
-currently bundled only for the Gentle Giants Húsavík and Arctic Shorex
-Djúpivogur excursions because those two have approved primary-source material.
-The eight Oceania events remain complete operational entries without empty
-editorial wrappers until official source copy is approved.
+The canonical itinerary includes ten confirmed excursion events with concise
+editorial enrichment. Eight guides were reviewed against official Oceania shore
+excursion material; the two independent guides were reviewed against the
+official Gentle Giants and Arctic Shorex operator sources. Destination guides,
+destination images, and external ticket assets remain pending and are not
+represented by placeholders.
 
 Oceania confirmed that Stornoway (Hebrides), Scotland replaced the former
 Portree call on 29 August because of improvement plans in Portree. Stornoway is

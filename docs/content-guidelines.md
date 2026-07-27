@@ -74,6 +74,12 @@ Source names and the guide review date appear compactly in the interface. Public
 links may appear inside a small Sources disclosure, while all useful guide
 content remains available without connectivity.
 
+The initial excursion inventory contains ten reviewed guides: eight based on
+official Oceania shore excursion material and two based on official independent
+operator sources. A source without an approved stable public URL keeps its
+public source name and review date but does not expose a private local document
+path.
+
 ## Stable and changing information
 
 Suitable bundled content includes geography, established history, cultural
