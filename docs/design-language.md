@@ -86,7 +86,8 @@ contains, in order:
 4. Oceania Marina
 5. 22 August – 4 September 2026
 6. Dynamic days-to-go text
-7. Enter trip
+7. The locally selected pre-trip love message
+8. Enter trip
 
 The bottom navigation and regular app header do not appear on the cover.
 

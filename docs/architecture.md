@@ -95,21 +95,25 @@ sensitive document files must not be stored in the trip configuration.
 ## Date-aware startup routing
 
 Application initialization derives its destination from the canonical trip
-dates and a local calendar date. It opens Home before and after the trip and
-Today during the inclusive active-trip date range. This decision is applied
-only to the browser location present when the React application mounts.
-Internal navigation then remains entirely under React Router control.
+dates and a local calendar date. It opens Welcome before the trip, Today during
+the inclusive active-trip date range, and Home after the trip. Welcome remains
+the introduction screen; Home remains the regular trip briefing. This decision
+is applied only to the browser location present when the React application
+mounts. Internal navigation then remains entirely under React Router control.
 
 The application does not store or restore a last-route preference in
 `localStorage` or `sessionStorage`. Safari and an installed PWA can restore the
 last browser URL, so the startup gate replaces that initial location when it is
 not an explicit review route. Query-driven `state` and `phase` review routes,
-and the explicit `/welcome` preview, bypass the production startup decision.
+and an explicitly opened `/welcome` route, bypass the production startup
+decision.
 
 Daily personal messages are bundled content, not mutable trip state. A pure
 selector maps the current trip-local calendar date to a fixed message. This
 keeps selection deterministic and offline without a storage counter, network
-request, or runtime generation.
+request, or runtime generation. Before the trip the message appears on Welcome;
+during the trip it remains available on Home; after the trip Home shows the
+fixed reflective message.
 
 ## Guidance
 

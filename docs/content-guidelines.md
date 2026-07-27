@@ -156,7 +156,10 @@ guides, or excursion guides. For the initial experience:
 - messages contain no sensitive identity, booking, document, or medical data.
 
 The current schedule covers 27 July through 4 September 2026 with forty unique
-messages and a fixed post-trip fallback. Future authoring, synchronization,
+messages and a fixed post-trip fallback. Before departure, the selected message
+appears on Welcome and is omitted from pre-trip Home to avoid duplication in the
+normal entry flow. During the trip it remains available on Home; after the trip
+Home presents the fixed fallback. Future authoring, synchronization,
 traveler-specific visibility, and mutable storage require separate product and
 privacy review.
 
