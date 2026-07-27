@@ -670,7 +670,6 @@ a:focus-visible {
   width: 100%;
   max-width: 48rem;
   margin: 0 auto;
-  animation: page-in 240ms ease-out both;
 }
 
 .trip-header {
