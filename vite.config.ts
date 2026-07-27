@@ -9,7 +9,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg', 'apple-touch-icon.png'],
+      includeAssets: ['apple-touch-icon.png'],
       manifest: {
         name: 'Travel Companion',
         short_name: 'Companion',
