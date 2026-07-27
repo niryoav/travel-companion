@@ -2,12 +2,23 @@ import type { TripContentBundle } from '../../domain/content/contentTypes'
 
 export const oceaniaMarina2026TripContent: TripContentBundle = {
   schemaVersion: 1,
-  contentVersion: '2026-07-27.4',
+  contentVersion: '2026-07-27.5',
   tripId: 'trip-oceania-marina-2026',
   destinationGuides: [
     {
       id: 'destination-guide-reykjavik',
       locationId: 'location-reykjavik',
+      image: {
+        src: '/images/destinations/reykjavik.webp',
+        alt: 'Panoramic view across Reykjavík toward Hallgrímskirkja and Mount Esja',
+        width: 1200,
+        height: 675,
+        credit: 'pjt56',
+        sourceUrl:
+          'https://commons.wikimedia.org/wiki/File:Reykjav%C3%ADk_Panorama-pjt.jpg',
+        license: 'CC BY-SA 3.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-sa/3.0/',
+      },
       introduction:
         'Reykjavík is a compact capital where colourful streets, contemporary Nordic design and a working waterfront sit close together. Hallgrímskirkja rises above the centre, while Harpa, the Old Harbour and the Sun Voyager give the shoreline a modern cultural character. Geothermal bathing is part of everyday Icelandic life, but this embarkation day should be shaped by the confirmed operational plan.',
       highlights: [
@@ -41,6 +52,17 @@ export const oceaniaMarina2026TripContent: TripContentBundle = {
     {
       id: 'destination-guide-isafjordur',
       locationId: 'location-isafjordur',
+      image: {
+        src: '/images/destinations/isafjordur.webp',
+        alt: 'Ísafjörður harbour with a rescue boat and steep Westfjords mountains',
+        width: 1200,
+        height: 675,
+        credit: 'Evgeniy Metyolkin',
+        sourceUrl:
+          'https://commons.wikimedia.org/wiki/File:%C3%8Dsafj%C3%B6r%C3%B0ur,_Iceland_-_panoramio_(2).jpg',
+        license: 'CC BY-SA 3.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-sa/3.0/',
+      },
       introduction:
         'Ísafjörður sits deep in the Westfjords, framed by steep mountains and calm-looking fjord water. The compact town grew from a trading and fishing centre into the region’s cultural hub. Historic wooden buildings preserve part of that maritime story, while the surrounding landscape gives even a short walk through town a strong sense of remoteness and scale.',
       highlights: [
@@ -73,6 +95,17 @@ export const oceaniaMarina2026TripContent: TripContentBundle = {
     {
       id: 'destination-guide-husavik',
       locationId: 'location-husavik',
+      image: {
+        src: '/images/destinations/husavik.webp',
+        alt: 'Aerial view of Húsavík harbour and Skjálfandi Bay',
+        width: 1200,
+        height: 675,
+        credit: 'Chensiyuan',
+        sourceUrl:
+          'https://commons.wikimedia.org/wiki/File:1_h%C3%BAsav%C3%ADk_aerial_panorama_2017.jpg',
+        license: 'CC BY-SA 4.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/',
+      },
       introduction:
         'Húsavík is a small harbour town on Skjálfandi Bay with a strong identity shaped by fishing, maritime life and whale watching. Its wooden church is a central landmark above the waterfront, and the compact centre keeps the bay close at hand. The wider region is also marked by geothermal activity and the volcanic landscapes of North Iceland.',
       highlights: [
@@ -105,6 +138,17 @@ export const oceaniaMarina2026TripContent: TripContentBundle = {
     {
       id: 'destination-guide-djupivogur',
       locationId: 'location-djupivogur',
+      image: {
+        src: '/images/destinations/djupivogur.webp',
+        alt: 'Aerial view of Djúpivogur harbour beneath Búlandstindur',
+        width: 1200,
+        height: 675,
+        credit: 'Eysteinn Guðni Guðnason',
+        sourceUrl:
+          'https://commons.wikimedia.org/wiki/File:Dj%C3%BApivogur_2023.jpg',
+        license: 'CC BY-SA 4.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/',
+      },
       introduction:
         'Djúpivogur is a small East Iceland harbour community where fishing history, local creativity and a quiet coastal landscape meet. Pyramid-shaped Búlandstindur dominates the setting across Berufjörður. Along the waterfront, Eggin í Gleðivík uses oversized stone eggs to reflect the area’s birdlife, while the town’s limited urban scale keeps mountains and sea visually present.',
       highlights: [
@@ -137,6 +181,17 @@ export const oceaniaMarina2026TripContent: TripContentBundle = {
     {
       id: 'destination-guide-torshavn',
       locationId: 'location-torshavn',
+      image: {
+        src: '/images/destinations/torshavn.webp',
+        alt: 'Panoramic view over Tórshavn and its harbour',
+        width: 1200,
+        height: 675,
+        credit: 'Ekrem Canli',
+        sourceUrl:
+          'https://commons.wikimedia.org/wiki/File:T%C3%B3rshavn_Pano_2022.jpg',
+        license: 'CC BY-SA 4.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/',
+      },
       introduction:
         'Tórshavn is one of the world’s smallest capitals, combining a working harbour with a distinctly Faroese cultural identity. Tinganes forms its historic core between two harbour areas, where turf-roofed timber buildings now house the home-rule government. Narrow lanes, old waterfront warehouses and a compact centre make the city easy to read, although its streets rise quickly from the water.',
       highlights: [
@@ -170,6 +225,17 @@ export const oceaniaMarina2026TripContent: TripContentBundle = {
     {
       id: 'destination-guide-stornoway',
       locationId: 'location-stornoway',
+      image: {
+        src: '/images/destinations/stornoway.webp',
+        alt: 'Stornoway waterfront viewed across the harbour',
+        width: 1200,
+        height: 675,
+        credit: 'MacIomhair',
+        sourceUrl:
+          'https://commons.wikimedia.org/wiki/File:Panorama_of_Stornoway.jpg',
+        license: 'CC BY 2.5',
+        licenseUrl: 'https://creativecommons.org/licenses/by/2.5/',
+      },
       introduction:
         'Stornoway is the principal town and harbour for Lewis and Harris, combining island-community life with a strong Gaelic and maritime character. Lews Castle and its wooded grounds overlook the town, while local arts and Harris Tweed reflect living Hebridean traditions. The harbour remains central to Stornoway’s identity without defining the wider Isle of Lewis itinerary.',
       highlights: [
@@ -202,6 +268,17 @@ export const oceaniaMarina2026TripContent: TripContentBundle = {
     {
       id: 'destination-guide-greenock',
       locationId: 'location-greenock',
+      image: {
+        src: '/images/destinations/greenock.webp',
+        alt: 'Greenock waterfront and the Firth of Clyde',
+        width: 1200,
+        height: 675,
+        credit: 'Thomas Nugent',
+        sourceUrl:
+          'https://commons.wikimedia.org/wiki/File:Greenock_Waterfront_-_geograph.org.uk_-_7749438.jpg',
+        license: 'CC BY-SA 2.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-sa/2.0/',
+      },
       introduction:
         'The ship calls at Greenock on the Firth of Clyde, not in central Glasgow. Greenock’s waterfront reflects the Clyde’s shipping, industrial and maritime history, while the wider region opens toward hills and estuary scenery. Glasgow is the major cultural gateway, known for bold architecture, music, art galleries and museums, but remains a separate city from the cruise port.',
       highlights: [
@@ -241,6 +318,17 @@ export const oceaniaMarina2026TripContent: TripContentBundle = {
     {
       id: 'destination-guide-dun-laoghaire',
       locationId: 'location-dun-laoghaire',
+      image: {
+        src: '/images/destinations/dun-laoghaire.webp',
+        alt: 'Dún Laoghaire harbour beside its granite pier',
+        width: 1200,
+        height: 675,
+        credit: 'William Murphy',
+        sourceUrl:
+          'https://commons.wikimedia.org/wiki/File:Dun_Laoghaire_Harbour_(1000935780)_(7).jpg',
+        license: 'CC BY-SA 2.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-sa/2.0/',
+      },
       introduction:
         'Dún Laoghaire is the harbour town where the ship calls; Dublin is the nearby capital and a separate urban destination. The port town is defined by its granite harbour, long piers and maritime heritage. Dublin adds broader context through the River Liffey, Georgian streets, literary traditions and layered history, without implying that every city landmark forms part of the day.',
       highlights: [
@@ -280,6 +368,17 @@ export const oceaniaMarina2026TripContent: TripContentBundle = {
     {
       id: 'destination-guide-holyhead',
       locationId: 'location-holyhead',
+      image: {
+        src: '/images/destinations/holyhead.webp',
+        alt: 'Holyhead Harbour and breakwater on Holy Island, Anglesey',
+        width: 1200,
+        height: 675,
+        credit: 'Oliver Mills',
+        sourceUrl:
+          'https://commons.wikimedia.org/wiki/File:Holyhead_Harbour_-_geograph.org.uk_-_4585106.jpg',
+        license: 'CC BY-SA 2.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-sa/2.0/',
+      },
       introduction:
         'Holyhead is the cruise port on Holy Island, at the western edge of Anglesey. Its story is shaped by sea crossings, harbour activity and a long maritime heritage. Beyond the port, Anglesey has a strong Welsh identity and a dramatic coastline of cliffs, coves and open views. This regional context is broader than any single booked excursion.',
       highlights: [
@@ -319,6 +418,17 @@ export const oceaniaMarina2026TripContent: TripContentBundle = {
     {
       id: 'destination-guide-ringaskiddy',
       locationId: 'location-ringaskiddy',
+      image: {
+        src: '/images/destinations/ringaskiddy-cork.webp',
+        alt: 'Ringaskiddy Terminal and its ferry berths within Cork Harbour',
+        width: 1200,
+        height: 675,
+        credit: 'Andrew Wood',
+        sourceUrl:
+          'https://commons.wikimedia.org/wiki/File:Ringaskiddy_Terminal_-_geograph.org.uk_-_1856365.jpg',
+        license: 'CC BY-SA 2.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-sa/2.0/',
+      },
       introduction:
         'Ringaskiddy is the cruise port within Cork Harbour; the ship does not dock in central Cork. The harbour’s sheltered waters have supported trade and maritime life for centuries. Cork city provides the wider regional focus, built around channels of the River Lee and known for bridges, compact historic streets, food culture and an independent character shaped by commerce and migration.',
       highlights: [
@@ -358,6 +468,17 @@ export const oceaniaMarina2026TripContent: TripContentBundle = {
     {
       id: 'destination-guide-falmouth',
       locationId: 'location-falmouth',
+      image: {
+        src: '/images/destinations/falmouth.webp',
+        alt: 'Falmouth waterfront, marina and hillside town',
+        width: 1200,
+        height: 675,
+        credit: 'Lewis Clarke',
+        sourceUrl:
+          'https://commons.wikimedia.org/wiki/File:Falmouth_,_Falmouth_Scenery_-_geograph.org.uk_-_5375310.jpg',
+        license: 'CC BY-SA 2.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-sa/2.0/',
+      },
       introduction:
         'Falmouth grew around one of the world’s notable natural deep-water harbours, and the sea still shapes the town’s identity. Its waterfront, sailing traditions and maritime heritage sit alongside galleries, independent shops and a lively creative culture. The surrounding Cornish coast adds beaches, headlands and broad sea views, while Falmouth itself remains distinct from other Cornish towns.',
       highlights: [
@@ -390,6 +511,17 @@ export const oceaniaMarina2026TripContent: TripContentBundle = {
     {
       id: 'destination-guide-southampton',
       locationId: 'location-southampton',
+      image: {
+        src: '/images/destinations/southampton.webp',
+        alt: 'Southampton cruise liner terminal viewed across the port',
+        width: 1200,
+        height: 675,
+        credit: 'Lewis Clarke',
+        sourceUrl:
+          'https://commons.wikimedia.org/wiki/File:Southampton_,_Cruise_Liner_Terminal_-_geograph.org.uk_-_6692990.jpg',
+        license: 'CC BY-SA 2.0',
+        licenseUrl: 'https://creativecommons.org/licenses/by-sa/2.0/',
+      },
       introduction:
         'Southampton is a major working port with maritime connections stretching from medieval trade to transatlantic travel and modern cruising. Surviving town walls, gates and old vaults reveal the earlier port city, while SeaCity Museum interprets Southampton’s relationship with the sea and Titanic. On disembarkation day, this background remains contextual rather than a promise of sightseeing time.',
       highlights: [
