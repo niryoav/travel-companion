@@ -69,21 +69,25 @@ function eventKindLabel(event: TripEvent): string {
 
 function temporalState(
   event: TripEvent,
-  currentEvent: TripEvent | null,
   nextEvent: TripEvent | null,
   now: Date,
 ): TodayEventState {
   if (!event.startsAt) {
     return 'UNTIMED'
   }
-  if (event.id === currentEvent?.id) {
+
+  const instant = now.getTime()
+  if (
+    event.endsAt &&
+    Date.parse(event.startsAt) <= instant &&
+    instant < Date.parse(event.endsAt)
+  ) {
     return 'CURRENT'
   }
   if (event.id === nextEvent?.id) {
     return 'NEXT'
   }
 
-  const instant = now.getTime()
   const completedAt = event.endsAt
     ? Date.parse(event.endsAt)
     : Date.parse(event.startsAt)
@@ -267,7 +271,7 @@ export function selectTodayViewModel(
     eventViewModel(
       data,
       event,
-      temporalState(event, currentEvent, nextEvent, now),
+      temporalState(event, nextEvent, now),
     ),
   )
   const portCall = selectTodayPortCall(data, today)
@@ -286,7 +290,9 @@ export function selectTodayViewModel(
     criticalInfo: criticalInfo(portCall, events, nextEvent),
     port: portViewModel(data, portCall),
     nextEvent:
-      timeline.find(({ state }) => state === 'CURRENT') ??
+      (currentEvent
+        ? timeline.find(({ id }) => id === currentEvent.id)
+        : undefined) ??
       timeline.find(({ state }) => state === 'NEXT'),
     timeline,
     emptyMessage:

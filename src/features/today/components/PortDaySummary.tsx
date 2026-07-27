@@ -36,4 +36,3 @@ export function PortDaySummary({ port }: PortDaySummaryProps) {
     </section>
   )
 }
-

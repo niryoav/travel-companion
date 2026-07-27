@@ -25,4 +25,3 @@ export function TodayHeader({ header }: TodayHeaderProps) {
     </header>
   )
 }
-

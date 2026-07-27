@@ -12,4 +12,3 @@ export function selectTodayPortCall(
     data.portCalls.find(({ id }) => id === day.portCallId) ?? null
   )
 }
-

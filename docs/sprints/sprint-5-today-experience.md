@@ -131,4 +131,3 @@ Home remains the concise briefing. Today provides the fuller chronological view.
 Production all-aboard values remain absent until verified from an authoritative
 trip document or onboard source. Privacy-safe review fixtures may demonstrate
 that presentation without being mistaken for production data.
-

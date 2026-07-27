@@ -14,4 +14,3 @@ export function selectTodayDocuments(
 
   return data.documentReferences.filter(({ id }) => referenceIds.has(id))
 }
-

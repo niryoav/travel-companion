@@ -28,4 +28,3 @@ export function TodayScreen({ now, tripData }: TodayScreenProps) {
 
   return <TodayView viewModel={viewModel} />
 }
-

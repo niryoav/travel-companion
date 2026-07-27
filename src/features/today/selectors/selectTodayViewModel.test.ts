@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
+import { selectCurrentEvent } from '../../../domain/trip/selectors/selectCurrentEvent'
+import { selectTodayEvents } from '../../../domain/trip/selectors/selectTodayEvents'
 import type { TripData } from '../../../domain/trip/tripTypes'
 import { tripFixture } from '../../../test/fixtures/tripFixture'
 import { selectTodayViewModel } from './selectTodayViewModel'
@@ -189,6 +191,76 @@ describe('selectTodayViewModel', () => {
         }),
       ]),
     )
+  })
+
+  it('marks every simultaneous ranged event as Now while keeping the first primary', () => {
+    const data: TripData = {
+      ...tripFixture,
+      days: tripFixture.days.map((day, index) =>
+        index === 0
+          ? {
+              ...day,
+              eventIds: [
+                'event-overlap-first',
+                'event-overlap-second',
+                'event-future-next',
+                'event-future-later',
+              ],
+            }
+          : day,
+      ),
+      events: [
+        {
+          id: 'event-overlap-first',
+          dayId: 'day-2030-05-10',
+          kind: 'ACTIVITY',
+          title: 'First overlapping activity',
+          startsAt: '2030-05-10T08:00:00Z',
+          endsAt: '2030-05-10T10:00:00Z',
+          timeZone: 'UTC',
+        },
+        {
+          id: 'event-overlap-second',
+          dayId: 'day-2030-05-10',
+          kind: 'ACTIVITY',
+          title: 'Second overlapping activity',
+          startsAt: '2030-05-10T08:30:00Z',
+          endsAt: '2030-05-10T09:30:00Z',
+          timeZone: 'UTC',
+        },
+        {
+          id: 'event-future-next',
+          dayId: 'day-2030-05-10',
+          kind: 'ACTIVITY',
+          title: 'Next activity',
+          startsAt: '2030-05-10T10:30:00Z',
+          timeZone: 'UTC',
+        },
+        {
+          id: 'event-future-later',
+          dayId: 'day-2030-05-10',
+          kind: 'ACTIVITY',
+          title: 'Later activity',
+          startsAt: '2030-05-10T11:30:00Z',
+          timeZone: 'UTC',
+        },
+      ],
+    }
+    const now = new Date('2030-05-10T09:00:00Z')
+    const events = selectTodayEvents(data, data.days[0])
+
+    expect(selectCurrentEvent(events, now)?.id).toBe('event-overlap-first')
+
+    const result = selectTodayViewModel(data, now)
+    expect(result.nextEvent?.id).toBe('event-overlap-first')
+    expect(
+      result.timeline
+        .filter(({ stateLabel }) => stateLabel === 'Now')
+        .map(({ id }) => id),
+    ).toEqual(['event-overlap-first', 'event-overlap-second'])
+    expect(
+      result.timeline.find(({ id }) => id === 'event-future-later'),
+    ).toMatchObject({ state: 'UPCOMING', stateLabel: 'Later' })
   })
 
   it('shows related-document navigation only for linked references', () => {

@@ -18,4 +18,3 @@ export function DayTimeline({ events }: DayTimelineProps) {
     </section>
   )
 }
-
