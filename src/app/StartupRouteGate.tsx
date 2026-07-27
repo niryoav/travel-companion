@@ -41,7 +41,12 @@ export function StartupRouteGate({
     !startup.shouldPreserveLocation &&
     location.pathname !== startup.targetPath
   ) {
-    return <Navigate replace to={startup.targetPath} />
+    return (
+      <>
+        <div className="startup-route-fallback" aria-hidden="true" />
+        <Navigate replace to={startup.targetPath} />
+      </>
+    )
   }
 
   return children
