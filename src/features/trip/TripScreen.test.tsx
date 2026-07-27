@@ -129,6 +129,41 @@ describe('TripScreen', () => {
     ).toEqual(['Travel to Harbor City', 'Harbor City', 'At sea'])
   })
 
+  it('renders production foreground cards immediately and again after reopening', () => {
+    const renderProductionTrip = () =>
+      render(
+        <MemoryRouter initialEntries={['/trip']}>
+          <TripScreen
+            tripData={oceaniaMarina2026TripData}
+            tripContent={oceaniaMarina2026TripContent}
+            now={new Date('2026-08-30T12:00:00Z')}
+          />
+        </MemoryRouter>,
+      )
+    const firstRender = renderProductionTrip()
+
+    expect(firstRender.container.querySelector('.trip-progress')).toBeVisible()
+    expect(
+      firstRender.container.querySelectorAll('.trip-day-card'),
+    ).toHaveLength(oceaniaMarina2026TripData.trip.dayIds.length)
+    expect(
+      screen.getByText('About Glasgow (Greenock)'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('img', {
+        name: /Greenock waterfront/i,
+      }),
+    ).toHaveAttribute('loading', 'lazy')
+
+    firstRender.unmount()
+    const reopened = renderProductionTrip()
+
+    expect(reopened.container.querySelector('.trip-progress')).toBeVisible()
+    expect(
+      reopened.container.querySelectorAll('.trip-day-card'),
+    ).toHaveLength(oceaniaMarina2026TripData.trip.dayIds.length)
+  })
+
   it('makes Today explicit and open by default without navigation', () => {
     renderTrip('/trip?state=active')
     const todayStatus = screen.getByText('Today')
