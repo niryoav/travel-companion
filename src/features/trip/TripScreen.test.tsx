@@ -151,7 +151,7 @@ describe('TripScreen', () => {
     ).toBeInTheDocument()
     expect(
       screen.getByRole('img', {
-        name: /Greenock waterfront/i,
+        name: /Loch Lomond/i,
       }),
     ).toHaveAttribute('loading', 'lazy')
 

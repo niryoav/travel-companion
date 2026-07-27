@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs'
+import { existsSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 import { describe, expect, it } from 'vitest'
@@ -33,6 +33,63 @@ const destinationGuides = [
   ['location-ringaskiddy', '2026-09-02', 'Cork (Ringaskiddy)'],
   ['location-falmouth', '2026-09-03', 'Falmouth'],
   ['location-southampton', '2026-09-04', 'London (Southampton)'],
+] as const
+
+const replacementUploads = [
+  {
+    dayNumber: 2,
+    sourceFilename: 'reykjavik day 2.webp',
+    locationId: 'location-reykjavik',
+    finalFilename: 'reykjavik.webp',
+  },
+  {
+    dayNumber: 3,
+    sourceFilename: 'isafjorour day 3.jpg',
+    locationId: 'location-isafjordur',
+    finalFilename: 'isafjordur.webp',
+  },
+  {
+    dayNumber: 4,
+    sourceFilename: 'husavik day4.jpg',
+    locationId: 'location-husavik',
+    finalFilename: 'husavik.webp',
+  },
+  {
+    dayNumber: 5,
+    sourceFilename: 'djupivogur day 5.jpg',
+    locationId: 'location-djupivogur',
+    finalFilename: 'djupivogur.webp',
+  },
+  {
+    dayNumber: 8,
+    sourceFilename: 'stornoway day 8.jpg',
+    locationId: 'location-stornoway',
+    finalFilename: 'stornoway.webp',
+  },
+  {
+    dayNumber: 9,
+    sourceFilename: 'Loch-Lomond-day 9.png',
+    locationId: 'location-greenock',
+    finalFilename: 'greenock.webp',
+  },
+  {
+    dayNumber: 10,
+    sourceFilename: 'dublin day 10.jpg',
+    locationId: 'location-dun-laoghaire',
+    finalFilename: 'dun-laoghaire.webp',
+  },
+  {
+    dayNumber: 11,
+    sourceFilename: 'holyhead day 11.jpg',
+    locationId: 'location-holyhead',
+    finalFilename: 'holyhead.webp',
+  },
+  {
+    dayNumber: 12,
+    sourceFilename: 'cork day 12.jpeg',
+    locationId: 'location-ringaskiddy',
+    finalFilename: 'ringaskiddy-cork.webp',
+  },
 ] as const
 
 describe('Oceania Marina bundled editorial content', () => {
@@ -75,9 +132,6 @@ describe('Oceania Marina bundled editorial content', () => {
         width: 1200,
         height: 675,
         credit: expect.any(String),
-        sourceUrl: expect.stringMatching(
-          /^https:\/\/commons[.]wikimedia[.]org\/wiki\/File:/,
-        ),
       })
       expect(guide?.image?.alt.trim()).not.toBe('')
       expect(guide?.image?.credit?.trim()).not.toBe('')
@@ -88,6 +142,95 @@ describe('Oceania Marina bundled editorial content', () => {
         ),
       ).toBe(true)
     }
+  })
+
+  it('maps each unambiguous user upload to its production day and destination', () => {
+    const viewModel = selectTripViewModel(
+      oceaniaMarina2026TripData,
+      new Date('2026-08-01T12:00:00Z'),
+      oceaniaMarina2026TripContent,
+    )
+
+    for (const {
+      dayNumber,
+      sourceFilename,
+      locationId,
+      finalFilename,
+    } of replacementUploads) {
+      const guide = selectDestinationGuide(
+        oceaniaMarina2026TripContent,
+        locationId,
+      )
+
+      expect(sourceFilename).toMatch(
+        new RegExp(`(?:day[ -]?${dayNumber}|${dayNumber}[.]?)`, 'i'),
+      )
+      expect(guide?.image).toMatchObject({
+        src: `/images/destinations/${finalFilename}`,
+        credit: 'User-supplied image',
+      })
+      expect(guide?.image?.sourceUrl).toBeUndefined()
+      expect(guide?.image?.license).toBeUndefined()
+      expect(guide?.image?.licenseUrl).toBeUndefined()
+      expect(
+        viewModel.days.find(({ dayNumber: value }) => value === dayNumber)
+          ?.destination?.image?.src,
+      ).toBe(`/images/destinations/${finalFilename}`)
+    }
+  })
+
+  it('preserves the Day 6 and Day 13 image paths and source metadata', () => {
+    expect(
+      selectDestinationGuide(
+        oceaniaMarina2026TripContent,
+        'location-torshavn',
+      )?.image,
+    ).toEqual({
+      src: '/images/destinations/torshavn.webp',
+      alt: 'Panoramic view over Tórshavn and its harbour',
+      width: 1200,
+      height: 675,
+      credit: 'Ekrem Canli',
+      sourceUrl:
+        'https://commons.wikimedia.org/wiki/File:T%C3%B3rshavn_Pano_2022.jpg',
+      license: 'CC BY-SA 4.0',
+      licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/',
+    })
+    expect(
+      selectDestinationGuide(
+        oceaniaMarina2026TripContent,
+        'location-falmouth',
+      )?.image,
+    ).toEqual({
+      src: '/images/destinations/falmouth.webp',
+      alt: 'Falmouth waterfront, marina and hillside town',
+      width: 1200,
+      height: 675,
+      credit: 'Lewis Clarke',
+      sourceUrl:
+        'https://commons.wikimedia.org/wiki/File:Falmouth_,_Falmouth_Scenery_-_geograph.org.uk_-_5375310.jpg',
+      license: 'CC BY-SA 2.0',
+      licenseUrl: 'https://creativecommons.org/licenses/by-sa/2.0/',
+    })
+  })
+
+  it('bundles only the twelve final WebP destination assets', () => {
+    const destinationAssetDirectory = resolve(
+      process.cwd(),
+      'public/images/destinations',
+    )
+
+    expect(readdirSync(destinationAssetDirectory).sort()).toEqual(
+      oceaniaMarina2026TripContent.destinationGuides
+        .map(({ image }) => image?.src.split('/').at(-1))
+        .filter((filename): filename is string => Boolean(filename))
+        .sort(),
+    )
+    expect(
+      readdirSync(destinationAssetDirectory).every((filename) =>
+        filename.endsWith('.webp'),
+      ),
+    ).toBe(true)
   })
 
   it('attaches each guide only to its canonical itinerary day', () => {
@@ -115,7 +258,7 @@ describe('Oceania Marina bundled editorial content', () => {
     ).toBe(true)
   })
 
-  it('uses port-specific imagery without making misleading ship or port claims', () => {
+  it('keeps uploaded excursion imagery geographically explicit', () => {
     const imageFor = (locationId: string) =>
       selectDestinationGuide(
         oceaniaMarina2026TripContent,
@@ -128,7 +271,7 @@ describe('Oceania Marina bundled editorial content', () => {
     )
     expect(imageFor('location-ringaskiddy')).toMatchObject({
       src: '/images/destinations/ringaskiddy-cork.webp',
-      sourceUrl: expect.stringContaining('Ringaskiddy_Terminal'),
+      alt: expect.stringMatching(/Cobh, Cork Harbour/i),
     })
     expect(imageFor('location-southampton')?.alt).not.toMatch(
       /Oceania|Marina/i,
@@ -145,7 +288,12 @@ describe('Oceania Marina bundled editorial content', () => {
     const guides = Object.fromEntries(
       oceaniaMarina2026TripContent.destinationGuides.map((guide) => [
         guide.locationId,
-        JSON.stringify(guide),
+        JSON.stringify({
+          introduction: guide.introduction,
+          highlights: guide.highlights,
+          practicalFacts: guide.practicalFacts,
+          goodToKnow: guide.goodToKnow,
+        }),
       ]),
     )
 
@@ -165,18 +313,21 @@ describe('Oceania Marina bundled editorial content', () => {
     const guides = JSON.stringify(
       oceaniaMarina2026TripContent.destinationGuides,
     )
-    const djupivogur = JSON.stringify(
-      selectDestinationGuide(
+    const editorialText = (locationId: string) => {
+      const guide = selectDestinationGuide(
         oceaniaMarina2026TripContent,
-        'location-djupivogur',
-      ),
-    )
-    const falmouth = JSON.stringify(
-      selectDestinationGuide(
-        oceaniaMarina2026TripContent,
-        'location-falmouth',
-      ),
-    )
+        locationId,
+      )
+
+      return JSON.stringify({
+        introduction: guide?.introduction,
+        highlights: guide?.highlights,
+        practicalFacts: guide?.practicalFacts,
+        goodToKnow: guide?.goodToKnow,
+      })
+    }
+    const djupivogur = editorialText('location-djupivogur')
+    const falmouth = editorialText('location-falmouth')
 
     expect(guides).not.toMatch(/Portree/i)
     expect(djupivogur).not.toMatch(/Jökulsárlón/i)
