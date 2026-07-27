@@ -8,11 +8,13 @@ import { HomePhaseView } from './HomePhaseView'
 import { selectHomeViewModel } from './selectors/selectHomeViewModel'
 
 interface HomeScreenProps {
+  now?: Date
   travelerName: string
   tripData: TripData
 }
 
 export function HomeScreen({
+  now = new Date(),
   travelerName,
   tripData,
 }: HomeScreenProps) {
@@ -20,12 +22,12 @@ export function HomeScreen({
   const reviewState = demoHomeStateFromSearch(search)
   const viewModel = reviewState
     ? homeReviewFixtures[reviewState]
-    : selectHomeViewModel(tripData)
+    : selectHomeViewModel(tripData, now)
 
   return (
     <main className="home-screen" id="main-content">
       <HomePhaseView
-        greeting={greetingFor(travelerName)}
+        greeting={greetingFor(travelerName, now)}
         viewModel={viewModel}
       />
     </main>

@@ -29,9 +29,11 @@ const tripContentRepository = new BundledTripContentRepository(
 
 function renderApp(
   tripStateRepository = new MemoryTripStateRepository(),
+  now = new Date('2030-05-01T12:00:00Z'),
 ) {
   render(
     <App
+      now={now}
       tripRepository={tripRepository}
       tripContentRepository={tripContentRepository}
       tripStateRepository={tripStateRepository}
@@ -46,6 +48,7 @@ describe('App', () => {
   })
 
   it('shows the approved trip welcome content without primary navigation', () => {
+    window.history.replaceState({}, '', '/welcome')
     renderApp()
 
     expect(
@@ -67,6 +70,7 @@ describe('App', () => {
   })
 
   it('opens Home from the welcome cover', async () => {
+    window.history.replaceState({}, '', '/welcome')
     const repository = renderApp()
 
     fireEvent.click(screen.getByRole('link', { name: 'Enter trip' }))
@@ -102,6 +106,7 @@ describe('App', () => {
   it('keeps primary navigation working after entering the app', async () => {
     const repository = new MemoryTripStateRepository()
     repository.travelerId = 'traveler-alex'
+    window.history.replaceState({}, '', '/welcome')
     renderApp(repository)
 
     fireEvent.click(screen.getByRole('link', { name: 'Enter trip' }))
@@ -188,9 +193,10 @@ describe('App', () => {
   it('changes the traveler later under More and updates Home', async () => {
     const repository = new MemoryTripStateRepository()
     repository.travelerId = 'traveler-alex'
-    window.history.replaceState({}, '', '/more')
+    window.history.replaceState({}, '', '/home')
     renderApp(repository)
 
+    fireEvent.click(await screen.findByRole('link', { name: 'More' }))
     expect(
       await screen.findByRole('heading', {
         level: 2,
@@ -213,9 +219,10 @@ describe('App', () => {
   it('does not show an appearance selector under More', async () => {
     const repository = new MemoryTripStateRepository()
     repository.travelerId = 'traveler-alex'
-    window.history.replaceState({}, '', '/more')
+    window.history.replaceState({}, '', '/home')
     renderApp(repository)
 
+    fireEvent.click(await screen.findByRole('link', { name: 'More' }))
     await screen.findByRole('heading', {
       level: 2,
       name: 'Traveler on this device',
