@@ -2,9 +2,431 @@ import type { TripContentBundle } from '../../domain/content/contentTypes'
 
 export const oceaniaMarina2026TripContent: TripContentBundle = {
   schemaVersion: 1,
-  contentVersion: '2026-07-27.3',
+  contentVersion: '2026-07-27.4',
   tripId: 'trip-oceania-marina-2026',
-  destinationGuides: [],
+  destinationGuides: [
+    {
+      id: 'destination-guide-reykjavik',
+      locationId: 'location-reykjavik',
+      introduction:
+        'Reykjavík is a compact capital where colourful streets, contemporary Nordic design and a working waterfront sit close together. Hallgrímskirkja rises above the centre, while Harpa, the Old Harbour and the Sun Voyager give the shoreline a modern cultural character. Geothermal bathing is part of everyday Icelandic life, but this embarkation day should be shaped by the confirmed operational plan.',
+      highlights: [
+        'Hallgrímskirkja and its distinctive skyline presence',
+        'Harpa concert hall beside the harbour',
+        'Old Harbour streets and maritime character',
+        'Sun Voyager and the waterfront',
+        'Colourful central streets and Nordic design',
+      ],
+      practicalFacts: [
+        { label: 'Country', value: 'Iceland' },
+        { label: 'Language', value: 'Icelandic' },
+        { label: 'Currency', value: 'Icelandic króna (ISK)' },
+      ],
+      goodToKnow: [
+        'Weather can shift quickly, even within the compact centre.',
+        'Use the embarkation plan, not this guide, to judge any available sightseeing time.',
+      ],
+      sourceReferences: [
+        {
+          id: 'source-visit-reykjavik-city-centre',
+          name: 'Visit Reykjavík — Reykjavík City Centre',
+          type: 'TOURISM_AUTHORITY',
+          url: 'https://visitreykjavik.is/city-areas/reykjavik-city-centre',
+          reviewedAt: '2026-07-27',
+        },
+      ],
+      reviewedAt: '2026-07-27',
+      verification: 'PRIMARY_SOURCE_REVIEWED',
+    },
+    {
+      id: 'destination-guide-isafjordur',
+      locationId: 'location-isafjordur',
+      introduction:
+        'Ísafjörður sits deep in the Westfjords, framed by steep mountains and calm-looking fjord water. The compact town grew from a trading and fishing centre into the region’s cultural hub. Historic wooden buildings preserve part of that maritime story, while the surrounding landscape gives even a short walk through town a strong sense of remoteness and scale.',
+      highlights: [
+        'Dramatic Westfjords mountain and fjord setting',
+        'Historic wooden trading buildings',
+        'Fishing and maritime heritage',
+        'Compact cultural centre for the wider region',
+      ],
+      practicalFacts: [
+        { label: 'Country', value: 'Iceland' },
+        { label: 'Language', value: 'Icelandic' },
+        { label: 'Currency', value: 'Icelandic króna (ISK)' },
+      ],
+      goodToKnow: [
+        'Conditions can turn cool, wet or windy quickly.',
+        'Wildlife remains unpredictable and should never be assumed.',
+      ],
+      sourceReferences: [
+        {
+          id: 'source-visit-westfjords-isafjordur',
+          name: 'Visit Westfjords — Ísafjörður',
+          type: 'TOURISM_AUTHORITY',
+          url: 'https://www.westfjords.is/en/destinations/towns/isafjordur',
+          reviewedAt: '2026-07-27',
+        },
+      ],
+      reviewedAt: '2026-07-27',
+      verification: 'PRIMARY_SOURCE_REVIEWED',
+    },
+    {
+      id: 'destination-guide-husavik',
+      locationId: 'location-husavik',
+      introduction:
+        'Húsavík is a small harbour town on Skjálfandi Bay with a strong identity shaped by fishing, maritime life and whale watching. Its wooden church is a central landmark above the waterfront, and the compact centre keeps the bay close at hand. The wider region is also marked by geothermal activity and the volcanic landscapes of North Iceland.',
+      highlights: [
+        'Working harbour on Skjálfandi Bay',
+        'Húsavík church in the town centre',
+        'Strong whale-watching and maritime identity',
+        'North Iceland’s geothermal and volcanic context',
+      ],
+      practicalFacts: [
+        { label: 'Country', value: 'Iceland' },
+        { label: 'Language', value: 'Icelandic' },
+        { label: 'Currency', value: 'Icelandic króna (ISK)' },
+      ],
+      goodToKnow: [
+        'The centre is modest in scale, with the harbour as its natural focus.',
+        'Whales are wild animals and cannot be promised from shore or at sea.',
+      ],
+      sourceReferences: [
+        {
+          id: 'source-visit-north-iceland-husavik',
+          name: 'Visit North Iceland — Húsavík',
+          type: 'TOURISM_AUTHORITY',
+          url: 'https://www.northiceland.is/en/destinations/towns/husavik',
+          reviewedAt: '2026-07-27',
+        },
+      ],
+      reviewedAt: '2026-07-27',
+      verification: 'PRIMARY_SOURCE_REVIEWED',
+    },
+    {
+      id: 'destination-guide-djupivogur',
+      locationId: 'location-djupivogur',
+      introduction:
+        'Djúpivogur is a small East Iceland harbour community where fishing history, local creativity and a quiet coastal landscape meet. Pyramid-shaped Búlandstindur dominates the setting across Berufjörður. Along the waterfront, Eggin í Gleðivík uses oversized stone eggs to reflect the area’s birdlife, while the town’s limited urban scale keeps mountains and sea visually present.',
+      highlights: [
+        'Búlandstindur above the coastal landscape',
+        'Eggin í Gleðivík waterfront artwork',
+        'Long trading and fishing heritage',
+        'Quiet harbour-community character',
+      ],
+      practicalFacts: [
+        { label: 'Country', value: 'Iceland' },
+        { label: 'Language', value: 'Icelandic' },
+        { label: 'Currency', value: 'Icelandic króna (ISK)' },
+      ],
+      goodToKnow: [
+        'Expect a village rather than a large urban centre.',
+        'Bring layers and waterproof protection for changeable coastal weather.',
+      ],
+      sourceReferences: [
+        {
+          id: 'source-visit-austurland-djupivogur',
+          name: 'Visit Austurland — Djúpivogur',
+          type: 'TOURISM_AUTHORITY',
+          url: 'https://www.east.is/en/destinations/communities/djupivogur',
+          reviewedAt: '2026-07-27',
+        },
+      ],
+      reviewedAt: '2026-07-27',
+      verification: 'PRIMARY_SOURCE_REVIEWED',
+    },
+    {
+      id: 'destination-guide-torshavn',
+      locationId: 'location-torshavn',
+      introduction:
+        'Tórshavn is one of the world’s smallest capitals, combining a working harbour with a distinctly Faroese cultural identity. Tinganes forms its historic core between two harbour areas, where turf-roofed timber buildings now house the home-rule government. Narrow lanes, old waterfront warehouses and a compact centre make the city easy to read, although its streets rise quickly from the water.',
+      highlights: [
+        'Historic Tinganes peninsula',
+        'Turf-roofed timber buildings',
+        'Harbourfront and old waterfront warehouses',
+        'Faroese government and cultural identity',
+      ],
+      practicalFacts: [
+        { label: 'Country', value: 'Faroe Islands' },
+        { label: 'Language', value: 'Faroese' },
+        { label: 'Currency', value: 'Danish krone (DKK)' },
+      ],
+      goodToKnow: [
+        'Some central streets are narrow, cobbled and hilly.',
+        'Wind and rain exposure can change the feel of a short walk.',
+        'The historic houses remain homes and working government buildings.',
+      ],
+      sourceReferences: [
+        {
+          id: 'source-visit-torshavn-must-sees',
+          name: 'Visit Tórshavn — Must See’s',
+          type: 'TOURISM_AUTHORITY',
+          url: 'https://www.visittorshavn.fo/see-do/must-sees/',
+          reviewedAt: '2026-07-27',
+        },
+      ],
+      reviewedAt: '2026-07-27',
+      verification: 'PRIMARY_SOURCE_REVIEWED',
+    },
+    {
+      id: 'destination-guide-stornoway',
+      locationId: 'location-stornoway',
+      introduction:
+        'Stornoway is the principal town and harbour for Lewis and Harris, combining island-community life with a strong Gaelic and maritime character. Lews Castle and its wooded grounds overlook the town, while local arts and Harris Tweed reflect living Hebridean traditions. The harbour remains central to Stornoway’s identity without defining the wider Isle of Lewis itinerary.',
+      highlights: [
+        'Stornoway harbour and island-town character',
+        'Lews Castle and surrounding grounds',
+        'Gaelic language and cultural life',
+        'Harris Tweed heritage',
+      ],
+      practicalFacts: [
+        { label: 'Country', value: 'Scotland' },
+        { label: 'Languages', value: 'English and Scottish Gaelic' },
+        { label: 'Currency', value: 'Pound sterling (GBP)' },
+      ],
+      goodToKnow: [
+        'Wind and rain protection are useful in exposed Hebridean conditions.',
+        'This guide does not define the route or timing of the booked island tour.',
+      ],
+      sourceReferences: [
+        {
+          id: 'source-visit-outer-hebrides-stornoway',
+          name: 'Visit Outer Hebrides — Stornoway',
+          type: 'TOURISM_AUTHORITY',
+          url: 'https://www.visitouterhebrides.co.uk/our-islands/lewis/see-and-do/stornoway',
+          reviewedAt: '2026-07-27',
+        },
+      ],
+      reviewedAt: '2026-07-27',
+      verification: 'PRIMARY_SOURCE_REVIEWED',
+    },
+    {
+      id: 'destination-guide-greenock',
+      locationId: 'location-greenock',
+      introduction:
+        'The ship calls at Greenock on the Firth of Clyde, not in central Glasgow. Greenock’s waterfront reflects the Clyde’s shipping, industrial and maritime history, while the wider region opens toward hills and estuary scenery. Glasgow is the major cultural gateway, known for bold architecture, music, art galleries and museums, but remains a separate city from the cruise port.',
+      highlights: [
+        'Greenock waterfront and Firth of Clyde views',
+        'Clyde maritime and industrial heritage',
+        'Glasgow architecture and creative culture',
+        'Major Glasgow museums as regional context',
+      ],
+      practicalFacts: [
+        { label: 'Cruise port', value: 'Greenock' },
+        { label: 'Regional city', value: 'Glasgow' },
+        { label: 'Currency', value: 'Pound sterling (GBP)' },
+      ],
+      goodToKnow: [
+        'Do not assume independent access to Glasgow without a confirmed transport plan.',
+        'Greenock and Glasgow should be treated as distinct places.',
+      ],
+      sourceReferences: [
+        {
+          id: 'source-discover-inverclyde-cruise',
+          name: 'Discover Inverclyde — Cruise Visitors',
+          type: 'TOURISM_AUTHORITY',
+          url: 'https://discoverinverclyde.com/cruise-visitors/',
+          reviewedAt: '2026-07-27',
+        },
+        {
+          id: 'source-visit-scotland-glasgow',
+          name: 'VisitScotland — Glasgow',
+          type: 'TOURISM_AUTHORITY',
+          url: 'https://www.visitscotland.com/places-to-go/glasgow',
+          reviewedAt: '2026-07-27',
+        },
+      ],
+      reviewedAt: '2026-07-27',
+      verification: 'PRIMARY_SOURCE_REVIEWED',
+    },
+    {
+      id: 'destination-guide-dun-laoghaire',
+      locationId: 'location-dun-laoghaire',
+      introduction:
+        'Dún Laoghaire is the harbour town where the ship calls; Dublin is the nearby capital and a separate urban destination. The port town is defined by its granite harbour, long piers and maritime heritage. Dublin adds broader context through the River Liffey, Georgian streets, literary traditions and layered history, without implying that every city landmark forms part of the day.',
+      highlights: [
+        'Dún Laoghaire harbour and granite piers',
+        'Port-town maritime heritage',
+        'Dublin’s Georgian architecture',
+        'Literary culture and River Liffey context',
+      ],
+      practicalFacts: [
+        { label: 'Cruise port', value: 'Dún Laoghaire' },
+        { label: 'Nearby city', value: 'Dublin' },
+        { label: 'Currency', value: 'Euro (EUR)' },
+      ],
+      goodToKnow: [
+        'Keep the harbour town distinct from Dublin city centre.',
+        'Listed city themes are context, not a promise that each landmark will be visited.',
+      ],
+      sourceReferences: [
+        {
+          id: 'source-visit-dublin-coastal-trail',
+          name: 'Visit Dublin — Dublin Coastal Trail',
+          type: 'TOURISM_AUTHORITY',
+          url: 'https://www.visitdublin.com/guides/dublin-coastal-trail',
+          reviewedAt: '2026-07-27',
+        },
+        {
+          id: 'source-visit-dublin-first-time-guide',
+          name: 'Visit Dublin — First-Time Visitor Guide',
+          type: 'TOURISM_AUTHORITY',
+          url: 'https://www.visitdublin.com/guides/guide-first-time-visitor-dublin',
+          reviewedAt: '2026-07-27',
+        },
+      ],
+      reviewedAt: '2026-07-27',
+      verification: 'PRIMARY_SOURCE_REVIEWED',
+    },
+    {
+      id: 'destination-guide-holyhead',
+      locationId: 'location-holyhead',
+      introduction:
+        'Holyhead is the cruise port on Holy Island, at the western edge of Anglesey. Its story is shaped by sea crossings, harbour activity and a long maritime heritage. Beyond the port, Anglesey has a strong Welsh identity and a dramatic coastline of cliffs, coves and open views. This regional context is broader than any single booked excursion.',
+      highlights: [
+        'Holyhead’s harbour and maritime heritage',
+        'Holy Island’s position off Anglesey',
+        'Anglesey’s coastal landscapes',
+        'Welsh language and island identity',
+      ],
+      practicalFacts: [
+        { label: 'Country', value: 'Wales' },
+        { label: 'Languages', value: 'Welsh and English' },
+        { label: 'Currency', value: 'Pound sterling (GBP)' },
+      ],
+      goodToKnow: [
+        'The wider island is not presented as walkable from the cruise port.',
+        'Exposed coastal conditions call for layers and waterproof protection.',
+      ],
+      sourceReferences: [
+        {
+          id: 'source-visit-anglesey-holyhead',
+          name: 'Visit Anglesey — Holyhead',
+          type: 'TOURISM_AUTHORITY',
+          url: 'https://www.visitanglesey.co.uk/en-gb/explore/towns/holyhead',
+          reviewedAt: '2026-07-27',
+        },
+        {
+          id: 'source-visit-anglesey',
+          name: 'Visit Anglesey',
+          type: 'TOURISM_AUTHORITY',
+          url: 'https://www.visitanglesey.co.uk/en-gb',
+          reviewedAt: '2026-07-27',
+        },
+      ],
+      reviewedAt: '2026-07-27',
+      verification: 'PRIMARY_SOURCE_REVIEWED',
+    },
+    {
+      id: 'destination-guide-ringaskiddy',
+      locationId: 'location-ringaskiddy',
+      introduction:
+        'Ringaskiddy is the cruise port within Cork Harbour; the ship does not dock in central Cork. The harbour’s sheltered waters have supported trade and maritime life for centuries. Cork city provides the wider regional focus, built around channels of the River Lee and known for bridges, compact historic streets, food culture and an independent character shaped by commerce and migration.',
+      highlights: [
+        'Ringaskiddy within expansive Cork Harbour',
+        'Long maritime and trading history',
+        'Cork city’s River Lee channels and bridges',
+        'Regional food and cultural identity',
+      ],
+      practicalFacts: [
+        { label: 'Cruise port', value: 'Ringaskiddy' },
+        { label: 'Regional city', value: 'Cork' },
+        { label: 'Currency', value: 'Euro (EUR)' },
+      ],
+      goodToKnow: [
+        'Ringaskiddy and Cork city centre are distinct places.',
+        'Use confirmed operational plans for movement beyond the port.',
+      ],
+      sourceReferences: [
+        {
+          id: 'source-pure-cork',
+          name: 'Pure Cork — Official Tourism',
+          type: 'TOURISM_AUTHORITY',
+          url: 'https://www.purecork.ie/',
+          reviewedAt: '2026-07-27',
+        },
+        {
+          id: 'source-cork-city-walks',
+          name: 'Cork City Council — Cork City Walks',
+          type: 'GOVERNMENT',
+          url: 'https://www.corkcity.ie/en/things-to-do/parks-outdoors/cork-city-walks/',
+          reviewedAt: '2026-07-27',
+        },
+      ],
+      reviewedAt: '2026-07-27',
+      verification: 'PRIMARY_SOURCE_REVIEWED',
+    },
+    {
+      id: 'destination-guide-falmouth',
+      locationId: 'location-falmouth',
+      introduction:
+        'Falmouth grew around one of the world’s notable natural deep-water harbours, and the sea still shapes the town’s identity. Its waterfront, sailing traditions and maritime heritage sit alongside galleries, independent shops and a lively creative culture. The surrounding Cornish coast adds beaches, headlands and broad sea views, while Falmouth itself remains distinct from other Cornish towns.',
+      highlights: [
+        'Historic natural harbour and waterfront',
+        'Sailing and maritime heritage',
+        'Cornish coastal scenery',
+        'Contemporary art and creative culture',
+      ],
+      practicalFacts: [
+        { label: 'Country', value: 'England' },
+        { label: 'Region', value: 'Cornwall' },
+        { label: 'Currency', value: 'Pound sterling (GBP)' },
+      ],
+      goodToKnow: [
+        'The waterfront and town can include slopes and varied surfaces.',
+        'Museum or attraction admission is not assumed by this guide.',
+      ],
+      sourceReferences: [
+        {
+          id: 'source-visit-cornwall-falmouth',
+          name: 'Visit Cornwall — Falmouth',
+          type: 'TOURISM_AUTHORITY',
+          url: 'https://www.visitcornwall.com/destinations/falmouth',
+          reviewedAt: '2026-07-27',
+        },
+      ],
+      reviewedAt: '2026-07-27',
+      verification: 'PRIMARY_SOURCE_REVIEWED',
+    },
+    {
+      id: 'destination-guide-southampton',
+      locationId: 'location-southampton',
+      introduction:
+        'Southampton is a major working port with maritime connections stretching from medieval trade to transatlantic travel and modern cruising. Surviving town walls, gates and old vaults reveal the earlier port city, while SeaCity Museum interprets Southampton’s relationship with the sea and Titanic. On disembarkation day, this background remains contextual rather than a promise of sightseeing time.',
+      highlights: [
+        'Major historic and modern port',
+        'Medieval walls, gates and Old Town',
+        'Transatlantic and Titanic heritage',
+        'SeaCity Museum as maritime context',
+      ],
+      practicalFacts: [
+        { label: 'Country', value: 'England' },
+        { label: 'Character', value: 'Port city' },
+        { label: 'Currency', value: 'Pound sterling (GBP)' },
+      ],
+      goodToKnow: [
+        'Use the disembarkation plan to judge any available time in the city.',
+        'Airport or onward-transfer guidance is intentionally outside this guide.',
+      ],
+      sourceReferences: [
+        {
+          id: 'source-visit-southampton-history',
+          name: 'Visit Southampton — History and Heritage',
+          type: 'TOURISM_AUTHORITY',
+          url: 'https://www.visitsouthampton.co.uk/things-to-do/history/',
+          reviewedAt: '2026-07-27',
+        },
+        {
+          id: 'source-visit-southampton-museums',
+          name: 'Visit Southampton — Museums and Galleries',
+          type: 'TOURISM_AUTHORITY',
+          url: 'https://visitsouthampton.co.uk/museumsandgalleries',
+          reviewedAt: '2026-07-27',
+        },
+      ],
+      reviewedAt: '2026-07-27',
+      verification: 'PRIMARY_SOURCE_REVIEWED',
+    },
+  ],
   excursionGuides: [
     {
       id: 'excursion-guide-isafjordur-whale-nature',
