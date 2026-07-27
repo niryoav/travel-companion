@@ -66,4 +66,22 @@ describe('validateTripData', () => {
       'Unsorted trip-day window: day-2030-05-10',
     )
   })
+
+  it('rejects timing on an event whose schedule is pending', () => {
+    const invalid = {
+      ...tripFixture,
+      events: tripFixture.events.map((event, index) =>
+        index === 0
+          ? {
+              ...event,
+              scheduleStatus: 'TO_BE_CONFIRMED' as const,
+            }
+          : event,
+      ),
+    }
+
+    expect(validateTripData(invalid)).toContain(
+      `Pending event schedule contains timing: ${tripFixture.events[0].id}`,
+    )
+  })
 })

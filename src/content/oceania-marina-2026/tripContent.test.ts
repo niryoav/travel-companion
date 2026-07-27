@@ -78,6 +78,9 @@ describe('Oceania Marina bundled editorial content', () => {
     expect(JSON.stringify(guide)).not.toMatch(
       /Calanais|Gearrannan|Carloway|Butt of Lewis|10:00|16:00/,
     )
+    expect(JSON.stringify(guide)).not.toMatch(
+      /order|payment|deposit|price|total|billing|phone|email|private confirmation/i,
+    )
   })
 
   it('attaches each Oceania guide to the correct excursion and date', () => {

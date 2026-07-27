@@ -91,6 +91,9 @@ describe('canonical active trip data', () => {
     })
     expect(stornoway?.startsAt).toBeUndefined()
     expect(stornoway?.endsAt).toBeUndefined()
+    expect(JSON.stringify(stornoway)).not.toMatch(
+      /order|payment|deposit|price|total|billing|phone|email|https?:\/\//i,
+    )
     expect(
       oceaniaMarina2026TripData.portCalls.every(
         ({ allAboardAt }) => allAboardAt === undefined,
