@@ -142,6 +142,24 @@ route, highlights, and a public meeting context when operationally required.
 Review private material locally and source-control only approved non-sensitive
 facts.
 
+## Personal daily content
+
+Personal messages are a separate, deliberately controlled form of bundled
+content. They must not be mixed into operational `TripData`, destination
+guides, or excursion guides. For the initial experience:
+
+- English is the only variable-content language;
+- the approved opening `Mon amour pour toujours,` remains fixed in French;
+- every dated body is reviewed and stored locally;
+- selection is deterministic by local calendar date;
+- no AI, randomization, network request, or storage counter is used;
+- messages contain no sensitive identity, booking, document, or medical data.
+
+The current schedule covers 27 July through 4 September 2026 with forty unique
+messages and a fixed post-trip fallback. Future authoring, synchronization,
+traveler-specific visibility, and mutable storage require separate product and
+privacy review.
+
 ## Presentation
 
 Inside an expanded Trip day, preserve this order:

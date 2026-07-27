@@ -28,6 +28,9 @@ operational view of the current travel day.
 - One licensed, locally bundled image for each canonical destination
 - Eleven confirmed excursion events represented operationally, with editorial
   enrichment limited to source-reviewed guides
+- Date-aware initial routing to Home before and after the trip and Today during
+  the active trip
+- A locally bundled, date-selected personal message on Home
 
 ## Deliverables
 
@@ -42,6 +45,8 @@ operational view of the current travel day.
 - Twelve collapsed destination disclosures inside their expanded day details
 - Twelve optimized 1200 × 675 WebP destination images with source, credit, and
   license metadata
+- Forty unique daily messages covering 27 July through 4 September 2026, plus
+  one fixed post-trip message
 
 ## Acceptance Criteria
 
@@ -82,6 +87,15 @@ operational view of the current travel day.
       check-in, meeting context, and warnings only when configured.
 - [ ] Excursion enrichment is attached by `eventId`, remains collapsed by
       default, and never repeats operational times or meeting instructions.
+- [ ] A fresh app initialization opens Home before 22 August, Today from
+      22 August through 4 September, and Home after 4 September.
+- [ ] Startup routing runs only for the initial browser location; subsequent
+      primary navigation is not redirected.
+- [ ] Explicit `?state=...` and `?phase=...` review routes remain deterministic.
+- [ ] Home shows the date-appropriate personal message from 27 July onward and
+      the fixed reflective message after the trip.
+- [ ] Every message uses the fixed French opening, English body, and fixed
+      English closing and signature.
 
 ## Technical Notes
 
@@ -101,6 +115,12 @@ operational view of the current travel day.
   guide fields to `Location`, `TripDay`, `TripEvent`, `PortCall`, or `TripData`.
 - Bundle guide text and approved local assets with the PWA; do not fetch them at
   runtime.
+- Derive startup and message dates from the canonical trip dates and the
+  current travel-day or home time zone. Do not use route persistence,
+  local-storage counters, random choice, or UTC calendar dates.
+- React Router does not persist the current route in application storage.
+  Safari or the installed PWA may restore its last URL; the one-time startup
+  gate replaces that initial location with the date-appropriate destination.
 
 ## UX Notes
 
@@ -123,6 +143,11 @@ operational view of the current travel day.
 - An optional destination image remains inside the nested disclosure, reserves
   a 16:9 aspect ratio, uses descriptive alternative text and lazy loading, and
   must have approved reuse rights.
+- The personal message appears in a compact, dedicated Home panel after the
+  introduction and before operational cards. It has no modal, dismissal,
+  animation, sound, or automatic focus.
+- Pre-trip Home uses `Our journey begins soon` with the supporting line
+  `Two weeks to explore, enjoy, and create beautiful memories together.`
 
 ## Out of Scope
 
@@ -133,7 +158,6 @@ operational view of the current travel day.
 - Notifications, authentication, synchronization, or new persistence
 - Speculative domain entities or unverified operational information
 - Home, Today, Documents, More, or global-navigation redesign
-- Daily Love Messages implementation
 - Unconfirmed excursion background
 - Unlicensed destination images, runtime image fetching, or image generation
 - Changing prices, opening hours, closures, weather, availability, or
@@ -163,6 +187,10 @@ operational view of the current travel day.
   and PWA precache coverage
 - Multi-excursion days, summary-only guides, missing enrichment, operational
   warnings, source links, and seasonal notes
+- Initial routing before, during, and after the trip; one-time navigation
+  behavior; and review-route preservation
+- All forty unique dated messages, fixed formatting, local-date boundaries,
+  deterministic selection, and fixed post-trip fallback
 
 ## Review Checklist
 
@@ -187,9 +215,13 @@ operational view of the current travel day.
 
 ## Notes
 
-Daily Love Messages remains an unnumbered later personal-experience feature.
-Future storage, privacy, authoring under More, traveler-specific visibility, and
-optional photo support require product review before implementation.
+Sprint 6 includes a deliberately narrow Daily Love Messages experience: forty
+English messages are bundled locally for 27 July through 4 September 2026, with
+the fixed French opening `Mon amour pour toujours,` and a fixed post-trip
+message. Home remains manually available during the trip even though a fresh
+active-trip launch opens Today. Future authoring under More, mutable storage,
+traveler-specific visibility, synchronization, and optional photo support still
+require product review.
 
 All twelve production destinations now have concise editorial guides reviewed
 against official tourism, local-government, or other public primary sources.
