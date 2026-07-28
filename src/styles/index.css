@@ -170,31 +170,23 @@ a:focus-visible {
 }
 
 .welcome-card {
-  position: relative;
-  isolation: isolate;
   width: min(100%, 31rem);
   margin: 0 auto;
   border: 1px solid rgb(255 255 255 / 24%);
   border-radius: 1.65rem;
+  background:
+    linear-gradient(
+      160deg,
+      rgb(9 45 68 / 88%),
+      rgb(4 27 43 / 94%)
+    );
   box-shadow: 0 24px 70px rgb(0 10 18 / 34%);
   color: #fff;
   padding: clamp(1.15rem, 5vw, 1.5rem);
 }
 
-.welcome-card::before {
-  position: absolute;
-  z-index: 0;
-  border-radius: inherit;
-  background: rgb(5 28 43 / 62%);
-  -webkit-backdrop-filter: blur(10px) saturate(115%);
-  backdrop-filter: blur(10px) saturate(115%);
-  content: "";
-  inset: 0;
-}
-
 .welcome-card-content {
-  position: relative;
-  z-index: 1;
+  display: block;
 }
 
 .welcome-label {

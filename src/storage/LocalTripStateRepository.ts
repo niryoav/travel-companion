@@ -1,5 +1,7 @@
 import type { TravelerId, TripId } from '../domain/trip/tripTypes'
 import type {
+  DocumentRoundTripState,
+  MeaningfulInternalRoute,
   StoredTripState,
   TripStateRepository,
 } from './TripStateRepository'
@@ -10,6 +12,29 @@ const LEGACY_TRAVELER_PROFILE_KEY = 'travel-companion:traveler-profile'
 const LEGACY_TRAVELER_IDS: Record<string, TravelerId> = {
   Yoav: 'traveler-yoav',
   Isabel: 'traveler-isabel',
+}
+
+interface LegacyStoredTripState {
+  schemaVersion: 1
+  activeTripId: TripId
+  travelerId?: TravelerId
+}
+
+function isDocumentRoundTripState(
+  value: unknown,
+): value is DocumentRoundTripState {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'originatedFromDocumentAction' in value &&
+    value.originatedFromDocumentAction === true &&
+    'sourceRoute' in value &&
+    typeof value.sourceRoute === 'string' &&
+    'documentId' in value &&
+    typeof value.documentId === 'string' &&
+    'openedAt' in value &&
+    typeof value.openedAt === 'string'
+  )
 }
 
 function parseStoredState(value: string | null): StoredTripState | null {
@@ -23,12 +48,45 @@ function parseStoredState(value: string | null): StoredTripState | null {
       typeof parsed === 'object' &&
       parsed !== null &&
       'schemaVersion' in parsed &&
-      parsed.schemaVersion === 1 &&
       'activeTripId' in parsed &&
       typeof parsed.activeTripId === 'string' &&
       (!('travelerId' in parsed) || typeof parsed.travelerId === 'string')
     ) {
-      return parsed as StoredTripState
+      if (parsed.schemaVersion === 1) {
+        const legacy = parsed as LegacyStoredTripState
+        return {
+          schemaVersion: 2,
+          activeTripId: legacy.activeTripId,
+          travelerId: legacy.travelerId,
+        }
+      }
+
+      if (parsed.schemaVersion === 2) {
+        const state: StoredTripState = {
+          schemaVersion: 2,
+          activeTripId: parsed.activeTripId,
+        }
+        if (
+          'travelerId' in parsed &&
+          typeof parsed.travelerId === 'string'
+        ) {
+          state.travelerId = parsed.travelerId
+        }
+        if (
+          'lastMeaningfulRoute' in parsed &&
+          typeof parsed.lastMeaningfulRoute === 'string'
+        ) {
+          state.lastMeaningfulRoute =
+            parsed.lastMeaningfulRoute as MeaningfulInternalRoute
+        }
+        if (
+          'documentRoundTrip' in parsed &&
+          isDocumentRoundTripState(parsed.documentRoundTrip)
+        ) {
+          state.documentRoundTrip = parsed.documentRoundTrip
+        }
+        return state
+      }
     }
   } catch {
     return null
@@ -38,7 +96,7 @@ function parseStoredState(value: string | null): StoredTripState | null {
 }
 
 export class LocalTripStateRepository implements TripStateRepository {
-  private sessionTravelerId: TravelerId | null = null
+  private sessionState: StoredTripState | null = null
 
   constructor(
     private readonly storage: Storage,
@@ -46,19 +104,25 @@ export class LocalTripStateRepository implements TripStateRepository {
     private readonly validTravelerIds: ReadonlySet<TravelerId>,
   ) {}
 
-  getTravelerId(): TravelerId | null {
-    if (this.sessionTravelerId) {
-      return this.sessionTravelerId
-    }
+  getActiveTripId(): TripId | null {
+    const state = this.readState()
+    return state?.activeTripId === this.activeTripId
+      ? state.activeTripId
+      : null
+  }
 
+  activateTrip(): void {
+    this.writeState({})
+  }
+
+  getTravelerId(): TravelerId | null {
     try {
-      const state = parseStoredState(this.storage.getItem(TRIP_STATE_KEY))
+      const state = this.readState()
       if (
         state?.activeTripId === this.activeTripId &&
         state.travelerId &&
         this.validTravelerIds.has(state.travelerId)
       ) {
-        this.sessionTravelerId = state.travelerId
         return state.travelerId
       }
 
@@ -71,7 +135,6 @@ export class LocalTripStateRepository implements TripStateRepository {
         migratedTravelerId &&
         this.validTravelerIds.has(migratedTravelerId)
       ) {
-        this.sessionTravelerId = migratedTravelerId
         this.writeState({ travelerId: migratedTravelerId })
         return migratedTravelerId
       }
@@ -87,20 +150,83 @@ export class LocalTripStateRepository implements TripStateRepository {
       return
     }
 
-    this.sessionTravelerId = travelerId
     try {
       this.writeState({ travelerId })
     } catch {
-      // The selection still applies to the current UI session.
+      this.sessionState = {
+        schemaVersion: 2,
+        activeTripId: this.activeTripId,
+        travelerId,
+      }
     }
   }
 
-  private writeState(values: Pick<StoredTripState, 'travelerId'>): void {
+  getLastMeaningfulRoute(): MeaningfulInternalRoute | null {
+    const state = this.readState()
+    return state?.activeTripId === this.activeTripId
+      ? state.lastMeaningfulRoute ?? null
+      : null
+  }
+
+  setLastMeaningfulRoute(route: MeaningfulInternalRoute): void {
+    this.writeState({ lastMeaningfulRoute: route })
+  }
+
+  getDocumentRoundTrip(): DocumentRoundTripState | null {
+    const state = this.readState()
+    return state?.activeTripId === this.activeTripId
+      ? state.documentRoundTrip ?? null
+      : null
+  }
+
+  beginDocumentRoundTrip(state: DocumentRoundTripState): void {
+    this.writeState({ documentRoundTrip: state })
+  }
+
+  clearDocumentRoundTrip(): void {
+    const state = this.readState()
+    if (!state || state.activeTripId !== this.activeTripId) {
+      return
+    }
+
+    const rest = { ...state }
+    delete rest.documentRoundTrip
+    this.sessionState = rest
+    try {
+      this.storage.setItem(TRIP_STATE_KEY, JSON.stringify(rest))
+    } catch {
+      // Session state still prevents a stale restoration in this process.
+    }
+  }
+
+  private readState(): StoredTripState | null {
+    try {
+      const stored = parseStoredState(this.storage.getItem(TRIP_STATE_KEY))
+      if (stored) {
+        this.sessionState = stored
+      }
+    } catch {
+      // Fall back to the current in-memory session.
+    }
+
+    return this.sessionState
+  }
+
+  private writeState(
+    values: Partial<Omit<StoredTripState, 'schemaVersion' | 'activeTripId'>>,
+  ): void {
+    const current = this.readState()
     const state: StoredTripState = {
-      schemaVersion: 1,
+      ...(current?.activeTripId === this.activeTripId ? current : {}),
+      schemaVersion: 2,
       activeTripId: this.activeTripId,
       ...values,
     }
-    this.storage.setItem(TRIP_STATE_KEY, JSON.stringify(state))
+    this.sessionState = state
+    try {
+      this.storage.setItem(TRIP_STATE_KEY, JSON.stringify(state))
+    } catch {
+      // The state remains available for the current process.
+    }
   }
 }

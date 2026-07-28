@@ -1,12 +1,15 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router'
 
 import type { TripData } from '../domain/trip/tripTypes'
+import type { TripStateRepository } from '../storage/TripStateRepository'
+import { documentRestorationTarget } from './routeRestoration'
 import { selectStartupPath } from './selectStartupPath'
 
 interface StartupRouteGateProps {
   children: ReactNode
   tripData: TripData
+  tripStateRepository: TripStateRepository
   now: Date
 }
 
@@ -22,19 +25,43 @@ function isExplicitReviewRoute(pathname: string, search: string): boolean {
 export function StartupRouteGate({
   children,
   tripData,
+  tripStateRepository,
   now,
 }: StartupRouteGateProps) {
   const location = useLocation()
-  const [startup] = useState(() => ({
-    initialLocationKey: location.key,
-    shouldPreserveLocation: isExplicitReviewRoute(
-      location.pathname,
-      location.search,
-    ),
-    targetPath: selectStartupPath(tripData, now),
-  }))
+  const [startup] = useState(() => {
+    const documentTarget = documentRestorationTarget(
+      tripStateRepository.getActiveTripId() === tripData.trip.id,
+      tripStateRepository.getDocumentRoundTrip(),
+      now,
+    )
+
+    return {
+      initialLocationKey: location.key,
+      documentTarget,
+      shouldPreserveLocation:
+        !documentTarget &&
+        isExplicitReviewRoute(location.pathname, location.search),
+      targetPath:
+        documentTarget ?? selectStartupPath(tripData, now),
+    }
+  })
 
   const isInitialLocation = location.key === startup.initialLocationKey
+
+  useEffect(() => {
+    if (
+      startup.documentTarget &&
+      location.pathname + location.search === startup.documentTarget
+    ) {
+      tripStateRepository.clearDocumentRoundTrip()
+    }
+  }, [
+    location.pathname,
+    location.search,
+    startup.documentTarget,
+    tripStateRepository,
+  ])
 
   if (
     isInitialLocation &&

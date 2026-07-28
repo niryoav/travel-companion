@@ -1,24 +1,66 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { BundledTripRepository } from '../data/trips/BundledTripRepository'
 import { BundledTripContentRepository } from '../data/content/BundledTripContentRepository'
 import type { DailyLoveMessageSchedule } from '../domain/content/dailyLoveMessage'
-import type { TravelerId } from '../domain/trip/tripTypes'
-import type { TripStateRepository } from '../storage/TripStateRepository'
+import type { TravelerId, TripId } from '../domain/trip/tripTypes'
+import type {
+  DocumentRoundTripState,
+  MeaningfulInternalRoute,
+  TripStateRepository,
+} from '../storage/TripStateRepository'
 import { tripFixture } from '../test/fixtures/tripFixture'
 import { tripContentFixture } from '../test/fixtures/tripContentFixture'
 import { App } from './App'
 
 class MemoryTripStateRepository implements TripStateRepository {
+  activeTripId: TripId | null = null
   travelerId: TravelerId | null = null
+  lastMeaningfulRoute: MeaningfulInternalRoute | null = null
+  documentRoundTrip: DocumentRoundTripState | null = null
+
+  getActiveTripId() {
+    return this.activeTripId
+  }
+
+  activateTrip() {
+    this.activeTripId = tripFixture.trip.id
+  }
 
   getTravelerId() {
     return this.travelerId
   }
 
   setTravelerId(travelerId: TravelerId) {
+    this.activateTrip()
     this.travelerId = travelerId
+  }
+
+  getLastMeaningfulRoute() {
+    return this.lastMeaningfulRoute
+  }
+
+  setLastMeaningfulRoute(route: MeaningfulInternalRoute) {
+    this.lastMeaningfulRoute = route
+  }
+
+  getDocumentRoundTrip() {
+    return this.documentRoundTrip
+  }
+
+  beginDocumentRoundTrip(state: DocumentRoundTripState) {
+    this.activateTrip()
+    this.documentRoundTrip = state
+  }
+
+  clearDocumentRoundTrip() {
+    this.documentRoundTrip = null
   }
 }
 
@@ -51,10 +93,11 @@ const dailyLoveMessageFixture: DailyLoveMessageSchedule = {
 function renderApp(
   tripStateRepository = new MemoryTripStateRepository(),
   now = new Date('2030-05-01T12:00:00Z'),
+  loveMessageSchedule = dailyLoveMessageFixture,
 ) {
   render(
     <App
-      loveMessageSchedule={dailyLoveMessageFixture}
+      loveMessageSchedule={loveMessageSchedule}
       now={now}
       tripRepository={tripRepository}
       tripContentRepository={tripContentRepository}
@@ -67,6 +110,10 @@ function renderApp(
 describe('App', () => {
   beforeEach(() => {
     window.history.replaceState({}, '', '/')
+    Object.defineProperty(navigator, 'onLine', {
+      configurable: true,
+      value: true,
+    })
   })
 
   it('shows the approved trip welcome content without primary navigation', () => {
@@ -137,6 +184,46 @@ describe('App', () => {
     expect(navigation).toHaveTextContent('Trip')
     expect(navigation).toHaveTextContent('Documents')
     expect(navigation).toHaveTextContent('More')
+  })
+
+  it('keeps essential Welcome content when optional daily content is unavailable', () => {
+    window.history.replaceState({}, '', '/welcome')
+    renderApp(
+      new MemoryTripStateRepository(),
+      new Date('2030-05-01T12:00:00Z'),
+      {
+        ...dailyLoveMessageFixture,
+        messages: [],
+      },
+    )
+
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'Northern Coast Journey',
+      }),
+    ).toBeVisible()
+    expect(
+      screen.getByRole('link', { name: 'Enter trip' }),
+    ).toBeVisible()
+    expect(screen.queryByText('A note for you')).not.toBeInTheDocument()
+  })
+
+  it('keeps Welcome content visible after a restored pageshow event', () => {
+    window.history.replaceState({}, '', '/welcome')
+    renderApp()
+
+    window.dispatchEvent(new Event('pageshow'))
+
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'Northern Coast Journey',
+      }).closest('.welcome-card-content'),
+    ).toBeVisible()
+    expect(
+      screen.getByRole('link', { name: 'Enter trip' }),
+    ).toBeVisible()
   })
 
   it('keeps primary navigation working after entering the app', async () => {
@@ -478,5 +565,188 @@ describe('App', () => {
       }),
     ).toBeInTheDocument()
     expect(window.location.search).toBe('?phase=sea-day')
+  })
+
+  it.each([
+    ['/trip', 'Aboard MV Example'],
+    ['/documents', 'Documents'],
+    ['/home', 'Our journey begins soon'],
+  ])(
+    'restores %s after a document round-trip before the trip',
+    async (sourceRoute, expectedText) => {
+      const repository = new MemoryTripStateRepository()
+      repository.activeTripId = tripFixture.trip.id
+      repository.travelerId = 'traveler-alex'
+      repository.documentRoundTrip = {
+        originatedFromDocumentAction: true,
+        sourceRoute,
+        documentId: 'document-example',
+        openedAt: '2030-05-01T11:55:00Z',
+      }
+      window.history.replaceState({}, '', '/')
+
+      renderApp(repository, new Date('2030-05-01T12:00:00Z'))
+
+      await waitFor(() => {
+        expect(window.location.pathname).toBe(sourceRoute)
+      })
+      expect(screen.getAllByText(expectedText).length).toBeGreaterThan(0)
+      expect(repository.documentRoundTrip).toBeNull()
+    },
+  )
+
+  it.each([true, false])(
+    'uses the same document restoration path when online is %s',
+    async (online) => {
+      Object.defineProperty(navigator, 'onLine', {
+        configurable: true,
+        value: online,
+      })
+      const repository = new MemoryTripStateRepository()
+      repository.activeTripId = tripFixture.trip.id
+      repository.documentRoundTrip = {
+        originatedFromDocumentAction: true,
+        sourceRoute: '/trip',
+        documentId: 'document-example',
+        openedAt: '2030-05-01T11:55:00Z',
+      }
+
+      renderApp(repository, new Date('2030-05-01T12:00:00Z'))
+
+      expect(
+        await screen.findByText('Aboard MV Example'),
+      ).toBeInTheDocument()
+      expect(window.location.pathname).toBe('/trip')
+    },
+  )
+
+  it('falls back to Documents after a document round-trip with an invalid source', async () => {
+    const repository = new MemoryTripStateRepository()
+    repository.activeTripId = tripFixture.trip.id
+    repository.documentRoundTrip = {
+      originatedFromDocumentAction: true,
+      sourceRoute: '/missing',
+      documentId: 'document-example',
+      openedAt: '2030-05-01T11:55:00Z',
+    }
+
+    renderApp(repository, new Date('2030-05-01T12:00:00Z'))
+
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'Documents',
+      }),
+    ).toBeInTheDocument()
+    expect(window.location.pathname).toBe('/documents')
+  })
+
+  it('does not restore a document route for a first-time inactive trip', () => {
+    const repository = new MemoryTripStateRepository()
+    repository.documentRoundTrip = {
+      originatedFromDocumentAction: true,
+      sourceRoute: '/trip',
+      documentId: 'document-example',
+      openedAt: '2030-05-01T11:55:00Z',
+    }
+
+    renderApp(repository, new Date('2030-05-01T12:00:00Z'))
+
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'Northern Coast Journey',
+      }),
+    ).toBeInTheDocument()
+    expect(window.location.pathname).toBe('/welcome')
+  })
+
+  it('records source route, document id, and timestamp before opening a PDF', async () => {
+    const repository = new MemoryTripStateRepository()
+    repository.activateTrip()
+    window.history.replaceState({}, '', '/trip?state=active')
+    renderApp(repository)
+
+    fireEvent.click(
+      await screen.findByRole('link', {
+        name: 'Open flight document',
+      }),
+    )
+
+    expect(repository.lastMeaningfulRoute).toBe('/trip?state=active')
+    expect(repository.documentRoundTrip).toMatchObject({
+      originatedFromDocumentAction: true,
+      sourceRoute: '/trip?state=active',
+      documentId: 'review-flight-document',
+    })
+    expect(
+      Date.parse(repository.documentRoundTrip?.openedAt ?? ''),
+    ).not.toBeNaN()
+  })
+
+  it('restores a document source on pageshow after app resume', async () => {
+    const repository = new MemoryTripStateRepository()
+    repository.activateTrip()
+    window.history.replaceState({}, '', '/trip?state=active')
+    renderApp(repository)
+    await screen.findByText('Aboard MV Example')
+    repository.documentRoundTrip = {
+      originatedFromDocumentAction: true,
+      sourceRoute: '/documents',
+      documentId: 'document-example',
+      openedAt: new Date().toISOString(),
+    }
+
+    window.dispatchEvent(new Event('pageshow'))
+
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'Documents',
+      }),
+    ).toBeInTheDocument()
+    expect(window.location.pathname).toBe('/documents')
+    expect(repository.documentRoundTrip).toBeNull()
+  })
+
+  it('restores a document source when the app becomes visible again', async () => {
+    const repository = new MemoryTripStateRepository()
+    repository.activateTrip()
+    repository.travelerId = 'traveler-alex'
+    window.history.replaceState({}, '', '/home?phase=pre-trip')
+    renderApp(repository)
+    await screen.findByText('Our journey begins soon')
+    repository.documentRoundTrip = {
+      originatedFromDocumentAction: true,
+      sourceRoute: '/trip',
+      documentId: 'document-example',
+      openedAt: new Date().toISOString(),
+    }
+    Object.defineProperty(document, 'visibilityState', {
+      configurable: true,
+      value: 'visible',
+    })
+
+    document.dispatchEvent(new Event('visibilitychange'))
+
+    expect(
+      await screen.findByText('Aboard MV Example'),
+    ).toBeInTheDocument()
+    expect(window.location.pathname).toBe('/trip')
+    expect(repository.documentRoundTrip).toBeNull()
+  })
+
+  it('persists each meaningful route after the trip is activated', async () => {
+    const repository = new MemoryTripStateRepository()
+    repository.activateTrip()
+    repository.travelerId = 'traveler-alex'
+    window.history.replaceState({}, '', '/home?phase=pre-trip')
+    renderApp(repository)
+
+    expect(repository.lastMeaningfulRoute).toBe('/home?phase=pre-trip')
+    fireEvent.click(await screen.findByRole('link', { name: 'Trip' }))
+    await screen.findByText('Aboard MV Example')
+
+    expect(repository.lastMeaningfulRoute).toBe('/trip')
   })
 })

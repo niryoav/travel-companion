@@ -7,6 +7,13 @@ const styles = readFileSync(
   resolve(process.cwd(), 'src/styles/index.css'),
   'utf8',
 )
+const welcomeSource = readFileSync(
+  resolve(
+    process.cwd(),
+    'src/features/welcome/WelcomeCoverScreen.tsx',
+  ),
+  'utf8',
+)
 
 function declarationsFor(selector: string) {
   const selectorStart = styles.indexOf(selector)
@@ -47,8 +54,15 @@ describe('Trip foreground rendering styles', () => {
     expect(declarationsFor('.welcome-card-content')).not.toMatch(
       /\b(?:animation|opacity|visibility|transform|content-visibility|contain|will-change)\s*:/,
     )
-    expect(declarationsFor('.welcome-card-content')).toMatch(
-      /\bz-index:\s*1\b/,
+    expect(declarationsFor('.welcome-card-content')).toContain(
+      'display: block',
+    )
+    expect(styles).not.toContain('.welcome-card::before')
+    expect(declarationsFor('.welcome-card')).not.toMatch(
+      /backdrop-filter|z-index|isolation/,
+    )
+    expect(welcomeSource).not.toMatch(
+      /setTimeout|useEffect|Suspense|lazy\(|opacity|visibility/,
     )
     expect(declarationsFor('.home-screen')).not.toMatch(
       fragilePaintProperties,

@@ -134,11 +134,12 @@ operational view of the current travel day.
 - Bundle guide text and approved local assets with the PWA; do not fetch them at
   runtime.
 - Derive startup and message dates from the canonical trip dates and the
-  current travel-day or home time zone. Do not use route persistence,
-  local-storage counters, random choice, or UTC calendar dates.
-- React Router does not persist the current route in application storage.
-  Safari or the installed PWA may restore its last URL; the one-time startup
-  gate replaces that initial location with the date-appropriate destination.
+  current travel-day or home time zone. Do not use local-storage counters,
+  random choice, or UTC calendar dates.
+- Persist the active trip and meaningful internal route as small versioned
+  device state. A recent document-action marker restores the PDF source route
+  before date-based startup routing; general launches continue to use the
+  date-appropriate destination.
 - Practical-document metadata remains inside canonical `TripData`. Reduced PDF
   travel copies live in `public/documents/travel/`; Workbox precaches `pdf`
   assets alongside the application shell.

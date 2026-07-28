@@ -114,12 +114,15 @@ the introduction screen; Home remains the regular trip briefing. This decision
 is applied only to the browser location present when the React application
 mounts. Internal navigation then remains entirely under React Router control.
 
-The application does not store or restore a last-route preference in
-`localStorage` or `sessionStorage`. Safari and an installed PWA can restore the
-last browser URL, so the startup gate replaces that initial location when it is
-not an explicit review route. Query-driven `state` and `phase` review routes,
-and an explicitly opened `/welcome` route, bypass the production startup
-decision.
+Small versioned local state records the active trip and last meaningful
+internal route. Before a local PDF is opened, the application also records its
+document ID, source route, timestamp, and document-action origin. A valid,
+recent document round-trip takes precedence over date-based startup routing on
+startup, `pageshow`, and foreground resume. Invalid document source routes fall
+back to Documents; ordinary launches still use the date matrix and do not
+restore a general last-route preference. Query-driven `state` and `phase`
+review routes, and an explicitly opened `/welcome` route, continue to bypass
+the ordinary startup decision when no document restoration is pending.
 
 Daily personal messages are bundled content, not mutable trip state. A pure
 selector maps the current trip-local calendar date to a fixed message. This

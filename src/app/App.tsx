@@ -13,6 +13,7 @@ import type { TripRepository } from '../data/trips/TripRepository'
 import type { TripContentRepository } from '../data/content/TripContentRepository'
 import type { TripStateRepository } from '../storage/TripStateRepository'
 import { StartupRouteGate } from './StartupRouteGate'
+import { TripLifecycleProvider } from './TripLifecycleProvider'
 import {
   appBuildInfo as defaultAppBuildInfo,
   type AppBuildInfo,
@@ -52,8 +53,16 @@ export function App({
 
   return (
     <BrowserRouter>
-      <StartupRouteGate tripData={tripData} now={now}>
-        <Routes>
+      <TripLifecycleProvider
+        activeTripId={tripData.trip.id}
+        tripStateRepository={tripStateRepository}
+      >
+        <StartupRouteGate
+          tripData={tripData}
+          tripStateRepository={tripStateRepository}
+          now={now}
+        >
+          <Routes>
           <Route
             path="/"
             element={
@@ -127,8 +136,9 @@ export function App({
             />
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Route>
-        </Routes>
-      </StartupRouteGate>
+          </Routes>
+        </StartupRouteGate>
+      </TripLifecycleProvider>
     </BrowserRouter>
   )
 }

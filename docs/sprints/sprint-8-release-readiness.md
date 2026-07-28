@@ -49,6 +49,12 @@ product experience.
 - Unknown routes retain the established safe redirect.
 - Opacity-based page entrance animation is removed so foreground content is
   visible on first paint.
+- PDF actions persist a short-lived source-route marker. Startup and resume
+  restore that valid route before applying the date-based launch matrix, while
+  invalid document routes fall back to Documents.
+- Welcome essential content is present and visible on the first stable render.
+  Its translucent card no longer depends on an iOS-sensitive backdrop-filter
+  compositing layer.
 - Workbox continues to precache the app shell, approved images, and approved
   PDFs, with outdated cache cleanup enabled.
 - Development-only lint packages are updated to their supported current

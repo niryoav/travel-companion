@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 
+import { useTripLifecycle } from '../../app/TripLifecycleContext'
 import { DailyLoveMessage } from '../../components/DailyLoveMessage'
 import {
   selectDailyLoveMessage,
@@ -21,6 +22,7 @@ export function WelcomeCoverScreen({
   now,
   tripData,
 }: WelcomeCoverScreenProps) {
+  const { activateTrip } = useTripLifecycle()
   const cruise = tripData.cruises.find(
     ({ id }) => id === tripData.trip.cruiseId,
   )
@@ -64,7 +66,11 @@ export function WelcomeCoverScreen({
           {loveMessage ? (
             <DailyLoveMessage message={loveMessage} variant="welcome" />
           ) : null}
-          <Link className="welcome-enter" to="/home">
+          <Link
+            className="welcome-enter"
+            onClick={activateTrip}
+            to="/home"
+          >
             Enter trip
           </Link>
         </div>

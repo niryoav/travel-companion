@@ -6,6 +6,7 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 
 import { tripFixture } from '../test/fixtures/tripFixture'
+import { LocalTripStateRepository } from '../storage/LocalTripStateRepository'
 import { StartupRouteGate } from './StartupRouteGate'
 
 vi.mock('react-router', async () => {
@@ -23,10 +24,16 @@ vi.mock('react-router', async () => {
 
 describe('startup shell', () => {
   it('paints a nonblank fallback instead of the restored route while redirecting', () => {
+    const tripStateRepository = new LocalTripStateRepository(
+      window.localStorage,
+      tripFixture.trip.id,
+      new Set(tripFixture.travelers.map(({ id }) => id)),
+    )
     const { container } = render(
       <MemoryRouter initialEntries={['/trip']}>
         <StartupRouteGate
           tripData={tripFixture}
+          tripStateRepository={tripStateRepository}
           now={new Date('2030-05-01T12:00:00Z')}
         >
           <p>Restored route content</p>
