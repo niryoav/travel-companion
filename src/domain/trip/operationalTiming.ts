@@ -269,7 +269,7 @@ export function selectPortOperationalStatus(
       state: 'NOT_YET_IN_PORT',
     }
   }
-  if (!portCall.allAboardAt) {
+  if (!portCall.allAboardAt || !allAboardTiming) {
     return { ...base, state: 'TIMING_UNAVAILABLE' }
   }
 
