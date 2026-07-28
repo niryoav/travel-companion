@@ -201,6 +201,19 @@ pending”, “Return buffer cannot yet be calculated”, “Travel duration not
 yet”, and “All Aboard time unavailable”. Never show blank labels, malformed
 punctuation, or an inferred time.
 
+## Release-state behavior
+
+Technical status belongs under More and uses the same calm Ocean Day cards.
+Update availability is informative rather than intrusive; applying an update
+requires a clearly labelled button. Failure wording explains that the current
+app remains usable. Ordinary status is not announced as an alert.
+
+Application and route failures use one clear heading, a short recovery
+explanation, and a large retry or return action. Missing images disappear
+without collapsing their guide content. Empty document and itinerary states
+remain intentional and readable. Foreground content must be visible on first
+paint and must not depend on an opacity or transform entrance animation.
+
 ## Trip
 
 Trip is the complete chronological overview of the journey. It uses the shared

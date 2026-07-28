@@ -142,6 +142,24 @@ The operational layer has no runtime service or storage dependency. It is
 compiled into the existing offline application bundle and uses only `Date` and
 `Intl`.
 
+## Sprint 8 release foundation
+
+Service-worker registration is owned by one app-level update manager. It
+exposes stable update and offline-readiness state to More while keeping
+registration APIs out of presentation components. A waiting worker is applied
+only after an explicit traveler action; registration or update-check failure
+does not block the app.
+
+Vite injects the package version and build timestamp. More also reads the
+canonical bundled trip `dataVersion`; no source-control path, repository URL,
+commit identifier, booking value, or secret is exposed.
+
+A root error boundary handles initialization failure, while a route boundary
+keeps the shared shell and navigation available if one main screen fails.
+Loading, empty, unavailable, and image-failure states remain distinct.
+Workbox precaches only local production assets and cleans obsolete generated
+caches.
+
 ## Guidance
 
 - Keep trip-specific content separate from reusable app components.
