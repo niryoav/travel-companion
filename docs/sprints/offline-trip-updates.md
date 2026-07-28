@@ -39,6 +39,15 @@ connectivity.
 - Never infer tender, gangway, All Aboard, or excursion values.
 - Recalculate leave-by and return buffers only when the effective data contains
   every required input.
+- Resolve edit-sheet comparisons on the trip day’s local date in its configured
+  IANA time zone. Impossible combinations block persistence; operationally
+  tight combinations remain non-blocking warnings.
+- Tender crossing duration retains the existing technical range of 1–240
+  minutes. Excursion travel duration retains the existing 1–1,440 minute
+  technical range.
+- Tight excursion-return warnings reuse the centralized return-buffer
+  thresholds. Tender-connection warnings use the configured excursion safety
+  buffer when present, otherwise the centralized 15-minute fallback.
 
 ## UX Notes
 

@@ -116,6 +116,18 @@ describe('LocalTripOverrideRepository', () => {
       },
       eventOverrides: {},
     }),
+    JSON.stringify({
+      schemaVersion: 1,
+      tripId: tripFixture.trip.id,
+      dayOverrides: {
+        'day-2030-05-11': {
+          dayId: 'day-2030-05-11',
+          tenderCrossingMinutes: 241,
+          updatedAt: '2030-05-10T18:42:00Z',
+        },
+      },
+      eventOverrides: {},
+    }),
   ])('fails safely for malformed or stale local state', (value) => {
     window.localStorage.setItem(storageKey, value)
 

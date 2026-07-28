@@ -1,3 +1,4 @@
+import { MAX_TENDER_CROSSING_MINUTES } from './operationalEditValidation'
 import { isValidInstant } from './tripTime'
 import type {
   EventId,
@@ -194,7 +195,8 @@ function isDayOverride(
       value.tenderCrossingMinutes === null ||
       (Number.isInteger(value.tenderCrossingMinutes) &&
         Number(value.tenderCrossingMinutes) > 0 &&
-        Number(value.tenderCrossingMinutes) <= 240)) &&
+        Number(value.tenderCrossingMinutes) <=
+          MAX_TENDER_CROSSING_MINUTES)) &&
     isOptionalNullableOperationalTime(value.lastTender) &&
     isOptionalNullableString(value.tenderNote)
   )

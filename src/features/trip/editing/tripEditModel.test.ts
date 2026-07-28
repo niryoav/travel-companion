@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
+import {
+  applyTripOverrides,
+  emptyTripOverrideBundle,
+} from '../../../domain/trip/tripOverrides'
 import { tripFixture } from '../../../test/fixtures/tripFixture'
 import { oceaniaMarina2026TripData } from '../../../trips/oceania-marina-2026/tripData'
 import {
@@ -99,6 +103,42 @@ describe('trip day edit model', () => {
     })
   })
 
+  it('validates unsaved edits against existing effective overrides', () => {
+    const baseline = structuredClone(tripFixture)
+    baseline.portCalls[0].portAccess = {
+      status: 'TENDER_REQUIRED',
+    }
+    const overrides = emptyTripOverrideBundle(baseline.trip.id)
+    overrides.dayOverrides['day-2030-05-11'] = {
+      dayId: 'day-2030-05-11',
+      departureAt: '2030-05-11T18:30:00+02:00',
+      updatedAt: '2030-05-10T18:42:00Z',
+    }
+    const effective = applyTripOverrides(baseline, overrides)
+    const draft = createTripDayEditDraft(
+      effective,
+      'day-2030-05-11',
+    )
+    if (!draft) {
+      throw new Error('Fixture day draft missing')
+    }
+    draft.lastTender = {
+      time: '18:15',
+      verification: 'CONFIRMED',
+    }
+
+    const result = buildTripDayOverrides(baseline, draft)
+
+    expect(result.errors).toEqual([])
+    expect(result.dayOverride).toMatchObject({
+      departureAt: '2030-05-11T16:30:00.000Z',
+      lastTender: {
+        at: '2030-05-11T16:15:00.000Z',
+        verification: 'CONFIRMED',
+      },
+    })
+  })
+
   it('does not expose a separate travel duration override for Oceania excursions', () => {
     const data = structuredClone(tripFixture)
     const event = data.events.find(
@@ -122,6 +162,39 @@ describe('trip day edit model', () => {
     expect(result.eventOverrides['event-excursion']).toBeNull()
   })
 
+  it('saves cancellation without requiring or persisting excursion timing edits', () => {
+    const data = structuredClone(tripFixture)
+    const event = data.events.find(
+      ({ id }) => id === 'event-excursion',
+    )
+    if (!event) {
+      throw new Error('Fixture excursion missing')
+    }
+    event.bookingType = 'INDEPENDENT'
+    const draft = createTripDayEditDraft(
+      data,
+      'day-2030-05-11',
+    )
+    if (!draft) {
+      throw new Error('Fixture day draft missing')
+    }
+    draft.excursions[0] = {
+      ...draft.excursions[0],
+      endTime: '08:00',
+      meetingTime: '',
+      startTime: '',
+      status: 'CANCELLED',
+      travelDurationMinutes: '0',
+    }
+
+    const result = buildTripDayOverrides(data, draft)
+
+    expect(result.errors).toEqual([])
+    expect(result.eventOverrides['event-excursion']).toEqual({
+      status: 'CANCELLED',
+    })
+  })
+
   it('rejects inconsistent port and excursion windows', () => {
     const draft = createTripDayEditDraft(
       tripFixture,
@@ -139,8 +212,8 @@ describe('trip day edit model', () => {
     expect(buildTripDayOverrides(tripFixture, draft).errors).toEqual(
       expect.arrayContaining([
         'Ship departure must be after arrival.',
-        'All Aboard cannot be after ship departure.',
-        'Coastal walk return must be after its start.',
+        'All Aboard cannot be after ship departure at 18:00.',
+        'Excursion return cannot be before the excursion start.',
       ]),
     )
   })

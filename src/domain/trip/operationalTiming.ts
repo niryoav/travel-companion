@@ -23,6 +23,10 @@ export const RETURN_BUFFER_THRESHOLDS = {
   },
 } as const
 
+// A positive connection shorter than fifteen minutes is possible but deserves
+// a calm warning. It is not used as invented travel time.
+export const TIGHT_CONNECTION_WARNING_MINUTES = 15
+
 export interface EventTimeZoneResolution {
   timeZone: string
   source: 'EVENT' | 'TRIP_DAY'

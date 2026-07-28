@@ -1566,6 +1566,32 @@ a:focus-visible {
   resize: vertical;
 }
 
+.trip-edit-field input[aria-invalid="true"],
+.trip-edit-time-with-status input[aria-invalid="true"] {
+  border-color: var(--attention);
+  box-shadow: 0 0 0 1px var(--attention);
+}
+
+.trip-edit-field-messages {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.trip-edit-field-messages p {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.trip-edit-field-error {
+  color: var(--attention);
+  font-weight: 750;
+}
+
+.trip-edit-field-warning {
+  color: var(--champagne);
+}
+
 .trip-edit-comparison {
   display: flex;
   flex-wrap: wrap;
@@ -1639,6 +1665,11 @@ a:focus-visible {
   border: 0;
   background: var(--champagne);
   color: var(--ocean-950);
+}
+
+.trip-edit-save:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .trip-edit-sheet button:focus-visible,

@@ -2,6 +2,11 @@ import {
   instantFromLocalTime,
   timeInputValue,
 } from '../../../domain/trip/localTimeInput'
+import {
+  MAX_EXCURSION_TRAVEL_MINUTES,
+  MAX_TENDER_CROSSING_MINUTES,
+  validateOperationalEditTiming,
+} from '../../../domain/trip/operationalEditValidation'
 import type {
   DayOperationalOverrideInput,
   EventOperationalOverrideInput,
@@ -32,6 +37,8 @@ export interface ExcursionEditDraft {
   meetingPoint: string
   travelDurationMinutes: string
   note: string
+  safetyBufferMinutes?: number
+  timeZone: string
 }
 
 export interface TripDayEditDraft {
@@ -129,6 +136,8 @@ export function createTripDayEditDraft(
         travelDurationMinutes:
           event.travelDurationMinutes?.toString() ?? '',
         note: event.localOperationalNote ?? '',
+        safetyBufferMinutes: event.safetyBufferMinutes,
+        timeZone,
       }
     })
 
@@ -275,6 +284,9 @@ export function buildTripDayOverrides(
   baseline: TripData,
   draft: TripDayEditDraft,
 ): BuiltTripDayOverrides {
+  const timingErrors = validateOperationalEditTiming(draft).errors.map(
+    ({ message }) => message,
+  )
   const errors: string[] = []
   const day = baseline.days.find(({ id }) => id === draft.dayId)
   const portCall = baseline.portCalls.find(
@@ -285,6 +297,13 @@ export function buildTripDayOverrides(
       dayOverride: null,
       eventOverrides: {},
       errors: ['This trip day is no longer available.'],
+    }
+  }
+  if (timingErrors.length > 0) {
+    return {
+      dayOverride: null,
+      eventOverrides: {},
+      errors: timingErrors,
     }
   }
 
@@ -377,7 +396,7 @@ export function buildTripDayOverrides(
         baselineTender?.crossingMinutes,
         draft.tenderCrossingMinutes,
         'Tender crossing duration',
-        240,
+        MAX_TENDER_CROSSING_MINUTES,
         errors,
       ),
     )
@@ -400,32 +419,6 @@ export function buildTripDayOverrides(
     )
   }
 
-  const arrival = instantFromLocalTime(
-    day.localDate,
-    draft.arrivalTime,
-    day.timeZone,
-  )
-  const departure = instantFromLocalTime(
-    day.localDate,
-    draft.departureTime,
-    day.timeZone,
-  )
-  const allAboard = instantFromLocalTime(
-    day.localDate,
-    draft.allAboardTime,
-    day.timeZone,
-  )
-  if (arrival && departure && Date.parse(arrival) >= Date.parse(departure)) {
-    errors.push('Ship departure must be after arrival.')
-  }
-  if (
-    allAboard &&
-    departure &&
-    Date.parse(allAboard) > Date.parse(departure)
-  ) {
-    errors.push('All Aboard cannot be after ship departure.')
-  }
-
   const eventOverrides: Record<
     string,
     EventOperationalOverrideInput | null
@@ -442,6 +435,19 @@ export function buildTripDayOverrides(
     const eventOverride: EventOperationalOverrideInput = {}
     if (excursionDraft.status !== defaultExcursionStatus(event)) {
       eventOverride.status = excursionDraft.status
+    }
+    if (excursionDraft.status === 'CANCELLED') {
+      setWhenDefined(
+        eventOverride,
+        'note',
+        textChange(
+          event.localOperationalNote,
+          excursionDraft.note,
+        ),
+      )
+      eventOverrides[event.id] =
+        Object.keys(eventOverride).length > 0 ? eventOverride : null
+      continue
     }
     const meetingKey = excursionDraft.meetingField
     setWhenDefined(
@@ -493,7 +499,7 @@ export function buildTripDayOverrides(
           event.travelDurationMinutes,
           excursionDraft.travelDurationMinutes,
           `${event.title} travel duration`,
-          1_440,
+          MAX_EXCURSION_TRAVEL_MINUTES,
           errors,
         ),
       )
@@ -507,19 +513,6 @@ export function buildTripDayOverrides(
       ),
     )
 
-    const start = instantFromLocalTime(
-      day.localDate,
-      excursionDraft.startTime,
-      timeZone,
-    )
-    const end = instantFromLocalTime(
-      day.localDate,
-      excursionDraft.endTime,
-      timeZone,
-    )
-    if (start && end && Date.parse(start) >= Date.parse(end)) {
-      errors.push(`${event.title} return must be after its start.`)
-    }
     eventOverrides[event.id] =
       Object.keys(eventOverride).length > 0 ? eventOverride : null
   }
@@ -528,6 +521,6 @@ export function buildTripDayOverrides(
     dayOverride:
       Object.keys(dayOverride).length > 0 ? dayOverride : null,
     eventOverrides,
-    errors,
+    errors: [...new Set(errors)],
   }
 }

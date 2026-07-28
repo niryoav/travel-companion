@@ -130,7 +130,7 @@ describe('Trip operational editing', () => {
   })
 
   it('saves tender, All Aboard, and excursion changes immediately', () => {
-    const { repository } = renderEditor()
+    const { baseline, repository } = renderEditor()
     fireEvent.change(screen.getByLabelText('Port access status'), {
       target: { value: 'TENDER_REQUIRED' },
     })
@@ -165,6 +165,105 @@ describe('Trip operational editing', () => {
     expect(
       repository.getSnapshot().eventOverrides['event-excursion'],
     ).toMatchObject({ status: 'CHANGED' })
+    expect(
+      new LocalTripOverrideRepository(
+        window.localStorage,
+        baseline,
+      ).getSnapshot().eventOverrides['event-excursion'],
+    ).toMatchObject({ status: 'CHANGED' })
+  })
+
+  it('disables Save, associates inline errors, and focuses the first invalid field', () => {
+    const { repository } = renderEditor()
+    fireEvent.change(screen.getByLabelText('Port access status'), {
+      target: { value: 'TENDER_REQUIRED' },
+    })
+    const firstTender = screen.getByLabelText('First tender time')
+    fireEvent.change(firstTender, { target: { value: '06:45' } })
+
+    const message = screen.getByText(
+      'First tender cannot be before ship arrival at 07:00.',
+    )
+    const saveButton = screen.getByRole('button', { name: 'Save' })
+    expect(firstTender).toHaveAttribute('aria-invalid', 'true')
+    expect(firstTender).toHaveAttribute(
+      'aria-describedby',
+      message.parentElement?.id,
+    )
+    expect(saveButton).toBeDisabled()
+
+    fireEvent.submit(saveButton.closest('form') as HTMLFormElement)
+    expect(firstTender).toHaveFocus()
+    expect(repository.getSnapshot().dayOverrides).toEqual({})
+  })
+
+  it('clears dependent errors live when values are corrected or restored', () => {
+    renderEditor()
+    fireEvent.change(screen.getByLabelText('Port access status'), {
+      target: { value: 'TENDER_REQUIRED' },
+    })
+    fireEvent.change(screen.getByLabelText('First tender time'), {
+      target: { value: '08:00' },
+    })
+    fireEvent.change(screen.getByLabelText('Ship arrival time'), {
+      target: { value: '09:00' },
+    })
+
+    expect(
+      screen.getByText(
+        'First tender cannot be before ship arrival at 09:00.',
+      ),
+    ).toBeInTheDocument()
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Use original for Ship arrival time',
+      }),
+    )
+    expect(
+      screen.queryByText(/First tender cannot be before ship arrival/),
+    ).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('First tender time'), {
+      target: { value: '06:45' },
+    })
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('First tender time'), {
+      target: { value: '07:00' },
+    })
+    expect(
+      screen.getByRole('button', { name: 'Save' }),
+    ).toBeEnabled()
+  })
+
+  it('shows non-blocking warnings while keeping Save available', () => {
+    const { repository } = renderEditor()
+    fireEvent.change(screen.getByLabelText('Port access status'), {
+      target: { value: 'TENDER_REQUIRED' },
+    })
+    const lastTender = screen.getByLabelText(
+      'Last tender back to ship',
+    )
+    fireEvent.change(lastTender, { target: { value: '17:00' } })
+
+    const warning = screen.getByText(
+      'Last tender is earlier than All Aboard. Plan to use the last tender time.',
+    )
+    expect(lastTender).not.toHaveAttribute('aria-invalid')
+    expect(lastTender).toHaveAttribute(
+      'aria-describedby',
+      warning.parentElement?.id,
+    )
+    expect(
+      screen.getByRole('button', { name: 'Save' }),
+    ).toBeEnabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    expect(
+      repository.getSnapshot().dayOverrides['day-2030-05-11']
+        ?.lastTender,
+    ).toMatchObject({
+      at: '2030-05-11T15:00:00.000Z',
+      verification: 'CONFIRMED',
+    })
   })
 
   it('shows original and updated values, then resets the full day', () => {

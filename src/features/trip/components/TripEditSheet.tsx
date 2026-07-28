@@ -8,6 +8,11 @@ import {
 } from 'react'
 
 import { PortAccessIndicator } from '../../../components/PortAccessIndicator'
+import {
+  validateOperationalEditTiming,
+  type OperationalEditField,
+  type OperationalEditIssue,
+} from '../../../domain/trip/operationalEditValidation'
 import type { TripOverrideBundle } from '../../../domain/trip/tripOverrides'
 import type {
   ExcursionOperationalStatus,
@@ -96,6 +101,35 @@ function SelectField({
   )
 }
 
+function FieldMessages({
+  id,
+  issues = [],
+}: {
+  id: string
+  issues?: OperationalEditIssue[]
+}) {
+  return issues.length > 0 ? (
+    <div
+      aria-live="polite"
+      className="trip-edit-field-messages"
+      id={`${id}-validation`}
+    >
+      {issues.map(({ message, severity }) => (
+        <p
+          className={
+            severity === 'ERROR'
+              ? 'trip-edit-field-error'
+              : 'trip-edit-field-warning'
+          }
+          key={`${severity}-${message}`}
+        >
+          {message}
+        </p>
+      ))}
+    </div>
+  ) : null
+}
+
 function TextInput({
   id,
   label,
@@ -103,7 +137,9 @@ function TextInput({
   onChange,
   type = 'text',
   inputMode,
+  issues,
   maxLength,
+  validationField,
 }: {
   id: string
   label: string
@@ -111,20 +147,33 @@ function TextInput({
   onChange: (value: string) => void
   type?: 'text' | 'time' | 'number'
   inputMode?: 'numeric'
+  issues?: OperationalEditIssue[]
   maxLength?: number
+  validationField?: OperationalEditField
 }) {
+  const hasError = issues?.some(
+    ({ severity }) => severity === 'ERROR',
+  )
   return (
-    <label htmlFor={id}>
-      <span>{label}</span>
-      <input
-        id={id}
-        inputMode={inputMode}
-        maxLength={maxLength}
-        type={type}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      />
-    </label>
+    <>
+      <label htmlFor={id}>
+        <span>{label}</span>
+        <input
+          aria-describedby={
+            issues?.length ? `${id}-validation` : undefined
+          }
+          aria-invalid={hasError || undefined}
+          data-validation-field={validationField}
+          id={id}
+          inputMode={inputMode}
+          maxLength={maxLength}
+          type={type}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      </label>
+      <FieldMessages id={id} issues={issues} />
+    </>
   )
 }
 
@@ -158,6 +207,7 @@ function TenderTimeField({
   label,
   value,
   original,
+  issues,
   onChange,
   onUseOriginal,
 }: {
@@ -165,6 +215,7 @@ function TenderTimeField({
   label: string
   value: TenderTimeDraft
   original: TenderTimeDraft
+  issues?: OperationalEditIssue[]
   onChange: (value: TenderTimeDraft) => void
   onUseOriginal: () => void
 }) {
@@ -182,7 +233,15 @@ function TenderTimeField({
         <TextInput
           id={`${id}-time`}
           label={label}
+          issues={issues}
           type="time"
+          validationField={
+            id === 'trip-edit-first-tender'
+              ? 'firstTenderTime'
+              : id === 'trip-edit-our-tender'
+                ? 'ourTenderTime'
+                : 'lastTenderTime'
+          }
           value={value.time}
           onChange={(time) =>
             onChange({
@@ -237,18 +296,31 @@ function ExcursionFields({
   onChange,
   onReset,
   hasPersistedOverride,
+  issues,
 }: {
   excursion: ExcursionEditDraft
   original: ExcursionEditDraft
   onChange: (value: ExcursionEditDraft) => void
   onReset: () => void
   hasPersistedOverride: boolean
+  issues: OperationalEditIssue[]
 }) {
   const update = (
     key: keyof ExcursionEditDraft,
     value: ExcursionEditDraft[keyof ExcursionEditDraft],
   ) => onChange({ ...excursion, [key]: value })
   const prefix = `trip-edit-${excursion.id}`
+  const fieldIssues = (
+    field:
+      | 'meetingTime'
+      | 'startTime'
+      | 'endTime'
+      | 'travelDurationMinutes',
+  ) =>
+    issues.filter(
+      ({ field: issueField }) =>
+        issueField === `excursion:${excursion.id}:${field}`,
+    )
 
   return (
     <fieldset className="trip-edit-section trip-edit-excursion">
@@ -295,8 +367,10 @@ function ExcursionFields({
         >
           <TextInput
             id={`${prefix}-${key}`}
+            issues={fieldIssues(key)}
             label={label}
             type="time"
+            validationField={`excursion:${excursion.id}:${key}`}
             value={excursion[key]}
             onChange={(value) => update(key, value)}
           />
@@ -335,8 +409,12 @@ function ExcursionFields({
           <TextInput
             id={`${prefix}-travel-duration`}
             inputMode="numeric"
+            issues={fieldIssues('travelDurationMinutes')}
             label="Estimated travel duration (minutes)"
             type="number"
+            validationField={
+              `excursion:${excursion.id}:travelDurationMinutes`
+            }
             value={excursion.travelDurationMinutes}
             onChange={(value) =>
               update('travelDurationMinutes', value)
@@ -391,7 +469,14 @@ export function TripEditSheet({
     [effectiveTripData, dayId],
   )
   const [draft, setDraft] = useState(initialDraft)
-  const [errors, setErrors] = useState<string[]>([])
+  const [saveErrors, setSaveErrors] = useState<string[]>([])
+  const validation = useMemo(
+    () =>
+      draft
+        ? validateOperationalEditTiming(draft)
+        : { errors: [], issues: [], warnings: [] },
+    [draft],
+  )
   const dirty =
     Boolean(draft && initialDraft) &&
     JSON.stringify(draft) !== JSON.stringify(initialDraft)
@@ -479,7 +564,10 @@ export function TripEditSheet({
   const updateDraft = <K extends keyof TripDayEditDraft>(
     key: K,
     value: TripDayEditDraft[K],
-  ) => setDraft({ ...draft, [key]: value })
+  ) => {
+    setSaveErrors([])
+    setDraft({ ...draft, [key]: value })
+  }
   const updateExcursion = (value: ExcursionEditDraft) =>
     updateDraft(
       'excursions',
@@ -488,11 +576,35 @@ export function TripEditSheet({
       ),
     )
 
+  const issuesFor = (field: OperationalEditField) =>
+    validation.issues.filter(
+      ({ field: issueField }) => issueField === field,
+    )
+  const focusFirstBlockingError = () => {
+    const firstField = validation.errors[0]?.field
+    if (!firstField) {
+      return
+    }
+    const field = [
+      ...(dialogRef.current?.querySelectorAll<HTMLElement>(
+        '[data-validation-field]',
+      ) ?? []),
+    ].find(
+      ({ dataset }) => dataset.validationField === firstField,
+    )
+    field?.focus()
+  }
+
   const save = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (validation.errors.length > 0) {
+      setSaveErrors([])
+      focusFirstBlockingError()
+      return
+    }
     const result = buildTripDayOverrides(baselineTripData, draft)
     if (result.errors.length > 0) {
-      setErrors(result.errors)
+      setSaveErrors(result.errors)
       return
     }
     repository.saveDayEdits(
@@ -553,11 +665,13 @@ export function TripEditSheet({
                   : null}
               </p>
             ) : null}
-            {errors.length > 0 ? (
+            {saveErrors.length > 0 ? (
               <div className="trip-edit-errors" role="alert">
                 <strong>Check these details</strong>
                 <ul>
-                  {errors.map((error) => <li key={error}>{error}</li>)}
+                  {saveErrors.map((error) => (
+                    <li key={error}>{error}</li>
+                  ))}
                 </ul>
               </div>
             ) : null}
@@ -617,8 +731,10 @@ export function TripEditSheet({
                 >
                   <TextInput
                     id={`trip-edit-${key}`}
+                    issues={issuesFor(key)}
                     label={label}
                     type="time"
+                    validationField={key}
                     value={draft[key]}
                     onChange={(value) => updateDraft(key, value)}
                   />
@@ -650,6 +766,7 @@ export function TripEditSheet({
                 </p>
                 <TenderTimeField
                   id="trip-edit-first-tender"
+                  issues={issuesFor('firstTenderTime')}
                   label="First tender time"
                   value={draft.firstTender}
                   original={originalDraft.firstTender}
@@ -665,6 +782,7 @@ export function TripEditSheet({
                 />
                 <TenderTimeField
                   id="trip-edit-our-tender"
+                  issues={issuesFor('ourTenderTime')}
                   label="Our tender / tender-ticket time"
                   value={draft.ourTender}
                   original={originalDraft.ourTender}
@@ -710,8 +828,10 @@ export function TripEditSheet({
                   <TextInput
                     id="trip-edit-tender-crossing"
                     inputMode="numeric"
+                    issues={issuesFor('tenderCrossingMinutes')}
                     label="Estimated tender crossing duration (minutes)"
                     type="number"
+                    validationField="tenderCrossingMinutes"
                     value={draft.tenderCrossingMinutes}
                     onChange={(value) =>
                       updateDraft('tenderCrossingMinutes', value)
@@ -720,6 +840,7 @@ export function TripEditSheet({
                 </Field>
                 <TenderTimeField
                   id="trip-edit-last-tender"
+                  issues={issuesFor('lastTenderTime')}
                   label="Last tender back to ship"
                   value={draft.lastTender}
                   original={originalDraft.lastTender}
@@ -764,6 +885,7 @@ export function TripEditSheet({
                     overrides.eventOverrides[excursion.id],
                   )}
                   key={excursion.id}
+                  issues={validation.issues}
                   original={original}
                   onChange={updateExcursion}
                   onReset={() =>
@@ -796,7 +918,11 @@ export function TripEditSheet({
             <button type="button" onClick={requestClose}>
               Cancel
             </button>
-            <button className="trip-edit-save" type="submit">
+            <button
+              className="trip-edit-save"
+              disabled={validation.errors.length > 0}
+              type="submit"
+            >
               Save
             </button>
           </footer>
