@@ -26,6 +26,7 @@ export interface TodayHeaderViewModel {
 export interface TodayEventViewModel {
   id: string
   kindLabel: string
+  publicCode?: string
   title: string
   state: TodayEventState
   stateLabel: string

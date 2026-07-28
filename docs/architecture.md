@@ -73,10 +73,10 @@ feature requires them.
 
 ## Sprint 4 trip-data foundation
 
-Approved non-sensitive operational facts for the active trip live in one
-controlled trip configuration under `src/trips/`. The configuration is imported
-only by a bundled `TripRepository`, so Home, Welcome, profile flows, and tests do
-not own copies of production trip data.
+Approved operational facts for the active trip live in one controlled trip
+configuration under `src/trips/`. The configuration is imported only by a
+bundled `TripRepository`, so Home, Welcome, profile flows, and tests do not own
+copies of production trip data.
 
 The trip configuration is compiled into the application bundle and therefore
 covered by the existing PWA application-shell precache. Only small mutable
@@ -88,9 +88,13 @@ from explicit trip-day windows and offset-aware timestamps. A feature adapter
 maps those results to the existing `HomeViewModel`. Privacy-safe fixtures remain
 separate and power deterministic review routes.
 
-Real identity details, full booking references, payment details, cabin numbers,
-private addresses and phone numbers, medical information, tickets, codes, and
-sensitive document files must not be stored in the trip configuration.
+Private operational facts such as a pickup address or stateroom may be included
+only when the product owner explicitly supplies and approves them for offline
+use. They remain confined to the canonical trip configuration and must not be
+copied into fixtures, components, or general documentation. Passport and
+identity data, payment details, credentials, account-access links, full booking
+references, private phone numbers, medical information, and unapproved source
+documents must never be stored there.
 
 Practical document metadata is part of the controlled trip configuration, while
 approved reduced PDF travel copies are separate local assets under

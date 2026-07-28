@@ -23,6 +23,36 @@ describe('validateTripData', () => {
     )
   })
 
+  it('rejects unknown event traveler relationships', () => {
+    const invalid = {
+      ...tripFixture,
+      events: tripFixture.events.map((event, index) =>
+        index === 0
+          ? { ...event, travelerIds: ['traveler-missing'] }
+          : event,
+      ),
+    }
+
+    expect(validateTripData(invalid)).toContain(
+      `Unknown traveler traveler-missing on event ${tripFixture.events[0].id}`,
+    )
+  })
+
+  it('rejects unknown transport location relationships', () => {
+    const invalid = {
+      ...tripFixture,
+      transports: tripFixture.transports.map((transport, index) =>
+        index === 0
+          ? { ...transport, toLocationId: 'location-missing' }
+          : transport,
+      ),
+    }
+
+    expect(validateTripData(invalid)).toContain(
+      `Unknown destination location-missing on transport ${tripFixture.transports[0].id}`,
+    )
+  })
+
   it('rejects a gap between consecutive trip-day windows', () => {
     const invalid = {
       ...tripFixture,

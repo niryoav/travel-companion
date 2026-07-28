@@ -78,9 +78,11 @@ interface BaseEvent {
   id: EventId
   dayId: TripDayId
   title: string
+  travelerIds?: TravelerId[]
   startsAt?: string
   endsAt?: string
   timeZone?: string
+  endTimeZone?: string
   locationId?: LocationId
   bookingReferenceIds?: BookingReferenceId[]
   documentReferenceIds?: DocumentReferenceId[]
@@ -124,7 +126,7 @@ export type TripEvent = TransportEvent | ActivityEvent
 
 export interface TransportSegment {
   id: TransportId
-  mode: 'AIR' | 'PRIVATE_TRANSFER' | 'RAIL' | 'SHIP'
+  mode: 'AIR' | 'BUS' | 'PRIVATE_TRANSFER' | 'RAIL' | 'SHIP'
   label: string
   publicCode?: string
   fromLocationId?: LocationId

@@ -11,6 +11,12 @@ describe('PwaStatusCard', () => {
     expect(screen.getByRole('status')).toHaveTextContent(
       'Browser-managed updates',
     )
+    expect(screen.getByText('Offline status could not be verified')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Updates are managed automatically. No action is required unless an update is offered here.',
+      ),
+    ).toBeInTheDocument()
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 

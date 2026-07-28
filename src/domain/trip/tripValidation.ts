@@ -134,6 +134,14 @@ export function validateTripData(data: TripData): string[] {
     if (event.timeZone && !isSupportedTimeZone(event.timeZone)) {
       errors.push(`Unsupported event time zone: ${event.id}`)
     }
+    if (event.endTimeZone && !isSupportedTimeZone(event.endTimeZone)) {
+      errors.push(`Unsupported event end time zone: ${event.id}`)
+    }
+    for (const travelerId of event.travelerIds ?? []) {
+      if (!travelerIds.has(travelerId)) {
+        errors.push(`Unknown traveler ${travelerId} on event ${event.id}`)
+      }
+    }
     if (
       event.scheduleStatus === 'TO_BE_CONFIRMED' &&
       (event.startsAt || event.endsAt)
@@ -174,6 +182,25 @@ export function validateTripData(data: TripData): string[] {
           `Unknown document ${documentReferenceId} on event ${event.id}`,
         )
       }
+    }
+  }
+
+  for (const transport of data.transports) {
+    if (
+      transport.fromLocationId &&
+      !locationIds.has(transport.fromLocationId)
+    ) {
+      errors.push(
+        `Unknown origin ${transport.fromLocationId} on transport ${transport.id}`,
+      )
+    }
+    if (
+      transport.toLocationId &&
+      !locationIds.has(transport.toLocationId)
+    ) {
+      errors.push(
+        `Unknown destination ${transport.toLocationId} on transport ${transport.id}`,
+      )
     }
   }
 

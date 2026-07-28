@@ -55,8 +55,11 @@ describe('bundled practical travel documents', () => {
     )
 
     expect(linkedDocuments).toEqual({
-      'event-disembarkation': [
-        'document-southampton-heathrow-transfer',
+      'event-keflavik-hotel-transfer': [
+        'document-keflavik-reykjavik-flybus',
+      ],
+      'event-hotel-viking-stay': [
+        'document-precruise-hotel',
       ],
       'event-husavik-big-whale-safari': [
         'document-husavik-whale-safari',
@@ -66,6 +69,9 @@ describe('bundled practical travel documents', () => {
       ],
       'event-stornoway-isle-of-lewis': [
         'document-stornoway-isle-of-lewis',
+      ],
+      'event-southampton-heathrow-transfer': [
+        'document-southampton-heathrow-transfer',
       ],
     })
     expect(JSON.stringify(linkedDocuments).toLowerCase()).not.toContain(

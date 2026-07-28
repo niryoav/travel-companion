@@ -35,6 +35,28 @@ describe('selectTodayViewModel', () => {
     })
   })
 
+  it('shows verified flight codes and destination-local arrival times', () => {
+    const outbound = selectTodayViewModel(
+      oceaniaMarina2026TripData,
+      new Date('2026-08-22T12:00:00Z'),
+    ).timeline.find(({ id }) => id === 'event-outbound-flight')
+    const returnFlight = selectTodayViewModel(
+      oceaniaMarina2026TripData,
+      new Date('2026-09-04T14:00:00Z'),
+    ).timeline.find(({ id }) => id === 'event-return-flight')
+
+    expect(outbound).toMatchObject({
+      publicCode: 'FI555',
+      time: '13:50',
+      endTime: '15:10',
+    })
+    expect(returnFlight).toMatchObject({
+      publicCode: 'BA386',
+      time: '13:55',
+      endTime: '16:10',
+    })
+  })
+
   it('maps verified port context and all-aboard information', () => {
     const result = selectTodayViewModel(
       tripFixture,

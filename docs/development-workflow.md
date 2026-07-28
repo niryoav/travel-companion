@@ -108,8 +108,12 @@ fix: address ... review findings
 - Do not duplicate personal or trip-specific facts in components or tests.
 - Use fictional names, places, providers, and dates in tests and review fixtures.
 - Never commit passports, identity details, payment data, full booking
-  references, home addresses, private phone numbers, QR codes, barcodes,
-  medical data, tickets, credentials, or private documents.
+  references, private phone numbers, QR codes, barcodes, medical data,
+  credentials, account-access links, or unapproved private documents.
+- Include a private operational location or accommodation identifier only when
+  the product owner explicitly supplies and approves it for offline use. Keep
+  it in the canonical trip configuration and do not duplicate it in fixtures,
+  components, or general documentation.
 - Confirm the GitHub repository is private before adding approved real
   operational data.
 

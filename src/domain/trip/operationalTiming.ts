@@ -7,6 +7,8 @@ import type {
   TripEvent,
 } from './tripTypes'
 
+// Ninety minutes gives travelers an early, calm safety signal before the
+// verified deadline becomes the primary remaining port-day constraint.
 export const ALL_ABOARD_APPROACHING_MINUTES = 90
 
 export const RETURN_BUFFER_THRESHOLDS = {

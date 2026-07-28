@@ -29,7 +29,19 @@ describe('canonical active trip data', () => {
         .filter(({ eventIds }) => eventIds.length > 0)
         .map(({ id, eventIds }) => [id, eventIds]),
     ).toEqual([
-      ['day-2026-08-23', ['event-embarkation']],
+      [
+        'day-2026-08-22',
+        [
+          'event-home-brussels-transfer',
+          'event-outbound-flight',
+          'event-keflavik-hotel-transfer',
+          'event-hotel-viking-stay',
+        ],
+      ],
+      [
+        'day-2026-08-23',
+        ['event-hotel-ship-transfer', 'event-embarkation'],
+      ],
       ['day-2026-08-24', ['event-isafjordur-whale-nature']],
       [
         'day-2026-08-25',
@@ -46,7 +58,14 @@ describe('canonical active trip data', () => {
       ['day-2026-09-01', ['event-holyhead-penrhyn-castle']],
       ['day-2026-09-02', ['event-cork-jameson']],
       ['day-2026-09-03', ['event-falmouth-st-ives']],
-      ['day-2026-09-04', ['event-disembarkation']],
+      [
+        'day-2026-09-04',
+        [
+          'event-disembarkation',
+          'event-southampton-heathrow-transfer',
+          'event-return-flight',
+        ],
+      ],
     ])
     expect(
       excursions.filter(({ bookingType }) => bookingType === 'OCEANIA'),
@@ -151,6 +170,117 @@ describe('canonical active trip data', () => {
     })
     expect(JSON.stringify(oceaniaMarina2026TripData)).not.toContain(
       '2026-09-01T07:30',
+    )
+  })
+
+  it('records the verified outbound journey without a false Flybus time', () => {
+    const transfer = oceaniaMarina2026TripData.events.find(
+      ({ id }) => id === 'event-home-brussels-transfer',
+    )
+    const flight = oceaniaMarina2026TripData.events.find(
+      ({ id }) => id === 'event-outbound-flight',
+    )
+    const flybus = oceaniaMarina2026TripData.events.find(
+      ({ id }) => id === 'event-keflavik-hotel-transfer',
+    )
+    const hotel = oceaniaMarina2026TripData.events.find(
+      ({ id }) => id === 'event-hotel-viking-stay',
+    )
+
+    expect(transfer).toMatchObject({
+      startsAt: '2026-08-22T10:30:00+02:00',
+      endsAt: '2026-08-22T11:30:00+02:00',
+      leaveByAt: '2026-08-22T10:30:00+02:00',
+      travelerIds: ['traveler-yoav', 'traveler-isabel'],
+    })
+    expect(flight).toMatchObject({
+      publicCode: 'FI555',
+      startsAt: '2026-08-22T13:50:00+02:00',
+      endsAt: '2026-08-22T15:10:00Z',
+      endTimeZone: 'Atlantic/Reykjavik',
+      organizer: 'Icelandair',
+    })
+    expect(flybus).toMatchObject({
+      bookingStatus: 'CONFIRMED',
+      scheduleStatus: 'TO_BE_CONFIRMED',
+      documentReferenceIds: ['document-keflavik-reykjavik-flybus'],
+    })
+    expect(flybus?.startsAt).toBeUndefined()
+    expect(flybus?.endsAt).toBeUndefined()
+    expect(hotel).toMatchObject({
+      startsAt: '2026-08-22T16:00:00Z',
+      endsAt: '2026-08-23T11:00:00Z',
+      documentReferenceIds: ['document-precruise-hotel'],
+    })
+  })
+
+  it('keeps embarkation targets distinct from pending transfer details', () => {
+    const transfer = oceaniaMarina2026TripData.events.find(
+      ({ id }) => id === 'event-hotel-ship-transfer',
+    )
+    const embarkation = oceaniaMarina2026TripData.events.find(
+      ({ id }) => id === 'event-embarkation',
+    )
+
+    expect(transfer).toMatchObject({
+      scheduleStatus: 'TO_BE_CONFIRMED',
+      transportId: 'transport-hotel-ship',
+    })
+    expect(transfer?.startsAt).toBeUndefined()
+    expect(transfer?.leaveByAt).toBeUndefined()
+    expect(embarkation).toMatchObject({
+      startsAt: '2026-08-23T13:00:00Z',
+      timingVerification: 'CONFIRMED',
+    })
+    expect(embarkation?.operationalNotes).toEqual(
+      expect.arrayContaining([
+        'Latest permitted boarding time is not yet confirmed.',
+      ]),
+    )
+  })
+
+  it('records the verified return journey without inventing clearance or home transport', () => {
+    const portCall = oceaniaMarina2026TripData.portCalls.find(
+      ({ id }) => id === 'port-call-southampton',
+    )
+    const disembarkation = oceaniaMarina2026TripData.events.find(
+      ({ id }) => id === 'event-disembarkation',
+    )
+    const transfer = oceaniaMarina2026TripData.events.find(
+      ({ id }) => id === 'event-southampton-heathrow-transfer',
+    )
+    const flight = oceaniaMarina2026TripData.events.find(
+      ({ id }) => id === 'event-return-flight',
+    )
+
+    expect(portCall?.arrivalAt).toBe('2026-09-04T06:00:00+01:00')
+    expect(disembarkation).toMatchObject({
+      scheduleStatus: 'TO_BE_CONFIRMED',
+    })
+    expect(disembarkation?.startsAt).toBeUndefined()
+    expect(transfer).toMatchObject({
+      startsAt: '2026-09-04T07:45:00+01:00',
+      bookingStatus: 'CONFIRMED',
+      documentReferenceIds: ['document-southampton-heathrow-transfer'],
+    })
+    expect(flight).toMatchObject({
+      publicCode: 'BA386',
+      startsAt: '2026-09-04T13:55:00+01:00',
+      endsAt: '2026-09-04T16:10:00+02:00',
+      endTimeZone: 'Europe/Brussels',
+      organizer: 'British Airways',
+    })
+    expect(
+      oceaniaMarina2026TripData.events.some(
+        ({ id }) => id === 'event-brussels-home-transfer',
+      ),
+    ).toBe(false)
+  })
+
+  it('does not duplicate complete booking references in structured trip data', () => {
+    expect(oceaniaMarina2026TripData.bookingReferences).toEqual([])
+    expect(JSON.stringify(oceaniaMarina2026TripData)).not.toMatch(
+      /booking reference|confirmation number|pin|password/i,
     )
   })
 })

@@ -24,6 +24,7 @@ export function TimelineEvent({ event }: TimelineEventProps) {
       <div className="timeline-copy">
         <div className="timeline-meta">
           <span>{event.kindLabel}</span>
+          {event.publicCode ? <span>{event.publicCode}</span> : null}
           <span className="timeline-state">{event.stateLabel}</span>
         </div>
         <h3>{event.title}</h3>

@@ -41,16 +41,24 @@ export function PwaStatusCard({ manager }: PwaStatusCardProps) {
       ? 'Ready for offline use'
       : status.offlineStatus === 'CHECKING'
         ? 'Preparing offline access'
-        : 'Offline status unavailable'
+        : 'Offline status could not be verified'
 
   return (
     <SurfaceCard className="app-status-card">
       <p className="card-eyebrow">App status</p>
+      <p>
+        Updates are managed automatically. No action is required unless an
+        update is offered here.
+      </p>
       <div role="status" aria-live="polite" aria-atomic="true">
         <h2>{copy.title}</h2>
         <p>{copy.detail}</p>
       </div>
-      <p className="app-offline-status">{offlineLabel}</p>
+      <p
+        className={`app-offline-status app-offline-status-${status.offlineStatus.toLowerCase()}`}
+      >
+        {offlineLabel}
+      </p>
 
       {status.updateStatus === 'UPDATE_AVAILABLE' ? (
         <button type="button" onClick={() => void manager.applyUpdate()}>

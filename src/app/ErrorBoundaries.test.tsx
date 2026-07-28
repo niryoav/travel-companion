@@ -1,8 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ApplicationErrorBoundary } from './ApplicationErrorBoundary'
+import { AppShell } from './AppShell'
 import { RouteErrorBoundary } from './RouteErrorBoundary'
 
 function BrokenScreen(): never {
@@ -54,5 +55,35 @@ describe('error boundaries', () => {
       'href',
       '/home',
     )
+  })
+
+  it('clears a route error after navigating to another screen', () => {
+    render(
+      <MemoryRouter initialEntries={['/broken']}>
+        <Routes>
+          <Route element={<AppShell />}>
+            <Route path="broken" element={<BrokenScreen />} />
+            <Route path="home" element={<h1>Recovered Home</h1>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(
+      screen.getByRole('heading', {
+        name: 'This screen could not be displayed',
+      }),
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('link', { name: 'Return to Home' }))
+
+    expect(
+      screen.getByRole('heading', { name: 'Recovered Home' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', {
+        name: 'This screen could not be displayed',
+      }),
+    ).not.toBeInTheDocument()
   })
 })

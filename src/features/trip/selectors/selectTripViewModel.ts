@@ -144,7 +144,10 @@ function eventViewModel(
     startsAt: event.startsAt,
     endTime:
       event.endsAt
-        ? formatLocalTime(event.endsAt, timeZone.timeZone)
+        ? formatLocalTime(
+            event.endsAt,
+            event.endTimeZone ?? timeZone.timeZone,
+          )
         : undefined,
     endsAt: event.endsAt,
     location: location?.name,

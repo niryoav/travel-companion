@@ -13,9 +13,13 @@ database, or general domain framework.
 
 ## Decision
 
-Keep each trip's approved, non-sensitive operational facts in one controlled,
+Keep each trip's approved operational facts in one controlled,
 source-controlled trip configuration. Application code accesses that
-configuration only through `TripRepository`.
+configuration only through `TripRepository`. A private location or
+accommodation identifier may be included only when explicitly supplied and
+approved by the product owner for offline operational use. It must remain
+confined to that configuration; credentials, payment data, identity data, and
+full booking references remain prohibited.
 
 Use simple TypeScript records with stable string IDs and a discriminated event
 union. Keep cruise port calls distinct from generic events. Pure selectors
@@ -24,8 +28,9 @@ those results into the existing `HomeViewModel`.
 
 Represent calendar dates as `YYYY-MM-DD`. Represent timed itinerary values as
 ISO 8601 timestamps with an explicit offset and retain the relevant IANA time
-zone. Trip-day windows use absolute start and end instants so phase calculation
-does not depend on the device time zone.
+zone. A transport event may carry a separate destination time zone for its end
+display. Trip-day windows use absolute start and end instants so phase
+calculation does not depend on the device time zone.
 
 Bundle the canonical trip data with the application so the existing PWA
 precache makes it available offline. Persist only small, mutable, versioned
@@ -56,7 +61,8 @@ and tests must not duplicate real personal or itinerary data.
 - Time and phase behavior can be tested with an injected instant.
 - Stable IDs allow later relationships and local state without array-position
   coupling.
-- Source-controlled data must remain limited to approved non-sensitive facts.
+- Source-controlled data remains limited to approved operational facts, with
+  any private value minimized and confined to the canonical configuration.
 - New trip-data schema versions require a deliberate update to the small
   validation boundary.
 - Live weather, tasks, reminders, document storage, booking management, and

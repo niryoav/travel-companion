@@ -142,6 +142,7 @@ function eventViewModel(
   return {
     id: event.id,
     kindLabel: eventKindLabel(event),
+    publicCode: event.publicCode,
     title: event.title,
     state,
     stateLabel: stateLabel(state),
@@ -152,7 +153,10 @@ function eventViewModel(
     startsAt: event.startsAt,
     endTime:
       event.endsAt
-        ? formatLocalTime(event.endsAt, timeZone.timeZone)
+        ? formatLocalTime(
+            event.endsAt,
+            event.endTimeZone ?? timeZone.timeZone,
+          )
         : undefined,
     endsAt: event.endsAt,
     location: location?.name,

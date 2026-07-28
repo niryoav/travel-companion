@@ -35,6 +35,10 @@ product experience.
 
 ## Changes
 
+- Canonical trip data now includes the newly verified outbound journey,
+  flexible arrival transfer, hotel stay, embarkation target, Southampton
+  transfer, and return flight. Unconfirmed terminal, pickup, boarding,
+  clearance, and final-home-transfer facts remain explicitly pending.
 - More presents profile, app information, offline state, and update controls.
 - Update status distinguishes checking, current, available, applying, failed,
   and unavailable environments.
@@ -69,14 +73,13 @@ product experience.
 
 The following remain intentionally absent until after consolidated review:
 
-- outbound and return-flight details;
-- terminals and airport arrival targets;
-- home-to-airport movement;
-- Flybus operational timing and stops;
-- hotel-to-port transport;
-- embarkation timing and procedure;
-- Southampton pickup and Heathrow transfer timing;
-- complete leave-by values;
+- an exact Flybus departure time;
+- the Reykjavík cruise terminal;
+- the hotel-to-port taxi booking and pickup time;
+- the final embarkation procedure and latest permitted boarding time;
+- disembarkation clearance timing;
+- Brussels Airport to home transport;
+- remaining leave-by values that depend on pending transport;
 - confirmed All Aboard values;
 - remaining excursion timing confirmations;
 - final operational document additions.

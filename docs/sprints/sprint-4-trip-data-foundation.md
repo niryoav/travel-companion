@@ -67,10 +67,12 @@ requiring connectivity or manual production controls.
 - Treat `HomeViewModel` as the presentation boundary.
 - Use an injected instant in date-sensitive selectors and tests.
 - Do not persist the entire bundled trip.
-- Source-controlled operational facts may include public locations and itinerary
-  times, but never private addresses, identity data, full booking references,
-  payment data, cabin numbers, private phone numbers, medical data, tickets,
-  codes, or sensitive document files.
+- Source-controlled operational facts may include public locations and
+  itinerary times. A later explicitly approved operational address or
+  accommodation identifier must remain confined to the canonical trip
+  configuration. Identity data, full booking references, payment data, private
+  phone numbers, medical data, credentials, and unapproved sensitive document
+  files remain prohibited.
 
 ## UX Notes
 

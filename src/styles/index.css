@@ -174,12 +174,12 @@ a:focus-visible {
   margin: 0 auto;
   border: 1px solid rgb(255 255 255 / 24%);
   border-radius: 1.65rem;
-  background: rgb(5 28 43 / 72%);
+  background: rgb(5 28 43 / 62%);
   box-shadow: 0 24px 70px rgb(0 10 18 / 34%);
   color: #fff;
   padding: clamp(1.15rem, 5vw, 1.5rem);
-  -webkit-backdrop-filter: blur(18px) saturate(120%);
-  backdrop-filter: blur(18px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(115%);
+  backdrop-filter: blur(10px) saturate(115%);
 }
 
 .welcome-label {
@@ -2207,9 +2207,14 @@ a:focus-visible {
   line-height: 1.55;
 }
 
-.app-status-card .app-offline-status {
+.app-status-card .app-offline-status-ready {
   color: var(--positive);
   font-weight: 750;
+}
+
+.app-status-card .app-offline-status-checking,
+.app-status-card .app-offline-status-unavailable {
+  color: var(--text-muted);
 }
 
 .app-status-card button,

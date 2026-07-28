@@ -55,6 +55,28 @@ describe('selectTripViewModel', () => {
     })
   })
 
+  it('formats flight arrivals in their destination time zones', () => {
+    const result = selectTripViewModel(
+      oceaniaMarina2026TripData,
+      new Date('2026-08-01T12:00:00Z'),
+    )
+    const outbound = result.days
+      .find(({ dateTime }) => dateTime === '2026-08-22')
+      ?.events.find(({ id }) => id === 'event-outbound-flight')
+    const returnFlight = result.days
+      .find(({ dateTime }) => dateTime === '2026-09-04')
+      ?.events.find(({ id }) => id === 'event-return-flight')
+
+    expect(outbound).toMatchObject({
+      time: '13:50',
+      endTime: '15:10',
+    })
+    expect(returnFlight).toMatchObject({
+      time: '13:55',
+      endTime: '16:10',
+    })
+  })
+
   it('resolves display-ready destination and excursion content separately', () => {
     const result = selectTripViewModel(
       tripFixture,
