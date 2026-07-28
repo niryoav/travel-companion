@@ -1,8 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 
 import { AppShell } from './AppShell'
-import { DestinationScreen } from '../features/placeholders/DestinationScreen'
-import { destinationDefinitions } from '../features/placeholders/placeholderScreens'
+import { DocumentsScreen } from '../features/documents/DocumentsScreen'
 import { HomeProfileGate } from '../features/profile/HomeProfileGate'
 import { MoreScreen } from '../features/profile/MoreScreen'
 import { TodayScreen } from '../features/today/TodayScreen'
@@ -107,22 +106,10 @@ export function App({
                 />
               }
             />
-            {destinationDefinitions.map(
-              ({ path, title, description, icon, placeholder }) => (
-                <Route
-                  key={path}
-                  path={path}
-                  element={
-                    <DestinationScreen
-                      title={title}
-                      description={description}
-                      icon={icon}
-                      placeholder={placeholder}
-                    />
-                  }
-                />
-              ),
-            )}
+            <Route
+              path="documents"
+              element={<DocumentsScreen tripData={tripData} />}
+            />
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Route>
         </Routes>

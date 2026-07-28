@@ -1167,6 +1167,122 @@ a:focus-visible {
   color: var(--champagne);
 }
 
+.trip-day-document-actions {
+  display: grid;
+  justify-items: start;
+}
+
+.documents-screen {
+  display: grid;
+  align-content: start;
+  gap: 1.15rem;
+  width: 100%;
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+.documents-viewer-note {
+  margin: 0;
+  border-left: 3px solid var(--champagne);
+  color: var(--text-muted);
+  padding-left: 0.8rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.document-group h2 {
+  margin: 0 0 0.7rem;
+  color: var(--text);
+  font-size: 1.25rem;
+}
+
+.document-group ul {
+  display: grid;
+  gap: 0.8rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.document-card {
+  border: 1px solid var(--border);
+  border-radius: 1.2rem;
+  background:
+    linear-gradient(145deg, var(--home-card-start), var(--home-card-end));
+  box-shadow: var(--shadow), inset 0 1px rgb(255 255 255 / 5%);
+  padding: 1rem;
+}
+
+.document-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: var(--champagne);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.document-offline-status {
+  color: var(--positive);
+  letter-spacing: 0;
+  text-align: right;
+  text-transform: none;
+}
+
+.document-card h3 {
+  margin: 0.55rem 0 0;
+  color: var(--text);
+  font-size: 1.15rem;
+  line-height: 1.3;
+}
+
+.document-card p {
+  margin: 0.4rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.document-card .document-date-context {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.document-card .document-operational-notice {
+  border-left: 3px solid var(--attention);
+  color: var(--text);
+  padding-left: 0.7rem;
+  font-weight: 700;
+}
+
+.document-card .document-verification {
+  font-size: 0.78rem;
+}
+
+.document-action {
+  display: inline-flex;
+  min-height: 2.9rem;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--champagne) 72%, transparent);
+  border-radius: 0.85rem;
+  background: var(--accent-soft);
+  color: var(--champagne);
+  padding: 0.65rem 0.9rem;
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.document-action:focus-visible {
+  outline: 3px solid var(--champagne);
+  outline-offset: 3px;
+}
+
 
 .home-hero {
   display: grid;

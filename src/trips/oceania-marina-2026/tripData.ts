@@ -311,8 +311,8 @@ const days: TripDay[] = [
 
 export const oceaniaMarina2026TripData: TripData = {
   schemaVersion: 1,
-  dataVersion: '2026-07-27.3',
-  publishedAt: '2026-07-27T00:00:00Z',
+  dataVersion: '2026-07-28.1',
+  publishedAt: '2026-07-28T00:00:00Z',
   trip: {
     id: 'trip-oceania-marina-2026',
     title: 'Iceland & British Isles',
@@ -347,6 +347,7 @@ export const oceaniaMarina2026TripData: TripData = {
       startsAt: '2026-09-04T08:00:00+01:00',
       timeZone: 'Europe/London',
       locationId: 'location-southampton',
+      documentReferenceIds: ['document-southampton-heathrow-transfer'],
     },
     {
       id: 'event-isafjordur-whale-nature',
@@ -373,6 +374,7 @@ export const oceaniaMarina2026TripData: TripData = {
       organizer: 'Gentle Giants',
       bookingType: 'INDEPENDENT',
       checkInAt: '2026-08-25T08:50:00Z',
+      documentReferenceIds: ['document-husavik-whale-safari'],
     },
     {
       id: 'event-husavik-geosea-baths',
@@ -399,6 +401,7 @@ export const oceaniaMarina2026TripData: TripData = {
       bookingType: 'INDEPENDENT',
       meetingContext: 'Djúpavogsvegur, Djúpivogur',
       operationalNotes: ['Early tender coordination required'],
+      documentReferenceIds: ['document-djupivogur-glacier-tour'],
     },
     {
       id: 'event-torshavn-vestmanna',
@@ -424,6 +427,7 @@ export const oceaniaMarina2026TripData: TripData = {
       bookingStatus: 'CONFIRMED',
       scheduleStatus: 'TO_BE_CONFIRMED',
       operationalNotes: ['Departure and return time to be confirmed.'],
+      documentReferenceIds: ['document-stornoway-isle-of-lewis'],
       // The booking confirmation currently lists 10:00 and six hours. The
       // operator agreed by phone to an earlier cruise-compatible start and
       // return, but revised written timing is still pending.
@@ -507,5 +511,96 @@ export const oceaniaMarina2026TripData: TripData = {
   ],
   portCalls,
   bookingReferences: [],
-  documentReferences: [],
+  documentReferences: [
+    {
+      id: 'document-precruise-hotel',
+      title: 'Pre-cruise hotel confirmation',
+      category: 'HOTEL',
+      assetPath: '/documents/travel/precruise-hotel-confirmation.pdf',
+      mimeType: 'application/pdf',
+      associatedDate: '2026-08-22',
+      dayId: 'day-2026-08-22',
+      description: 'One-night confirmation for the stay before embarkation.',
+      actionLabel: 'Open hotel confirmation',
+      offlineAvailable: true,
+      verificationStatus: 'ISSUED',
+    },
+    {
+      id: 'document-keflavik-reykjavik-flybus',
+      title: 'Keflavík to Reykjavík Flybus voucher',
+      category: 'TRANSFER',
+      assetPath:
+        '/documents/travel/keflavik-reykjavik-flybus-voucher.pdf',
+      mimeType: 'application/pdf',
+      associatedDate: '2026-08-22',
+      dayId: 'day-2026-08-22',
+      locationId: 'location-reykjavik',
+      description: 'Flexible airport-to-city transfer voucher for arrival day.',
+      actionLabel: 'Open transfer voucher',
+      offlineAvailable: true,
+      verificationStatus: 'ISSUED',
+    },
+    {
+      id: 'document-husavik-whale-safari',
+      title: 'Húsavík whale safari confirmation',
+      category: 'EXCURSION_CONFIRMATION',
+      assetPath:
+        '/documents/travel/husavik-whale-safari-confirmation.pdf',
+      mimeType: 'application/pdf',
+      associatedDate: '2026-08-25',
+      dayId: 'day-2026-08-25',
+      locationId: 'location-husavik',
+      description: 'Operator confirmation and practical check-in guidance.',
+      actionLabel: 'Open excursion confirmation',
+      offlineAvailable: true,
+      verificationStatus: 'ISSUED',
+    },
+    {
+      id: 'document-djupivogur-glacier-tour',
+      title: 'Djúpivogur glacier tour ticket',
+      category: 'EXCURSION_TICKET',
+      assetPath:
+        '/documents/travel/djupivogur-glacier-tour-ticket.pdf',
+      mimeType: 'application/pdf',
+      associatedDate: '2026-08-26',
+      dayId: 'day-2026-08-26',
+      locationId: 'location-djupivogur',
+      description: 'Travel ticket with the confirmed start and meeting point.',
+      actionLabel: 'Open excursion ticket',
+      offlineAvailable: true,
+      verificationStatus: 'ISSUED',
+    },
+    {
+      id: 'document-stornoway-isle-of-lewis',
+      title: 'Stornoway Isle of Lewis confirmation',
+      category: 'EXCURSION_CONFIRMATION',
+      assetPath:
+        '/documents/travel/stornoway-isle-of-lewis-confirmation.pdf',
+      mimeType: 'application/pdf',
+      associatedDate: '2026-08-29',
+      dayId: 'day-2026-08-29',
+      locationId: 'location-stornoway',
+      description: 'Original operator confirmation for the Isle of Lewis tour.',
+      actionLabel: 'Open excursion confirmation',
+      offlineAvailable: true,
+      verificationStatus: 'ISSUED_WITH_SUPERSEDED_DETAILS',
+      operationalNotice:
+        'The time printed in this document is superseded. Departure and return remain to be confirmed in writing.',
+    },
+    {
+      id: 'document-southampton-heathrow-transfer',
+      title: 'Southampton to Heathrow transfer confirmation',
+      category: 'TRANSFER',
+      assetPath:
+        '/documents/travel/southampton-heathrow-transfer.pdf',
+      mimeType: 'application/pdf',
+      associatedDate: '2026-09-04',
+      dayId: 'day-2026-09-04',
+      locationId: 'location-southampton',
+      description: 'Confirmed private transfer after disembarkation.',
+      actionLabel: 'Open transfer confirmation',
+      offlineAvailable: true,
+      verificationStatus: 'ISSUED',
+    },
+  ],
 }

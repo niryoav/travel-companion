@@ -40,6 +40,9 @@ export function validateTripData(data: TripData): string[] {
   const locationIds = new Set(data.locations.map(({ id }) => id))
   const transportIds = new Set(data.transports.map(({ id }) => id))
   const portCallIds = new Set(data.portCalls.map(({ id }) => id))
+  const documentReferenceIds = new Set(
+    data.documentReferences.map(({ id }) => id),
+  )
 
   for (const travelerId of data.trip.travelerIds) {
     if (!travelerIds.has(travelerId)) {
@@ -144,6 +147,36 @@ export function validateTripData(data: TripData): string[] {
       (event.meetingContext !== undefined && !event.meetingContext.trim())
     ) {
       errors.push(`Invalid event operational content: ${event.id}`)
+    }
+    for (const documentReferenceId of event.documentReferenceIds ?? []) {
+      if (!documentReferenceIds.has(documentReferenceId)) {
+        errors.push(
+          `Unknown document ${documentReferenceId} on event ${event.id}`,
+        )
+      }
+    }
+  }
+
+  for (const document of data.documentReferences) {
+    if (!dayIds.has(document.dayId)) {
+      errors.push(`Unknown day ${document.dayId} on document ${document.id}`)
+    }
+    if (document.locationId && !locationIds.has(document.locationId)) {
+      errors.push(
+        `Unknown location ${document.locationId} on document ${document.id}`,
+      )
+    }
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(document.associatedDate) ||
+      !document.title.trim() ||
+      !document.description.trim() ||
+      !document.actionLabel.trim() ||
+      document.mimeType !== 'application/pdf' ||
+      !document.assetPath.startsWith('/documents/travel/') ||
+      /^https?:\/\//.test(document.assetPath) ||
+      document.offlineAvailable !== true
+    ) {
+      errors.push(`Invalid document metadata: ${document.id}`)
     }
   }
 

@@ -8,6 +8,14 @@ export type CruiseId = string
 export type PortCallId = string
 export type BookingReferenceId = string
 export type DocumentReferenceId = string
+export type DocumentCategory =
+  | 'FLIGHT'
+  | 'HOTEL'
+  | 'TRANSFER'
+  | 'CRUISE'
+  | 'EXCURSION'
+  | 'EXCURSION_TICKET'
+  | 'EXCURSION_CONFIRMATION'
 
 export type TripPhase =
   | 'PRE_TRIP'
@@ -134,7 +142,17 @@ export interface BookingReference {
 export interface DocumentReference {
   id: DocumentReferenceId
   title: string
-  category: 'FLIGHT' | 'HOTEL' | 'TRANSFER' | 'CRUISE' | 'EXCURSION'
+  category: DocumentCategory
+  assetPath: string
+  mimeType: 'application/pdf'
+  associatedDate: string
+  dayId: TripDayId
+  locationId?: LocationId
+  description: string
+  actionLabel: string
+  offlineAvailable: true
+  verificationStatus: 'ISSUED' | 'ISSUED_WITH_SUPERSEDED_DETAILS'
+  operationalNotice?: string
 }
 
 export interface TripData {
