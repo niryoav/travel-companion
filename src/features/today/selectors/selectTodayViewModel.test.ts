@@ -513,10 +513,7 @@ describe('selectTodayViewModel', () => {
     expect(result.nextEvent).toMatchObject({
       title: 'GG2 Big Whale Safari & Puffins',
       meetingTime: '08:50',
-      leaveBy: {
-        state: 'UNAVAILABLE',
-        detail: 'Travel duration not added yet.',
-      },
+      leaveBy: undefined,
     })
     expect(result.returnGuidance).toMatchObject({
       state: 'CANNOT_CALCULATE',

@@ -25,6 +25,9 @@ known inputs:
 - `checkInAt` is a configured check-in deadline;
 - `leaveByAt` is an explicit leave-by instant;
 - `travelDurationMinutes` and `safetyBufferMinutes` are calculation inputs;
+- `travelDurationRangeMinutes` represents a bounded estimated journey duration;
+- `estimatedSchedule` anchors a flexible departure window to another event;
+- `travelOriginLocationId` makes a separate excursion travel leg explicit;
 - `travelDurationVerification` distinguishes confirmed and estimated duration;
 - `timingVerification` marks an otherwise configured schedule as confirmed or
   estimated;
@@ -59,12 +62,17 @@ location input.
 
 ## Leave-by guidance
 
-An explicit `leaveByAt` takes precedence. Otherwise leave-by may be calculated
-from the earliest configured meeting, check-in, or event start time minus both
-travel duration and safety buffer. If any required input is absent, the result
-is unavailable and names the missing input. A calculation is estimated when its
+An explicit `leaveByAt` takes precedence. Otherwise leave-by is calculated only
+for an event with an explicit, separate travel requirement and the required
+duration, deadline, and safety-buffer inputs. Flights, hotel stays,
+ship-operated excursions, and unrelated events do not inherit generic
+leave-by completeness rules. A calculation is estimated when its
 travel-duration input is estimated; it is never presented as an exact confirmed
 fact.
+
+Scheduled flight duration is derived from known departure and arrival instants.
+Flexible transfers may derive approximate departure and arrival windows from a
+known anchor event and bounded offsets. These windows remain visibly estimated.
 
 ## Return-buffer thresholds
 
@@ -103,19 +111,9 @@ behavior. No fixture facts are copied into production.
 
 ## Intentionally deferred journey data
 
-- outbound flight;
-- return flight;
-- terminals;
-- home-to-airport movement;
-- airport arrival targets;
-- Flybus operational details;
-- hotel-to-port movement;
-- embarkation details;
-- Southampton pickup details;
-- Heathrow transfer details;
-- complete leave-by times;
-- confirmed All Aboard times;
-- remaining excursion timing confirmations.
+Unverified final boarding, gate, hotel-to-port pickup, cruise-terminal,
+disembarkation-clearance, All Aboard, and remaining excursion timing details
+stay absent until an authoritative source confirms them.
 
 Live traffic, maps, weather, provider status, editing, notifications, sync,
 accounts, costs, and external APIs remain out of scope.

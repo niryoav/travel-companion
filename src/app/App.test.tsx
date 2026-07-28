@@ -95,6 +95,12 @@ describe('App', () => {
     expect(screen.getByText('With all my love,')).toBeInTheDocument()
     expect(screen.getByText('Yoav ❤️')).toBeInTheDocument()
     expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'Northern Coast Journey',
+      }).closest('.welcome-card-content'),
+    ).toBeVisible()
+    expect(
       screen.queryByRole('navigation', { name: 'Primary navigation' }),
     ).not.toBeInTheDocument()
   })

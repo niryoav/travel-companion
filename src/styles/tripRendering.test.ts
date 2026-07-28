@@ -44,6 +44,12 @@ describe('Trip foreground rendering styles', () => {
     expect(declarationsFor('.welcome-card')).not.toMatch(
       fragilePaintProperties,
     )
+    expect(declarationsFor('.welcome-card-content')).not.toMatch(
+      /\b(?:animation|opacity|visibility|transform|content-visibility|contain|will-change)\s*:/,
+    )
+    expect(declarationsFor('.welcome-card-content')).toMatch(
+      /\bz-index:\s*1\b/,
+    )
     expect(declarationsFor('.home-screen')).not.toMatch(
       fragilePaintProperties,
     )

@@ -18,7 +18,12 @@ import { selectTripProgress } from '../../../domain/trip/selectors/selectTripPro
 import { selectTripDayDocuments } from '../../../domain/trip/selectors/selectTripDayDocuments'
 import {
   calculateLeaveBy,
+  formatDuration,
+  hasUnresolvedRelevantTravel,
+  isLeaveByRelevant,
   resolveEventTimeZone,
+  scheduledDurationMinutes,
+  selectEstimatedEventTiming,
 } from '../../../domain/trip/operationalTiming'
 import {
   formatDateRange,
@@ -105,6 +110,15 @@ function eventKindLabel(event: TripEvent): string {
   }
 }
 
+function formatDurationRange(
+  minimum: number,
+  maximum: number,
+): string {
+  return minimum < 60 && maximum < 60
+    ? `${minimum}–${maximum} min`
+    : `${formatDuration(minimum)}–${formatDuration(maximum)}`
+}
+
 function eventViewModel(
   data: TripData,
   content: TripContentBundle,
@@ -119,9 +133,12 @@ function eventViewModel(
   const relatedDocuments = selectDayDocuments(data, [event])
   const guide = selectExcursionGuide(content, event.id)
   const timeZone = resolveEventTimeZone(event, day)
-  const leaveBy = calculateLeaveBy(event)
-  const leaveByLabel =
-    leaveBy.state === 'CONFIRMED'
+  const leaveBy = isLeaveByRelevant(event)
+    ? calculateLeaveBy(event)
+    : undefined
+  const leaveByLabel = !leaveBy
+    ? undefined
+    : leaveBy.state === 'CONFIRMED'
       ? 'Leave by'
       : leaveBy.state === 'ESTIMATED'
         ? 'Estimated leave by'
@@ -132,6 +149,50 @@ function eventViewModel(
             : leaveBy.reason === 'TRAVEL_DURATION_MISSING'
               ? 'Travel duration not added yet'
               : undefined
+  const scheduledDuration =
+    event.kind === 'FLIGHT'
+      ? scheduledDurationMinutes(event)
+      : undefined
+  const estimatedTiming = selectEstimatedEventTiming(data, event)
+  const duration = scheduledDuration !== undefined
+    ? {
+        label: 'Scheduled duration',
+        value: formatDuration(scheduledDuration),
+      }
+    : event.travelDurationRangeMinutes
+      ? {
+          label: 'Estimated travel time',
+          value: formatDurationRange(
+            event.travelDurationRangeMinutes.minimum,
+            event.travelDurationRangeMinutes.maximum,
+          ),
+        }
+      : event.travelDurationMinutes !== undefined
+        ? {
+            label:
+              event.travelDurationVerification === 'ESTIMATED'
+                ? 'Estimated travel time'
+                : 'Travel time',
+            value: formatDuration(event.travelDurationMinutes),
+          }
+        : undefined
+  const leaveByViewModel = leaveBy && leaveByLabel
+    ? {
+        label: leaveByLabel,
+        time: leaveBy.leaveByAt
+          ? formatLocalTime(leaveBy.leaveByAt, timeZone.timeZone)
+          : undefined,
+        dateTime: leaveBy.leaveByAt,
+        detail:
+          leaveBy.state === 'PENDING'
+            ? 'Meeting time to be confirmed.'
+            : leaveBy.state === 'UNAVAILABLE'
+              ? 'Leave-by cannot yet be calculated.'
+              : leaveBy.state === 'CONFIRMED'
+                ? 'Explicit configured time.'
+                : `${leaveBy.travelDurationMinutes} min travel + ${leaveBy.safetyBufferMinutes} min safety buffer.`,
+      }
+    : undefined
 
   return {
     id: event.id,
@@ -196,23 +257,31 @@ function eventViewModel(
       )
         ? `Event timezone not added; using ${day.timeZone}`
         : undefined,
-    leaveBy: leaveByLabel
+    duration,
+    estimatedTiming: estimatedTiming
       ? {
-          label: leaveByLabel,
-          time: leaveBy.leaveByAt
-            ? formatLocalTime(leaveBy.leaveByAt, timeZone.timeZone)
+          departureWindow: `${formatLocalTime(
+            estimatedTiming.departureWindow.earliest,
+            timeZone.timeZone,
+          )}–${formatLocalTime(
+            estimatedTiming.departureWindow.latest,
+            timeZone.timeZone,
+          )}`,
+          arrivalWindow: estimatedTiming.arrivalWindow
+            ? `${formatLocalTime(
+                estimatedTiming.arrivalWindow.earliest,
+                timeZone.timeZone,
+              )}–${formatLocalTime(
+                estimatedTiming.arrivalWindow.latest,
+                timeZone.timeZone,
+              )}`
             : undefined,
-          dateTime: leaveBy.leaveByAt,
-          detail:
-            leaveBy.state === 'PENDING'
-              ? 'Meeting time to be confirmed.'
-              : leaveBy.state === 'UNAVAILABLE'
-                ? 'Leave-by cannot yet be calculated.'
-                : leaveBy.state === 'CONFIRMED'
-                  ? 'Explicit configured time.'
-                  : `${leaveBy.travelDurationMinutes} min travel + ${leaveBy.safetyBufferMinutes} min safety buffer.`,
         }
       : undefined,
+    operationalTimingNote: hasUnresolvedRelevantTravel(event)
+      ? 'Travel time from the configured origin is not yet verified.'
+      : undefined,
+    leaveBy: leaveByViewModel,
     operationalNotes: event.operationalNotes,
     experience: guide
       ? {

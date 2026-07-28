@@ -80,6 +80,15 @@ export interface TripEventViewModel {
   meetingAt?: string
   meetingContext?: string
   timeZoneNote?: string
+  duration?: {
+    label: string
+    value: string
+  }
+  estimatedTiming?: {
+    departureWindow: string
+    arrivalWindow?: string
+  }
+  operationalTimingNote?: string
   leaveBy?: {
     label: string
     time?: string

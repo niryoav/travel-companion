@@ -24,6 +24,8 @@ export function WelcomeCoverScreen({
   const cruise = tripData.cruises.find(
     ({ id }) => id === tripData.trip.cruiseId,
   )
+  const shipName =
+    cruise?.shipName ?? 'Cruise details available in Trip'
   const localDate = selectCurrentLocalDate(tripData, now)
   const loveMessage =
     localDate < tripData.trip.startDate
@@ -47,23 +49,25 @@ export function WelcomeCoverScreen({
       <div className="welcome-overlay" aria-hidden="true" />
 
       <section className="welcome-card" aria-labelledby="welcome-trip-title">
-        <p className="welcome-label">Travel Companion</p>
-        <p className="welcome-family">Your trip</p>
-        <h1 id="welcome-trip-title">{tripData.trip.title}</h1>
-        <p className="welcome-ship">{cruise?.shipName}</p>
-        <p className="welcome-dates">
-          {formatDateRange(
-            tripData.trip.startDate,
-            tripData.trip.endDate,
-          )}
-        </p>
-        <p className="welcome-countdown">{countdown}</p>
-        {loveMessage ? (
-          <DailyLoveMessage message={loveMessage} variant="welcome" />
-        ) : null}
-        <Link className="welcome-enter" to="/home">
-          Enter trip
-        </Link>
+        <div className="welcome-card-content">
+          <p className="welcome-label">Travel Companion</p>
+          <p className="welcome-family">Your trip</p>
+          <h1 id="welcome-trip-title">{tripData.trip.title}</h1>
+          <p className="welcome-ship">{shipName}</p>
+          <p className="welcome-dates">
+            {formatDateRange(
+              tripData.trip.startDate,
+              tripData.trip.endDate,
+            )}
+          </p>
+          <p className="welcome-countdown">{countdown}</p>
+          {loveMessage ? (
+            <DailyLoveMessage message={loveMessage} variant="welcome" />
+          ) : null}
+          <Link className="welcome-enter" to="/home">
+            Enter trip
+          </Link>
+        </div>
       </section>
     </main>
   )

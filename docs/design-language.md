@@ -196,9 +196,11 @@ estimated, pending, and unavailable values use explicit words rather than color
 alone. Ordinary missing data stays calm; urgent styling is reserved for a
 genuinely near or passed verified deadline.
 
-Use consistent missing-data language: “Time to be confirmed”, “Meeting point
-pending”, “Return buffer cannot yet be calculated”, “Travel duration not added
-yet”, and “All Aboard time unavailable”. Never show blank labels, malformed
+Use consistent missing-data language only where the value is operationally
+relevant: “Time to be confirmed”, “Meeting point pending”, “Return buffer
+cannot yet be calculated”, and “All Aboard time unavailable”. Flights, hotel
+stays, ship-operated excursions, and other events must not inherit generic
+travel-duration or leave-by warnings. Never show blank labels, malformed
 punctuation, or an inferred time.
 
 ## Release-state behavior

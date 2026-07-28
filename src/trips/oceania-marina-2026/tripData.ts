@@ -415,7 +415,7 @@ export const oceaniaMarina2026TripData: TripData = {
       bookingStatus: 'CONFIRMED',
       operationalNotes: [
         'Saga Premium · Isabel seat 03D · Yoav seat 03F.',
-        'Scheduled duration: 3h 20m.',
+        'Check the Icelandair app for gate and final boarding time.',
         'Checked baggage: 2 × 32 kg per person.',
         'Carry-on: 1 × 10 kg per person.',
         'Personal item maximum: 40 × 30 × 15 cm.',
@@ -433,6 +433,18 @@ export const oceaniaMarina2026TripData: TripData = {
       organizer: 'Reykjavík Excursions / Flybus',
       bookingStatus: 'CONFIRMED',
       scheduleStatus: 'TO_BE_CONFIRMED',
+      travelDurationRangeMinutes: {
+        minimum: 40,
+        maximum: 45,
+      },
+      travelDurationVerification: 'ESTIMATED',
+      estimatedSchedule: {
+        anchorEventId: 'event-outbound-flight',
+        startOffsetMinutes: {
+          minimum: 35,
+          maximum: 40,
+        },
+      },
       meetingContext: 'Outside the KEF Arrivals exit',
       operationalNotes: [
         'Flexible ticket for 2 adults.',
@@ -545,7 +557,6 @@ export const oceaniaMarina2026TripData: TripData = {
       bookingStatus: 'CONFIRMED',
       operationalNotes: [
         'Euro Traveller · Economy Plus.',
-        'Scheduled duration: 1h 15m.',
         'Checked baggage: 1 × 23 kg per person.',
         'Hand baggage: 1 cabin bag and 1 small handbag per person.',
         'Online check-in opens 24 hours before departure.',

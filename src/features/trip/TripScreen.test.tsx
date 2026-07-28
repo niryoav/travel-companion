@@ -178,6 +178,62 @@ describe('TripScreen', () => {
     ).toHaveLength(oceaniaMarina2026TripData.trip.dayIds.length)
   })
 
+  it('renders specific operational timing without generic travel warnings', () => {
+    render(
+      <MemoryRouter initialEntries={['/trip']}>
+        <TripScreen
+          tripData={oceaniaMarina2026TripData}
+          tripContent={oceaniaMarina2026TripContent}
+          now={new Date('2026-08-22T12:00:00Z')}
+        />
+      </MemoryRouter>,
+    )
+    const flight = screen
+      .getAllByText('Flight to Keflavík')
+      .at(-1)
+      ?.closest('.trip-event') as HTMLElement
+    const flybus = screen
+      .getAllByText('Flybus to Hotel Viking')
+      .at(-1)
+      ?.closest('.trip-event') as HTMLElement
+    const hotel = screen
+      .getAllByText('Hotel Viking')
+      .at(-1)
+      ?.closest('.trip-event') as HTMLElement
+    const independent = screen
+      .getAllByText('GG2 Big Whale Safari & Puffins')
+      .at(-1)
+      ?.closest('.trip-event') as HTMLElement
+    const oceania = screen
+      .getAllByText('Húsavík & GeoSea Baths')
+      .at(-1)
+      ?.closest('.trip-event') as HTMLElement
+
+    expect(within(flight).getByText('Scheduled duration · 3h 20m'))
+      .toBeInTheDocument()
+    expect(
+      within(flight).getByText(
+        'Check the Icelandair app for gate and final boarding time.',
+      ),
+    ).toBeInTheDocument()
+    expect(within(flybus).getByText('Estimated travel time · 40–45 min'))
+      .toBeInTheDocument()
+    expect(
+      within(flybus).getByText('Approximately 15:45–15:50'),
+    ).toBeInTheDocument()
+    expect(
+      within(flybus).getByText('Approximately 16:25–16:35'),
+    ).toBeInTheDocument()
+    for (const event of [flight, flybus, hotel, independent, oceania]) {
+      expect(event).not.toHaveTextContent('Travel duration not added yet')
+      expect(event).not.toHaveTextContent('Leave-by cannot yet be calculated')
+    }
+    expect(within(independent).getByText(/Check in/)).toHaveTextContent(
+      '08:50',
+    )
+    expect(within(oceania).getByText('13:00')).toBeInTheDocument()
+  })
+
   it('makes Today explicit and open by default without navigation', () => {
     renderTrip('/trip?state=active')
     const todayStatus = screen.getByText('Today')

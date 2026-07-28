@@ -203,6 +203,18 @@ describe('canonical active trip data', () => {
     expect(flybus).toMatchObject({
       bookingStatus: 'CONFIRMED',
       scheduleStatus: 'TO_BE_CONFIRMED',
+      travelDurationRangeMinutes: {
+        minimum: 40,
+        maximum: 45,
+      },
+      travelDurationVerification: 'ESTIMATED',
+      estimatedSchedule: {
+        anchorEventId: 'event-outbound-flight',
+        startOffsetMinutes: {
+          minimum: 35,
+          maximum: 40,
+        },
+      },
       documentReferenceIds: ['document-keflavik-reykjavik-flybus'],
     })
     expect(flybus?.startsAt).toBeUndefined()

@@ -10,6 +10,7 @@ import { selectTodayPortCall } from '../../../domain/trip/selectors/selectTodayP
 import {
   calculateLeaveBy,
   calculateReturnBuffer,
+  isLeaveByRelevant,
   resolveEventTimeZone,
   selectPortOperationalStatus,
   type PortOperationalStatus,
@@ -200,6 +201,10 @@ function leaveByViewModel(
   event: TripEvent,
   timeZone: string,
 ): TodayLeaveByViewModel | undefined {
+  if (!isLeaveByRelevant(event)) {
+    return undefined
+  }
+
   const result = calculateLeaveBy(event)
   if (
     result.state === 'UNAVAILABLE' &&

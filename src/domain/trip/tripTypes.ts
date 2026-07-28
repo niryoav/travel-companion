@@ -14,6 +14,16 @@ export type OperationalTimingVerification =
   | 'PENDING'
   | 'UNAVAILABLE'
 export type TravelDurationVerification = 'CONFIRMED' | 'ESTIMATED'
+
+export interface MinuteRange {
+  minimum: number
+  maximum: number
+}
+
+export interface EstimatedEventSchedule {
+  anchorEventId: EventId
+  startOffsetMinutes: MinuteRange
+}
 export type DocumentCategory =
   | 'FLIGHT'
   | 'HOTEL'
@@ -95,7 +105,10 @@ interface BaseEvent {
   checkInAt?: string
   leaveByAt?: string
   travelDurationMinutes?: number
+  travelDurationRangeMinutes?: MinuteRange
   travelDurationVerification?: TravelDurationVerification
+  estimatedSchedule?: EstimatedEventSchedule
+  travelOriginLocationId?: LocationId
   safetyBufferMinutes?: number
   timingVerification?: Extract<
     OperationalTimingVerification,

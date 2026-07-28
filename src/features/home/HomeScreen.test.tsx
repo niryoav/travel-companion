@@ -120,6 +120,32 @@ describe('HomeScreen', () => {
     expect(screen.queryByText('All aboard')).not.toBeInTheDocument()
   })
 
+  it('renders the full local date for a future production milestone', () => {
+    const viewModel = selectHomeViewModel(
+      oceaniaMarina2026TripData,
+      new Date('2026-07-28T12:00:00Z'),
+    )
+
+    render(
+      <HomePhaseView
+        greeting="Good afternoon, Traveler"
+        viewModel={viewModel}
+      />,
+    )
+
+    expect(screen.getByText('Saturday, 22 August')).toBeInTheDocument()
+    expect(screen.getByText('10:30')).toHaveAttribute(
+      'datetime',
+      '2026-08-22T10:30:00+02:00',
+    )
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Home to Brussels Airport',
+      }),
+    ).toBeInTheDocument()
+  })
+
   it('shows the selected traveler only in the greeting', () => {
     renderHome('/home')
 

@@ -156,6 +156,35 @@ describe('validateTripData', () => {
     )
   })
 
+  it('rejects invalid estimated timing ranges and anchors', () => {
+    const invalid = {
+      ...tripFixture,
+      events: tripFixture.events.map((event, index) =>
+        index === 0
+          ? {
+              ...event,
+              travelDurationRangeMinutes: {
+                minimum: 45,
+                maximum: 40,
+              },
+              travelDurationVerification: 'ESTIMATED' as const,
+              estimatedSchedule: {
+                anchorEventId: 'event-missing',
+                startOffsetMinutes: {
+                  minimum: 40,
+                  maximum: 35,
+                },
+              },
+            }
+          : event,
+      ),
+    }
+
+    expect(validateTripData(invalid)).toContain(
+      'Invalid event operational timing: event-flight-outbound',
+    )
+  })
+
   it('rejects unknown event-to-document relationships', () => {
     const invalid = {
       ...tripFixture,

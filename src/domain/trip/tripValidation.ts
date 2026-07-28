@@ -1,6 +1,17 @@
 import type { TripData } from './tripTypes'
 import { isSupportedTimeZone, isValidInstant } from './tripTime'
 
+function isValidMinuteRange(
+  range: { minimum: number; maximum: number },
+): boolean {
+  return (
+    Number.isInteger(range.minimum) &&
+    Number.isInteger(range.maximum) &&
+    range.minimum >= 0 &&
+    range.maximum >= range.minimum
+  )
+}
+
 function duplicateIds(values: { id: string }[]): string[] {
   const seen = new Set<string>()
   return values
@@ -151,6 +162,14 @@ export function validateTripData(data: TripData): string[] {
     if (event.locationId && !locationIds.has(event.locationId)) {
       errors.push(`Unknown location ${event.locationId} on event ${event.id}`)
     }
+    if (
+      event.travelOriginLocationId &&
+      !locationIds.has(event.travelOriginLocationId)
+    ) {
+      errors.push(
+        `Unknown travel origin ${event.travelOriginLocationId} on event ${event.id}`,
+      )
+    }
     if ('transportId' in event && !transportIds.has(event.transportId)) {
       errors.push(`Unknown transport ${event.transportId} on event ${event.id}`)
     }
@@ -168,11 +187,24 @@ export function validateTripData(data: TripData): string[] {
       (event.travelDurationMinutes !== undefined &&
         (!Number.isInteger(event.travelDurationMinutes) ||
           event.travelDurationMinutes < 0)) ||
+      (event.travelDurationRangeMinutes !== undefined &&
+        !isValidMinuteRange(event.travelDurationRangeMinutes)) ||
+      (event.travelDurationMinutes !== undefined &&
+        event.travelDurationRangeMinutes !== undefined) ||
       (event.safetyBufferMinutes !== undefined &&
         (!Number.isInteger(event.safetyBufferMinutes) ||
           event.safetyBufferMinutes < 0)) ||
       (event.travelDurationVerification !== undefined &&
-        event.travelDurationMinutes === undefined)
+        event.travelDurationMinutes === undefined &&
+        event.travelDurationRangeMinutes === undefined) ||
+      (event.travelDurationRangeMinutes !== undefined &&
+        event.travelDurationVerification !== 'ESTIMATED') ||
+      (event.estimatedSchedule !== undefined &&
+        (!eventIds.has(event.estimatedSchedule.anchorEventId) ||
+          event.estimatedSchedule.anchorEventId === event.id ||
+          !isValidMinuteRange(
+            event.estimatedSchedule.startOffsetMinutes,
+          )))
     ) {
       errors.push(`Invalid event operational timing: ${event.id}`)
     }

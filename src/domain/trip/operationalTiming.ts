@@ -43,6 +43,17 @@ export interface LeaveByResult {
   reason?: 'MEETING_TIME_PENDING' | 'TRAVEL_DURATION_MISSING' | 'SAFETY_BUFFER_MISSING'
 }
 
+export interface EstimatedEventTiming {
+  departureWindow: {
+    earliest: string
+    latest: string
+  }
+  arrivalWindow?: {
+    earliest: string
+    latest: string
+  }
+}
+
 export type ReturnBufferState =
   | 'COMFORTABLE'
   | 'LIMITED'
@@ -109,6 +120,98 @@ function earliestTarget(event: TripEvent): string | undefined {
   return [event.meetingAt, event.checkInAt, event.startsAt]
     .filter((value): value is string => Boolean(value))
     .sort((left, right) => Date.parse(left) - Date.parse(right))[0]
+}
+
+export function isLeaveByRelevant(event: TripEvent): boolean {
+  if (event.leaveByAt) {
+    return true
+  }
+
+  if (
+    event.kind === 'TRANSFER' &&
+    (event.meetingAt || event.checkInAt) &&
+    event.travelDurationMinutes !== undefined
+  ) {
+    return true
+  }
+
+  return (
+    event.kind === 'EXCURSION' &&
+    Boolean(event.travelOriginLocationId) &&
+    Boolean(event.locationId) &&
+    event.travelOriginLocationId !== event.locationId &&
+    event.travelDurationMinutes !== undefined
+  )
+}
+
+export function hasUnresolvedRelevantTravel(
+  event: TripEvent,
+): boolean {
+  return (
+    event.kind === 'EXCURSION' &&
+    Boolean(event.travelOriginLocationId) &&
+    Boolean(event.locationId) &&
+    event.travelOriginLocationId !== event.locationId &&
+    event.travelDurationMinutes === undefined
+  )
+}
+
+export function scheduledDurationMinutes(
+  event: TripEvent,
+): number | undefined {
+  if (!event.startsAt || !event.endsAt) {
+    return undefined
+  }
+
+  const duration = Math.round(
+    (Date.parse(event.endsAt) - Date.parse(event.startsAt)) / 60_000,
+  )
+  return Number.isFinite(duration) && duration >= 0
+    ? duration
+    : undefined
+}
+
+export function selectEstimatedEventTiming(
+  data: TripData,
+  event: TripEvent,
+): EstimatedEventTiming | undefined {
+  if (!event.estimatedSchedule) {
+    return undefined
+  }
+
+  const anchor = data.events.find(
+    ({ id }) => id === event.estimatedSchedule?.anchorEventId,
+  )
+  if (!anchor?.endsAt) {
+    return undefined
+  }
+
+  const anchorTime = Date.parse(anchor.endsAt)
+  const departureWindow = {
+    earliest: new Date(
+      anchorTime +
+        event.estimatedSchedule.startOffsetMinutes.minimum * 60_000,
+    ).toISOString(),
+    latest: new Date(
+      anchorTime +
+        event.estimatedSchedule.startOffsetMinutes.maximum * 60_000,
+    ).toISOString(),
+  }
+  const duration = event.travelDurationRangeMinutes
+  const arrivalWindow = duration
+    ? {
+        earliest: new Date(
+          Date.parse(departureWindow.earliest) +
+            duration.minimum * 60_000,
+        ).toISOString(),
+        latest: new Date(
+          Date.parse(departureWindow.latest) +
+            duration.maximum * 60_000,
+        ).toISOString(),
+      }
+    : undefined
+
+  return { departureWindow, arrivalWindow }
 }
 
 export function calculateLeaveBy(event: TripEvent): LeaveByResult {
@@ -212,7 +315,7 @@ export function calculateReturnBuffer(
   }
 }
 
-function formatDuration(minutes: number): string {
+export function formatDuration(minutes: number): string {
   const safeMinutes = Math.max(0, minutes)
   const hours = Math.floor(safeMinutes / 60)
   const remainder = safeMinutes % 60

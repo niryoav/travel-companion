@@ -70,10 +70,62 @@ describe('selectTripViewModel', () => {
     expect(outbound).toMatchObject({
       time: '13:50',
       endTime: '15:10',
+      duration: {
+        label: 'Scheduled duration',
+        value: '3h 20m',
+      },
+      leaveBy: undefined,
     })
     expect(returnFlight).toMatchObject({
       time: '13:55',
       endTime: '16:10',
+    })
+  })
+
+  it('maps event-specific operational guidance without generic warnings', () => {
+    const result = selectTripViewModel(
+      oceaniaMarina2026TripData,
+      new Date('2026-08-01T12:00:00Z'),
+    )
+    const departureEvents = result.days.find(
+      ({ dateTime }) => dateTime === '2026-08-22',
+    )?.events
+    const husavikEvents = result.days.find(
+      ({ dateTime }) => dateTime === '2026-08-25',
+    )?.events
+    const flybus = departureEvents?.find(
+      ({ id }) => id === 'event-keflavik-hotel-transfer',
+    )
+    const hotel = departureEvents?.find(
+      ({ id }) => id === 'event-hotel-viking-stay',
+    )
+    const independent = husavikEvents?.find(
+      ({ id }) => id === 'event-husavik-big-whale-safari',
+    )
+    const oceania = husavikEvents?.find(
+      ({ id }) => id === 'event-husavik-geosea-baths',
+    )
+
+    expect(flybus).toMatchObject({
+      duration: {
+        label: 'Estimated travel time',
+        value: '40–45 min',
+      },
+      estimatedTiming: {
+        departureWindow: '15:45–15:50',
+        arrivalWindow: '16:25–16:35',
+      },
+      leaveBy: undefined,
+    })
+    expect(hotel?.leaveBy).toBeUndefined()
+    expect(independent).toMatchObject({
+      checkInTime: '08:50',
+      leaveBy: undefined,
+      operationalTimingNote: undefined,
+    })
+    expect(oceania).toMatchObject({
+      time: '13:00',
+      leaveBy: undefined,
     })
   })
 

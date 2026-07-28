@@ -133,6 +133,28 @@ function TripEventDetail({ event }: { event: TripEventViewModel }) {
           </p>
         ) : null}
         {event.meetingContext ? <p>{event.meetingContext}</p> : null}
+        {event.duration ? (
+          <p className="trip-event-note">
+            {event.duration.label} · {event.duration.value}
+          </p>
+        ) : null}
+        {event.estimatedTiming ? (
+          <dl className="trip-estimated-timing">
+            <div>
+              <dt>Expected departure</dt>
+              <dd>Approximately {event.estimatedTiming.departureWindow}</dd>
+            </div>
+            {event.estimatedTiming.arrivalWindow ? (
+              <div>
+                <dt>Estimated hotel arrival</dt>
+                <dd>Approximately {event.estimatedTiming.arrivalWindow}</dd>
+              </div>
+            ) : null}
+          </dl>
+        ) : null}
+        {event.operationalTimingNote ? (
+          <p className="trip-event-note">{event.operationalTimingNote}</p>
+        ) : null}
         {event.leaveBy ? (
           <p className="trip-operational-note">
             {event.leaveBy.label}
@@ -150,7 +172,7 @@ function TripEventDetail({ event }: { event: TripEventViewModel }) {
         ) : null}
         {event.timeZoneNote ? <p>{event.timeZoneNote}</p> : null}
         {event.operationalNotes?.map((note) => (
-          <p className="trip-operational-note" key={note}>{note}</p>
+          <p className="trip-event-note" key={note}>{note}</p>
         ))}
         {event.location ? <p>{event.location}</p> : null}
         {event.transport ? <p>{event.transport}</p> : null}

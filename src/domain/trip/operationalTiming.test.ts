@@ -4,7 +4,11 @@ import { tripFixture } from '../../test/fixtures/tripFixture'
 import {
   calculateLeaveBy,
   calculateReturnBuffer,
+  hasUnresolvedRelevantTravel,
+  isLeaveByRelevant,
   resolveEventTimeZone,
+  scheduledDurationMinutes,
+  selectEstimatedEventTiming,
   selectEventLocalDate,
   selectPortOperationalStatus,
   selectTripOperationalState,
@@ -179,6 +183,99 @@ describe('leave-by guidance', () => {
     ).toEqual({
       state: 'PENDING',
       reason: 'MEETING_TIME_PENDING',
+    })
+  })
+
+  it('only applies leave-by to explicit or separately configured travel', () => {
+    expect(
+      isLeaveByRelevant(
+        event({
+          startsAt: '2030-05-10T09:00:00Z',
+          bookingType: 'OCEANIA',
+        }),
+      ),
+    ).toBe(false)
+    expect(
+      isLeaveByRelevant(
+        event({
+          startsAt: '2030-05-10T09:00:00Z',
+          bookingType: 'INDEPENDENT',
+          locationId: 'location-harbor-terminal',
+          travelOriginLocationId: 'location-coast-town',
+          travelDurationMinutes: 20,
+        }),
+      ),
+    ).toBe(true)
+  })
+
+  it('flags unresolved travel only when a separate origin is explicit', () => {
+    expect(
+      hasUnresolvedRelevantTravel(
+        event({
+          bookingType: 'INDEPENDENT',
+          locationId: 'location-harbor-terminal',
+          travelOriginLocationId: 'location-coast-town',
+        }),
+      ),
+    ).toBe(true)
+    expect(
+      hasUnresolvedRelevantTravel(
+        event({ bookingType: 'INDEPENDENT' }),
+      ),
+    ).toBe(false)
+  })
+})
+
+describe('event duration and estimated schedule', () => {
+  it('derives a scheduled duration from absolute flight instants', () => {
+    expect(
+      scheduledDurationMinutes(
+        event({
+          startsAt: '2030-05-10T13:50:00+02:00',
+          endsAt: '2030-05-10T15:10:00Z',
+        }),
+      ),
+    ).toBe(200)
+  })
+
+  it('derives an estimated transfer window from its anchor event', () => {
+    const anchor = {
+      ...tripFixture.events[0],
+      endsAt: '2030-05-10T15:10:00Z',
+    }
+    const transfer = event({
+      id: 'event-estimated-transfer',
+      travelDurationRangeMinutes: {
+        minimum: 40,
+        maximum: 45,
+      },
+      travelDurationVerification: 'ESTIMATED',
+      estimatedSchedule: {
+        anchorEventId: anchor.id,
+        startOffsetMinutes: {
+          minimum: 35,
+          maximum: 40,
+        },
+      },
+    })
+
+    expect(
+      selectEstimatedEventTiming(
+        {
+          ...tripFixture,
+          events: [anchor, transfer],
+        },
+        transfer,
+      ),
+    ).toEqual({
+      departureWindow: {
+        earliest: '2030-05-10T15:45:00.000Z',
+        latest: '2030-05-10T15:50:00.000Z',
+      },
+      arrivalWindow: {
+        earliest: '2030-05-10T16:25:00.000Z',
+        latest: '2030-05-10T16:35:00.000Z',
+      },
     })
   })
 })

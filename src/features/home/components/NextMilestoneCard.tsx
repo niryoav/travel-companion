@@ -23,9 +23,18 @@ export function NextMilestoneCard({
         <span className="timeline-symbol" aria-hidden="true" />
       </div>
 
+      {milestone.date ? (
+        <p className="milestone-date">{milestone.date}</p>
+      ) : null}
+
       <div className="milestone-details">
         {milestone.time ? (
-          <time className="milestone-time">{milestone.time}</time>
+          <time
+            className="milestone-time"
+            dateTime={milestone.dateTime}
+          >
+            {milestone.time}
+          </time>
         ) : null}
         <div>
           {milestone.location ? (
