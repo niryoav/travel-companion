@@ -122,8 +122,41 @@ images. Nine were selected and supplied directly by the user for private family
 use; they carry a simple user-supplied designation without invented
 photographer, license, or source metadata. The existing Tórshavn, Falmouth, and
 Southampton Commons images retain their verified source and license metadata.
-External ticket and document assets remain pending. Bilingual interface and
-editorial content remain a later, separate step.
+Practical ticket and confirmation assets are handled through the operational
+document boundary described below. Bilingual interface and editorial content
+remain a later, separate step.
+
+## Practical travel documents
+
+The app bundles a deliberately small offline travel folder containing only
+operational confirmations needed during the journey. Document metadata belongs
+to canonical `TripData`; binary PDF copies live under
+`public/documents/travel/` and are precached by Workbox.
+
+Current bundled copies cover the pre-cruise hotel, arrival Flybus, three
+independent excursions, and the Southampton-to-Heathrow transfer. Each file
+uses a privacy-safe filename, stable metadata, a trip-day relationship, and an
+event relationship only where a matching event already exists.
+
+Uploaded originals remain outside the repository. The bundled travel copies
+retain only useful pages:
+
+- Hotel Viking: page 1 of 6;
+- Tanni Travel / Arctic Shorex: the practical ticket portion of page 1 of 2;
+- Hebridean Isle Tours: page 1 of 3, with non-operational details removed;
+- BA Transfer: the practical first page of 2;
+- Gentle Giants: pages 1–2 because the second page contains practical safety
+  guidance;
+- Flybus: its single voucher page.
+
+The duplicate Tanni upload and the redundant Bokun portal confirmation are not
+bundled. The Stornoway confirmation is preserved as originally issued, while
+the UI clearly states that its printed schedule is superseded and revised
+written timing remains pending.
+
+Document actions open the local PDF in the device viewer. The source file is
+available offline; no runtime OneDrive, email, booking-provider, or operator
+login is required.
 
 ## Privacy
 
@@ -133,14 +166,16 @@ Never include:
 - cabin or identity details;
 - private phone numbers;
 - payment or medical information;
-- tickets, QR codes, or barcodes;
-- private documents or screenshots;
+- ticket identifiers, QR contents, or private document details transcribed
+  into source metadata, tests, or editorial copy;
 - traveler-specific private arrangements.
 
 Confirmed excursion content may include its public title, operator, general
 route, highlights, and a public meeting context when operationally required.
-Review private material locally and source-control only approved non-sensitive
-facts.
+Private originals are reviewed locally. When the product owner explicitly
+approves an operational travel copy for offline use, keep it separate from
+editorial content, remove unrelated pages and details, and never duplicate its
+private identifiers in metadata or tests.
 
 ## Personal daily content
 

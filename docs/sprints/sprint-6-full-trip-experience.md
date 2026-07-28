@@ -32,6 +32,8 @@ operational view of the current travel day.
   trip, and Home after the trip
 - A locally bundled, date-selected personal message on Welcome before the trip
   and Home during and after the trip
+- A privacy-minimized offline Documents experience for the practical hotel,
+  transfer, and independent-excursion confirmations
 
 ## Deliverables
 
@@ -48,6 +50,8 @@ operational view of the current travel day.
   license metadata
 - Forty unique daily messages covering 27 July through 4 September 2026, plus
   one fixed post-trip message
+- Six local practical PDF documents, grouped on `/documents` and linked
+  directly from matching Trip and Today events where applicable
 
 ## Acceptance Criteria
 
@@ -101,6 +105,15 @@ operational view of the current travel day.
       message after the trip.
 - [ ] Every message uses the fixed French opening, English body, and fixed
       English closing and signature.
+- [ ] Practical documents use stable metadata, privacy-safe filenames, local
+      PDF assets, and non-empty grouping on `/documents`.
+- [ ] Hotel and arrival-transfer documents resolve to 22 August; excursion
+      documents resolve to Húsavík, Djúpivogur, and Stornoway; the final
+      transfer resolves to 4 September.
+- [ ] Matching events show specific direct document actions, with no generic
+      cross-navigation link.
+- [ ] Every bundled PDF is included in the Workbox precache and opens without a
+      runtime provider dependency.
 
 ## Technical Notes
 
@@ -126,6 +139,9 @@ operational view of the current travel day.
 - React Router does not persist the current route in application storage.
   Safari or the installed PWA may restore its last URL; the one-time startup
   gate replaces that initial location with the date-appropriate destination.
+- Practical-document metadata remains inside canonical `TripData`. Reduced PDF
+  travel copies live in `public/documents/travel/`; Workbox precaches `pdf`
+  assets alongside the application shell.
 
 ## UX Notes
 
@@ -164,7 +180,7 @@ operational view of the current travel day.
 - Live weather, delays, provider status, or travel APIs
 - Notifications, authentication, synchronization, or new persistence
 - Speculative domain entities or unverified operational information
-- Home, Today, Documents, More, or global-navigation redesign
+- Home, Today, More, or global-navigation redesign
 - Unconfirmed excursion background
 - Unlicensed destination images, runtime image fetching, or image generation
 - Changing prices, opening hours, closures, weather, availability, or
@@ -198,6 +214,8 @@ operational view of the current travel day.
   behavior; and review-route preservation
 - All forty unique dated messages, fixed formatting, local-date boundaries,
   deterministic selection, and fixed post-trip fallback
+- Document metadata, day/event relationships, local asset existence, grouping,
+  contextual actions, privacy minimization, and PDF precache coverage
 
 ## Review Checklist
 
@@ -244,9 +262,11 @@ editorial enrichment. Eight guides were reviewed against official Oceania shore
 excursion material; three are independent bookings. The Gentle Giants and
 Arctic Shorex guides were reviewed against official operator sources, while the
 Hebridean Isle Tours guide was confirmed from the user-supplied booking
-confirmation. External ticket assets remain pending and are not represented by
-placeholders. Bilingual interface and editorial content remain a later,
-separate step.
+confirmation. Six reduced practical travel copies are now bundled for offline
+use: the pre-cruise hotel, arrival Flybus, the three independent excursions,
+and the final Southampton-to-Heathrow transfer. Duplicate, invoice-only,
+marketing, and redundant portal pages are excluded. Bilingual interface and
+editorial content remain a later, separate step.
 
 Nine destination images were subsequently replaced with user-selected local
 sources for private family use. Their metadata identifies them as

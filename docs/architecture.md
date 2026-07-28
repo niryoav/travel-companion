@@ -92,6 +92,15 @@ Real identity details, full booking references, payment details, cabin numbers,
 private addresses and phone numbers, medical information, tickets, codes, and
 sensitive document files must not be stored in the trip configuration.
 
+Practical document metadata is part of the controlled trip configuration, while
+approved reduced PDF travel copies are separate local assets under
+`public/documents/travel/`. Components receive display-ready document actions
+through selectors and never contain booking facts or file paths directly.
+Workbox precaches the approved PDFs so Documents and matching event actions do
+not depend on provider portals or connectivity. Private identifiers present
+inside a necessary ticket are not duplicated into TypeScript metadata, tests,
+or editorial content.
+
 ## Date-aware startup routing
 
 Application initialization derives its destination from the canonical trip
