@@ -50,6 +50,14 @@ const baseDays: TripDayViewModel[] = [
       startsAt: '2030-05-10T09:00:00+02:00',
       transport: 'Example Air',
       relatedDocumentCount: 1,
+      documentActions: [
+        {
+          id: 'review-flight-document',
+          href: '/documents/travel/example-flight-document.pdf',
+          label: 'Open flight document',
+          title: 'Example flight document',
+        },
+      ],
     },
     additionalEventCount: 0,
     events: [
@@ -61,6 +69,14 @@ const baseDays: TripDayViewModel[] = [
         startsAt: '2030-05-10T09:00:00+02:00',
         transport: 'Example Air',
         relatedDocumentCount: 1,
+        documentActions: [
+          {
+            id: 'review-flight-document',
+            href: '/documents/travel/example-flight-document.pdf',
+            label: 'Open flight document',
+            title: 'Example flight document',
+          },
+        ],
       },
     ],
     relatedDocumentCount: 1,

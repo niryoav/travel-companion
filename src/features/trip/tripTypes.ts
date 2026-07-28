@@ -1,6 +1,7 @@
 import type {
   TripDayKind,
 } from '../../domain/trip/tripTypes'
+import type { DocumentActionViewModel } from '../documents/documentTypes'
 import type {
   TripDayState,
 } from '../../domain/trip/selectors/classifyTripDayState'
@@ -77,6 +78,7 @@ export interface TripEventViewModel {
   operationalNotes?: string[]
   experience?: TripExcursionContentViewModel
   relatedDocumentCount: number
+  documentActions?: DocumentActionViewModel[]
 }
 
 export interface TripPortViewModel {
@@ -109,6 +111,7 @@ export interface TripDayViewModel {
   summaryAllAboardTime?: string
   summaryAllAboardAt?: string
   relatedDocumentCount: number
+  documentActions?: DocumentActionViewModel[]
   destination?: TripDestinationViewModel
   emptyMessage?: string
 }

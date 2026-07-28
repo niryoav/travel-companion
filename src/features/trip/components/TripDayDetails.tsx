@@ -1,5 +1,4 @@
-import { Link } from 'react-router'
-
+import { DocumentActionLink } from '../../documents/components/DocumentActionLink'
 import type {
   TripContentSourceViewModel,
   TripDayViewModel,
@@ -169,11 +168,13 @@ function TripEventDetail({ event }: { event: TripEventViewModel }) {
             </div>
           </details>
         ) : null}
-        {event.relatedDocumentCount > 0 ? (
-          <Link className="trip-document-link" to="/documents">
-            View related documents
-          </Link>
-        ) : null}
+        {event.documentActions?.map((action) => (
+          <DocumentActionLink
+            action={action}
+            className="trip-document-link"
+            key={action.id}
+          />
+        ))}
       </div>
     </li>
   )
@@ -254,6 +255,22 @@ export function TripDayDetails({ day }: TripDayDetailsProps) {
 
       {day.destination ? (
         <DestinationContent destination={day.destination} />
+      ) : null}
+
+      {day.documentActions?.length ? (
+        <section aria-labelledby={`${day.id}-documents-title`}>
+          <p className="trip-card-label">Travel documents</p>
+          <h4 id={`${day.id}-documents-title`}>For this day</h4>
+          <div className="trip-day-document-actions">
+            {day.documentActions.map((action) => (
+              <DocumentActionLink
+                action={action}
+                className="trip-document-link"
+                key={action.id}
+              />
+            ))}
+          </div>
+        </section>
       ) : null}
     </div>
   )

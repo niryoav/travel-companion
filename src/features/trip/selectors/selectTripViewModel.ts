@@ -15,6 +15,7 @@ import { selectDayEvents } from '../../../domain/trip/selectors/selectDayEvents'
 import { selectDayPortCall } from '../../../domain/trip/selectors/selectDayPortCall'
 import { selectTripDays } from '../../../domain/trip/selectors/selectTripDays'
 import { selectTripProgress } from '../../../domain/trip/selectors/selectTripProgress'
+import { selectTripDayDocuments } from '../../../domain/trip/selectors/selectTripDayDocuments'
 import {
   formatDateRange,
   formatLocalTime,
@@ -32,6 +33,7 @@ import type {
   TripProgressViewModel,
   TripViewModel,
 } from '../tripTypes'
+import { selectDocumentAction } from '../../documents/selectors/selectDocumentsViewModel'
 
 function sourceViewModel(source: SourceReference) {
   return {
@@ -109,9 +111,7 @@ function eventViewModel(
     'transportId' in event
       ? data.transports.find(({ id }) => id === event.transportId)
       : undefined
-  const relatedDocumentCount = new Set(
-    event.documentReferenceIds ?? [],
-  ).size
+  const relatedDocuments = selectDayDocuments(data, [event])
   const guide = selectExcursionGuide(content, event.id)
 
   return {
@@ -164,7 +164,8 @@ function eventViewModel(
           reviewedAt: guide.reviewedAt,
         }
       : undefined,
-    relatedDocumentCount,
+    relatedDocumentCount: relatedDocuments.length,
+    documentActions: relatedDocuments.map(selectDocumentAction),
   }
 }
 
@@ -251,7 +252,15 @@ function dayViewModel(
   )
   const showAllAboardInSummary =
     Boolean(portCall?.allAboardAt) && state !== 'PAST'
-  const documentCount = selectDayDocuments(data, domainEvents).length
+  const eventDocumentIds = new Set(
+    selectDayDocuments(data, domainEvents).map(({ id }) => id),
+  )
+  const dayDocuments = selectTripDayDocuments(
+    data,
+    day,
+    domainEvents,
+  ).filter(({ id }) => !eventDocumentIds.has(id))
+  const documentCount = eventDocumentIds.size + dayDocuments.length
 
   return {
     id: day.id,
@@ -277,6 +286,7 @@ function dayViewModel(
     summaryAllAboardAt:
       showAllAboardInSummary ? portCall?.allAboardAt : undefined,
     relatedDocumentCount: documentCount,
+    documentActions: dayDocuments.map(selectDocumentAction),
     destination: destinationGuide
       ? {
           title: destinationLocation?.name ?? day.title,

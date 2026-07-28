@@ -1,4 +1,5 @@
 import type { TripDayKind } from '../../domain/trip/tripTypes'
+import type { DocumentActionViewModel } from '../documents/documentTypes'
 
 export type TodayState =
   | 'PRE_TRIP'
@@ -35,6 +36,7 @@ export interface TodayEventViewModel {
   location?: string
   transport?: string
   hasRelatedDocuments: boolean
+  documentActions?: DocumentActionViewModel[]
 }
 
 export interface TodayCriticalInfoViewModel {

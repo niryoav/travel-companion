@@ -1,5 +1,4 @@
-import { Link } from 'react-router'
-
+import { DocumentActionLink } from '../../documents/components/DocumentActionLink'
 import type { TodayEventViewModel } from '../todayTypes'
 
 interface NextEventCardProps {
@@ -36,11 +35,15 @@ export function NextEventCard({
       {event.transport ? (
         <p className="today-event-detail">{event.transport}</p>
       ) : null}
-      {showDocumentAction && event.hasRelatedDocuments ? (
-        <Link className="today-event-document-link" to="/documents">
-          View related documents
-        </Link>
-      ) : null}
+      {showDocumentAction
+        ? event.documentActions?.map((action) => (
+            <DocumentActionLink
+              action={action}
+              className="today-event-document-link"
+              key={action.id}
+            />
+          ))
+        : null}
     </section>
   )
 }

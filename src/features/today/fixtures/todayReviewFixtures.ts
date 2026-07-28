@@ -41,6 +41,14 @@ export const todayReviewFixtures: Record<
       location: 'Central Airport',
       transport: 'Example Air',
       hasRelatedDocuments: true,
+      documentActions: [
+        {
+          id: 'review-flight-document',
+          href: '/documents/travel/example-flight-document.pdf',
+          label: 'Open flight document',
+          title: 'Example flight document',
+        },
+      ],
     },
     timeline: [
       {
@@ -64,6 +72,14 @@ export const todayReviewFixtures: Record<
         location: 'Central Airport',
         transport: 'Example Air',
         hasRelatedDocuments: true,
+        documentActions: [
+          {
+            id: 'review-flight-document',
+            href: '/documents/travel/example-flight-document.pdf',
+            label: 'Open flight document',
+            title: 'Example flight document',
+          },
+        ],
       },
     ],
   },

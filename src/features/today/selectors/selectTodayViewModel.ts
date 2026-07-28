@@ -22,6 +22,7 @@ import type {
   TodayPortViewModel,
   TodayViewModel,
 } from '../todayTypes'
+import { selectDocumentAction } from '../../documents/selectors/selectDocumentsViewModel'
 
 function formatCalendarDate(localDate: string, locale = 'en-GB'): string {
   return new Intl.DateTimeFormat(locale, {
@@ -119,6 +120,7 @@ function eventViewModel(
     'transportId' in event
       ? data.transports.find(({ id }) => id === event.transportId)
       : undefined
+  const relatedDocuments = selectTodayDocuments(data, [event])
 
   return {
     id: event.id,
@@ -138,8 +140,8 @@ function eventViewModel(
     endsAt: event.endsAt,
     location: location?.name,
     transport: transport?.label,
-    hasRelatedDocuments:
-      selectTodayDocuments(data, [event]).length > 0,
+    hasRelatedDocuments: relatedDocuments.length > 0,
+    documentActions: relatedDocuments.map(selectDocumentAction),
   }
 }
 

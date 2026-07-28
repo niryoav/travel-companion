@@ -1,5 +1,4 @@
-import { Link } from 'react-router'
-
+import { DocumentActionLink } from '../../documents/components/DocumentActionLink'
 import type { TodayEventViewModel } from '../todayTypes'
 
 interface TimelineEventProps {
@@ -30,11 +29,13 @@ export function TimelineEvent({ event }: TimelineEventProps) {
         <h3>{event.title}</h3>
         {event.location ? <p>{event.location}</p> : null}
         {event.transport ? <p>{event.transport}</p> : null}
-        {event.hasRelatedDocuments ? (
-          <Link className="today-event-document-link" to="/documents">
-            View related documents
-          </Link>
-        ) : null}
+        {event.documentActions?.map((action) => (
+          <DocumentActionLink
+            action={action}
+            className="today-event-document-link"
+            key={action.id}
+          />
+        ))}
       </div>
     </li>
   )
