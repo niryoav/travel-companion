@@ -39,6 +39,9 @@ export function PrepareForTomorrow({
         ) : null}
 
         {tomorrow.timingNote ? <p>{tomorrow.timingNote}</p> : null}
+        {tomorrow.portAccessNote ? (
+          <p>{tomorrow.portAccessNote}</p>
+        ) : null}
         {tomorrow.emptyMessage ? <p>{tomorrow.emptyMessage}</p> : null}
 
         {tomorrow.requiredItems.length > 0 ? (

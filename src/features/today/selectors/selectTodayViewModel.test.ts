@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest'
 
 import { selectCurrentEvent } from '../../../domain/trip/selectors/selectCurrentEvent'
 import { selectTodayEvents } from '../../../domain/trip/selectors/selectTodayEvents'
+import {
+  applyTripOverrides,
+  emptyTripOverrideBundle,
+} from '../../../domain/trip/tripOverrides'
 import type { TripData } from '../../../domain/trip/tripTypes'
 import { tripFixture } from '../../../test/fixtures/tripFixture'
 import { createDocumentFixture } from '../../../test/fixtures/documentFixture'
@@ -520,5 +524,61 @@ describe('selectTodayViewModel', () => {
       detail:
         'All Aboard time is not verified, so no buffer is calculated.',
     })
+  })
+
+  it('uses local timing and tender overrides in Today and Prepare for tomorrow', () => {
+    const baseline = structuredClone(tripFixture)
+    const excursion = baseline.events.find(
+      ({ id }) => id === 'event-excursion',
+    )
+    if (!excursion) {
+      throw new Error('Fixture excursion missing')
+    }
+    excursion.bookingType = 'INDEPENDENT'
+    excursion.meetingAt = '2030-05-11T09:00:00+02:00'
+    excursion.endsAt = '2030-05-11T15:00:00+02:00'
+    const overrides = emptyTripOverrideBundle(baseline.trip.id)
+    overrides.dayOverrides['day-2030-05-11'] = {
+      dayId: 'day-2030-05-11',
+      portAccessStatus: 'TENDER_REQUIRED',
+      allAboardAt: '2030-05-11T17:00:00+02:00',
+      ourTender: {
+        at: '2030-05-11T08:10:00+02:00',
+        verification: 'CONFIRMED',
+      },
+      updatedAt: '2030-05-10T18:42:00Z',
+    }
+    overrides.eventOverrides['event-excursion'] = {
+      eventId: 'event-excursion',
+      meetingAt: '2030-05-11T09:15:00+02:00',
+      endsAt: '2030-05-11T16:00:00+02:00',
+      updatedAt: '2030-05-10T18:42:00Z',
+    }
+    const effective = applyTripOverrides(baseline, overrides)
+
+    const today = selectTodayViewModel(
+      effective,
+      new Date('2030-05-11T06:00:00Z'),
+    )
+    expect(today.nextEvent).toMatchObject({
+      meetingTime: '09:15',
+      leaveBy: {
+        state: 'CONFIRMED',
+        time: '08:10',
+      },
+    })
+    expect(today.operationalStatus?.time).toBe('17:00')
+    expect(today.returnGuidance?.bufferLabel).toBe(
+      '60 min before All Aboard',
+    )
+
+    const departureDay = selectTodayViewModel(
+      effective,
+      new Date('2030-05-10T12:00:00Z'),
+    )
+    expect(departureDay.tomorrow?.firstEvent?.meetingTime).toBe('09:15')
+    expect(departureDay.tomorrow?.portAccessNote).toBe(
+      'Tender required · Our tender 08:10',
+    )
   })
 })

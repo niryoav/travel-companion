@@ -250,3 +250,11 @@ Quiet and incomplete days use calm intentional messaging rather than invented
 activities or operational facts. A dense calendar grid, generic
 cross-navigation actions, filters, editing, and update controls do not belong
 in the Sprint 6 Trip experience.
+
+The later Offline Trip Updates milestone adds one restrained exception: relevant
+production day cards may show a small champagne `Edit` action opposite the
+native disclosure label. Editing opens a bottom-aligned modal sheet with
+labelled fields, a scrollable body, and reachable Cancel and Save actions.
+Locally changed values use a quiet `Updated locally` indicator rather than
+warning styling. Tender status remains visible in the day summary, while
+unknown tender times stay calm and explicit.

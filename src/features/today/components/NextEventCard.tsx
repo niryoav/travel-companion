@@ -38,6 +38,11 @@ export function NextEventCard({
           {event.timingConfidenceLabel}
         </p>
       ) : null}
+      {event.operationalStatusLabel ? (
+        <p className="today-event-detail">
+          {event.operationalStatusLabel}
+        </p>
+      ) : null}
       {event.location ? (
         <p className="today-event-detail">Location · {event.location}</p>
       ) : null}
@@ -71,6 +76,11 @@ export function NextEventCard({
       ) : null}
       {event.transport ? (
         <p className="today-event-detail">{event.transport}</p>
+      ) : null}
+      {event.localOperationalNote ? (
+        <p className="today-event-detail">
+          {event.localOperationalNote}
+        </p>
       ) : null}
       {showDocumentAction
         ? event.documentActions?.map((action) => (

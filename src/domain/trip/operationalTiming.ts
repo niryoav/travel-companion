@@ -2,6 +2,7 @@ import { resolveTripPhase } from './selectors/resolveTripPhase'
 import { formatLocalTime, calendarDateInTimeZone } from './tripTime'
 import type {
   PortCall,
+  PortAccess,
   TripData,
   TripDay,
   TripEvent,
@@ -40,7 +41,11 @@ export interface LeaveByResult {
   targetAt?: string
   travelDurationMinutes?: number
   safetyBufferMinutes?: number
-  reason?: 'MEETING_TIME_PENDING' | 'TRAVEL_DURATION_MISSING' | 'SAFETY_BUFFER_MISSING'
+  reason?:
+    | 'MEETING_TIME_PENDING'
+    | 'TRAVEL_DURATION_MISSING'
+    | 'SAFETY_BUFFER_MISSING'
+    | 'TENDER_TIMING_PENDING'
 }
 
 export interface EstimatedEventTiming {
@@ -122,7 +127,10 @@ function earliestTarget(event: TripEvent): string | undefined {
     .sort((left, right) => Date.parse(left) - Date.parse(right))[0]
 }
 
-export function isLeaveByRelevant(event: TripEvent): boolean {
+export function isLeaveByRelevant(
+  event: TripEvent,
+  portAccess?: PortAccess,
+): boolean {
   if (event.leaveByAt) {
     return true
   }
@@ -131,6 +139,14 @@ export function isLeaveByRelevant(event: TripEvent): boolean {
     event.kind === 'TRANSFER' &&
     (event.meetingAt || event.checkInAt) &&
     event.travelDurationMinutes !== undefined
+  ) {
+    return true
+  }
+
+  if (
+    event.kind === 'EXCURSION' &&
+    event.bookingType === 'INDEPENDENT' &&
+    portAccess?.status === 'TENDER_REQUIRED'
   ) {
     return true
   }
@@ -214,12 +230,45 @@ export function selectEstimatedEventTiming(
   return { departureWindow, arrivalWindow }
 }
 
-export function calculateLeaveBy(event: TripEvent): LeaveByResult {
+export function calculateLeaveBy(
+  event: TripEvent,
+  portAccess?: PortAccess,
+): LeaveByResult {
   if (event.leaveByAt) {
     return {
       state: 'CONFIRMED',
       leaveByAt: event.leaveByAt,
       targetAt: earliestTarget(event),
+    }
+  }
+
+  const tender =
+    event.kind === 'EXCURSION' &&
+    event.bookingType === 'INDEPENDENT' &&
+    portAccess?.status === 'TENDER_REQUIRED'
+      ? portAccess.tender
+      : undefined
+  if (tender?.ourTender?.at) {
+    return {
+      state:
+        tender.ourTender.verification === 'CONFIRMED'
+          ? 'CONFIRMED'
+          : 'ESTIMATED',
+      leaveByAt: tender.ourTender.at,
+      targetAt: earliestTarget(event),
+      reason: undefined,
+    }
+  }
+  if (
+    portAccess?.status === 'TENDER_REQUIRED' &&
+    event.kind === 'EXCURSION' &&
+    event.bookingType === 'INDEPENDENT' &&
+    tender?.crossingMinutes === undefined
+  ) {
+    return {
+      state: 'PENDING',
+      targetAt: earliestTarget(event),
+      reason: 'TENDER_TIMING_PENDING',
     }
   }
 
@@ -250,7 +299,9 @@ export function calculateLeaveBy(event: TripEvent): LeaveByResult {
   }
 
   const offsetMinutes =
-    event.travelDurationMinutes + event.safetyBufferMinutes
+    event.travelDurationMinutes +
+    event.safetyBufferMinutes +
+    (tender?.crossingMinutes ?? 0)
   const leaveByAt = new Date(
     Date.parse(targetAt) - offsetMinutes * 60_000,
   ).toISOString()

@@ -3,9 +3,10 @@ import { TripDayDetails } from './TripDayDetails'
 
 interface TripDayCardProps {
   day: TripDayViewModel
+  onEdit?: (dayId: string) => void
 }
 
-export function TripDayCard({ day }: TripDayCardProps) {
+export function TripDayCard({ day, onEdit }: TripDayCardProps) {
   const additionalLabel =
     day.additionalEventCount === 1
       ? '1 more event'
@@ -50,6 +51,25 @@ export function TripDayCard({ day }: TripDayCardProps) {
           </div>
         ) : null}
 
+        {day.summaryPortAccessLabel ? (
+          <div className="trip-port-access-summary">
+            <strong>{day.summaryPortAccessLabel}</strong>
+            {day.summaryOurTenderTime ? (
+              <span>
+                Our tender:{' '}
+                <time dateTime={day.summaryOurTenderAt}>
+                  {day.summaryOurTenderTime}
+                </time>
+              </span>
+            ) : day.summaryPortAccessLabel === 'Tender required' ? (
+              <span>Tender timing still to be confirmed.</span>
+            ) : null}
+            {day.summaryTenderMeetingPoint ? (
+              <span>Meeting point: {day.summaryTenderMeetingPoint}</span>
+            ) : null}
+          </div>
+        ) : null}
+
         {day.summaryAllAboardTime ? (
           <div className="trip-all-aboard">
             <span>Verified all aboard</span>
@@ -59,9 +79,32 @@ export function TripDayCard({ day }: TripDayCardProps) {
           </div>
         ) : null}
 
-        <span className="trip-disclosure-label" aria-hidden="true">
-          <span className="trip-show-details">Show details</span>
-          <span className="trip-hide-details">Hide details</span>
+        {day.updatedLocallyLabel ? (
+          <span className="trip-updated-locally">
+            {day.updatedLocallyLabel}
+          </span>
+        ) : null}
+
+        <span className="trip-card-actions">
+          {day.isEditable && onEdit ? (
+            <button
+              className="trip-edit-action"
+              type="button"
+              onClick={(event) => {
+                event.preventDefault()
+                event.stopPropagation()
+                onEdit(day.id)
+              }}
+            >
+              Edit
+            </button>
+          ) : (
+            <span />
+          )}
+          <span className="trip-disclosure-label" aria-hidden="true">
+            <span className="trip-show-details">Show details</span>
+            <span className="trip-hide-details">Hide details</span>
+          </span>
         </span>
       </summary>
 

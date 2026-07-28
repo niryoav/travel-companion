@@ -96,6 +96,10 @@ export interface TripEventViewModel {
     detail: string
   }
   operationalNotes?: string[]
+  localOperationalNote?: string
+  operationalStatusLabel?: string
+  isCancelled?: boolean
+  updatedLocally?: boolean
   experience?: TripExcursionContentViewModel
   relatedDocumentCount: number
   documentActions?: DocumentActionViewModel[]
@@ -109,6 +113,26 @@ export interface TripPortViewModel {
   departureAt?: string
   allAboardTime?: string
   allAboardAt?: string
+  accessStatus?:
+    | 'DOCKED'
+    | 'TENDER_REQUIRED'
+    | 'TO_BE_CONFIRMED'
+  accessLabel?: string
+  operationalNote?: string
+  tender?: {
+    firstTender?: TripOperationalTimeViewModel
+    ourTender?: TripOperationalTimeViewModel
+    meetingPoint?: string
+    crossingLabel?: string
+    lastTender?: TripOperationalTimeViewModel
+    note?: string
+  }
+}
+
+export interface TripOperationalTimeViewModel {
+  time?: string
+  dateTime?: string
+  statusLabel: string
 }
 
 export interface TripDayViewModel {
@@ -130,6 +154,12 @@ export interface TripDayViewModel {
   port?: TripPortViewModel
   summaryAllAboardTime?: string
   summaryAllAboardAt?: string
+  summaryPortAccessLabel?: string
+  summaryOurTenderTime?: string
+  summaryOurTenderAt?: string
+  summaryTenderMeetingPoint?: string
+  isEditable?: boolean
+  updatedLocallyLabel?: string
   relatedDocumentCount: number
   documentActions?: DocumentActionViewModel[]
   destination?: TripDestinationViewModel

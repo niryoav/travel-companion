@@ -25,6 +25,24 @@ function duplicateIds(values: { id: string }[]): string[] {
     })
 }
 
+const operationalEntryStatuses = new Set([
+  'CONFIRMED',
+  'ESTIMATED',
+  'TO_BE_CONFIRMED',
+])
+const portAccessStatuses = new Set([
+  'DOCKED',
+  'TENDER_REQUIRED',
+  'TO_BE_CONFIRMED',
+])
+const excursionOperationalStatuses = new Set([
+  'CONFIRMED',
+  'ESTIMATED',
+  'TO_BE_CONFIRMED',
+  'CHANGED',
+  'CANCELLED',
+])
+
 export function validateTripData(data: TripData): string[] {
   const errors: string[] = []
   const entityGroups = [
@@ -179,7 +197,11 @@ export function validateTripData(data: TripData): string[] {
       event.requiredItems?.some((item) => !item.trim()) ||
       (event.organizer !== undefined && !event.organizer.trim()) ||
       (event.publicCode !== undefined && !event.publicCode.trim()) ||
-      (event.meetingContext !== undefined && !event.meetingContext.trim())
+      (event.meetingContext !== undefined && !event.meetingContext.trim()) ||
+      (event.localOperationalNote !== undefined &&
+        !event.localOperationalNote.trim()) ||
+      (event.operationalStatus !== undefined &&
+        !excursionOperationalStatuses.has(event.operationalStatus))
     ) {
       errors.push(`Invalid event operational content: ${event.id}`)
     }
@@ -214,6 +236,47 @@ export function validateTripData(data: TripData): string[] {
           `Unknown document ${documentReferenceId} on event ${event.id}`,
         )
       }
+    }
+  }
+
+  for (const portCall of data.portCalls) {
+    if (
+      !dayIds.has(portCall.dayId) ||
+      !locationIds.has(portCall.portLocationId) ||
+      !isSupportedTimeZone(portCall.timeZone) ||
+      [portCall.arrivalAt, portCall.departureAt, portCall.allAboardAt]
+        .some((value) => value !== undefined && !isValidInstant(value)) ||
+      portCall.eventIds.some((eventId) => !eventIds.has(eventId)) ||
+      (portCall.operationalNote !== undefined &&
+        !portCall.operationalNote.trim()) ||
+      (portCall.allAboardVerification !== undefined &&
+        !operationalEntryStatuses.has(portCall.allAboardVerification))
+    ) {
+      errors.push(`Invalid port call: ${portCall.id}`)
+    }
+    const access = portCall.portAccess
+    const tender = access?.tender
+    if (
+      access &&
+      (!portAccessStatuses.has(access.status) ||
+        (access.status !== 'TENDER_REQUIRED' && tender !== undefined) ||
+        (tender?.crossingMinutes !== undefined &&
+          (!Number.isInteger(tender.crossingMinutes) ||
+            tender.crossingMinutes <= 0 ||
+            tender.crossingMinutes > 240)) ||
+        [tender?.firstTender, tender?.ourTender, tender?.lastTender]
+          .some(
+            (value) =>
+              value !== undefined &&
+              (!operationalEntryStatuses.has(value.verification) ||
+                (value.at !== undefined && !isValidInstant(value.at)) ||
+                (value.verification !== 'TO_BE_CONFIRMED' && !value.at)),
+          ) ||
+        (tender?.meetingPoint !== undefined &&
+          !tender.meetingPoint.trim()) ||
+        (tender?.note !== undefined && !tender.note.trim()))
+    ) {
+      errors.push(`Invalid port access: ${portCall.id}`)
     }
   }
 

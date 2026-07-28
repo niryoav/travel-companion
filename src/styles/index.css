@@ -1105,6 +1105,30 @@ a:focus-visible {
   line-height: 1.4;
 }
 
+.trip-updated-locally,
+.trip-event-updated {
+  color: var(--champagne);
+  font-size: 0.76rem;
+  font-weight: 750;
+}
+
+.trip-port-access-summary {
+  display: grid;
+  gap: 0.15rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.7rem;
+}
+
+.trip-port-access-summary strong {
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.trip-port-access-summary span {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
 .trip-lead-event,
 .trip-all-aboard {
   display: grid;
@@ -1161,6 +1185,31 @@ a:focus-visible {
   color: var(--champagne);
   font-size: 0.82rem;
   font-weight: 800;
+}
+
+.trip-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.trip-edit-action {
+  min-height: 2.75rem;
+  border: 0;
+  border-radius: 0.7rem;
+  background: transparent;
+  color: var(--champagne);
+  padding: 0 0.35rem;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.trip-edit-action:focus-visible {
+  outline: 3px solid var(--champagne);
+  outline-offset: 2px;
 }
 
 .trip-disclosure-label::after {
@@ -1235,6 +1284,28 @@ a:focus-visible {
   grid-column: 1 / -1;
 }
 
+.trip-port-access,
+.trip-tender-times {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.8rem;
+  border-left: 3px solid var(--champagne);
+  padding-left: 0.75rem;
+}
+
+.trip-port-access strong,
+.trip-tender-times strong {
+  color: var(--text);
+}
+
+.trip-port-access p,
+.trip-tender-times p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
 .trip-event-list {
   display: grid;
   gap: 0.9rem;
@@ -1303,6 +1374,253 @@ a:focus-visible {
 
 .trip-event-note {
   color: var(--text-muted) !important;
+}
+
+.today-port-access,
+.today-tender-times {
+  margin: 0.75rem 0 0;
+  border-left: 3px solid var(--champagne);
+  color: var(--text-muted);
+  padding-left: 0.75rem;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.today-port-access strong,
+.today-tender-times strong {
+  color: var(--text);
+}
+
+.trip-save-confirmation {
+  margin: 0;
+  border: 1px solid color-mix(in srgb, var(--positive) 45%, transparent);
+  border-radius: 0.9rem;
+  background: var(--positive-soft);
+  color: var(--text);
+  padding: 0.75rem 0.9rem;
+  font-size: 0.88rem;
+  font-weight: 750;
+}
+
+.trip-edit-backdrop {
+  position: fixed;
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgb(0 15 32 / 76%);
+  inset: 0;
+}
+
+.trip-edit-sheet {
+  display: flex;
+  width: min(100%, 42rem);
+  max-height: min(92dvh, 58rem);
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 1.4rem 1.4rem 0 0;
+  background: var(--ocean-950);
+  box-shadow: 0 -1rem 3rem rgb(0 0 0 / 38%);
+  overflow: hidden;
+}
+
+.trip-edit-sheet form {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.trip-edit-header,
+.trip-edit-footer {
+  flex: none;
+  background: color-mix(in srgb, var(--ocean-950) 94%, transparent);
+}
+
+.trip-edit-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 1.1rem 0.9rem;
+}
+
+.trip-edit-header h2 {
+  margin: 0.2rem 0 0;
+  color: var(--text);
+  font-size: 1.35rem;
+}
+
+.trip-edit-context,
+.trip-edit-updated {
+  margin: 0.25rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.trip-edit-close {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-muted);
+  color: var(--text);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.trip-edit-body {
+  display: grid;
+  gap: 1rem;
+  min-height: 0;
+  padding: 1rem 1.1rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.trip-edit-section {
+  display: grid;
+  gap: 0.85rem;
+  min-width: 0;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 0.9rem;
+}
+
+.trip-edit-section legend {
+  color: var(--champagne);
+  padding: 0 0.25rem;
+  font-weight: 850;
+}
+
+.trip-edit-field,
+.trip-edit-field > label,
+.trip-edit-time-with-status,
+.trip-edit-time-with-status label {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.trip-edit-time-with-status {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.trip-edit-field label > span,
+.trip-edit-time-with-status label > span {
+  color: var(--text);
+  font-size: 0.84rem;
+  font-weight: 750;
+}
+
+.trip-edit-field input,
+.trip-edit-field select,
+.trip-edit-field textarea,
+.trip-edit-time-with-status input,
+.trip-edit-time-with-status select {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface-raised);
+  color: var(--text);
+  padding: 0.65rem 0.7rem;
+  font: inherit;
+  font-size: 1rem;
+}
+
+.trip-edit-field textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.trip-edit-comparison {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+}
+
+.trip-edit-comparison button,
+.trip-edit-reset {
+  min-height: 2.75rem;
+  border: 0;
+  background: transparent;
+  color: var(--champagne);
+  padding: 0 0.25rem;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.trip-edit-reset-day {
+  justify-self: start;
+}
+
+.trip-edit-errors {
+  margin: 0;
+  border-left: 3px solid var(--attention);
+  color: var(--text);
+  padding-left: 0.75rem;
+  font-size: 0.86rem;
+}
+
+.trip-edit-footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  border-top: 1px solid var(--border);
+  padding:
+    0.85rem
+    max(1.1rem, env(safe-area-inset-right))
+    max(0.85rem, env(safe-area-inset-bottom))
+    max(1.1rem, env(safe-area-inset-left));
+}
+
+.trip-edit-footer button {
+  min-height: 3rem;
+  border-radius: 0.85rem;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.trip-edit-footer button:first-child {
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+.trip-edit-save {
+  border: 0;
+  background: var(--champagne);
+  color: var(--ocean-950);
+}
+
+.trip-edit-sheet button:focus-visible,
+.trip-edit-sheet input:focus-visible,
+.trip-edit-sheet select:focus-visible,
+.trip-edit-sheet textarea:focus-visible {
+  outline: 3px solid var(--champagne);
+  outline-offset: 2px;
+}
+
+@media (orientation: landscape) and (max-height: 32rem) {
+  .trip-edit-sheet {
+    width: min(92vw, 48rem);
+    max-height: 96dvh;
+    border-radius: 1.4rem;
+    margin-bottom: 2dvh;
+  }
 }
 
 .trip-estimated-timing {

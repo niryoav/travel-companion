@@ -167,6 +167,20 @@ Loading, empty, unavailable, and image-failure states remain distinct.
 Workbox precaches only local production assets and cleans obsolete generated
 caches.
 
+## Local operational overrides
+
+The bundled itinerary remains the trusted baseline. A separate versioned
+`TripOverrideRepository` stores small port, tender, and excursion changes on
+the master editing device. A pure overlay creates the effective in-memory
+`TripData` consumed by Home, Today, Trip, and tomorrow preparation; canonical
+source data is never overwritten.
+
+Overrides use stable day and event IDs, validate at the storage boundary, and
+fail closed when malformed or from an unsupported schema. All Aboard and last
+tender remain separate operational facts. This device-local layer performs no
+network request and introduces no account, collaboration, or synchronization
+behavior. See ADR-003.
+
 ## Guidance
 
 - Keep trip-specific content separate from reusable app components.
