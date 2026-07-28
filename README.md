@@ -1,17 +1,24 @@
 # Travel Companion
 
-Travel Companion is a private, mobile-first planning and guidance app for the Nir-Buysse family. It is designed to help the family understand what matters now, what comes next, and what needs preparation during a trip.
+Travel Companion is a private, mobile-first planning and guidance app. It helps
+travelers understand what matters now, what comes next, and what needs
+preparation during a trip.
 
 ## Who it is for
-This project is for the Nir-Buysse family and is intended to support shared travel planning and trip awareness in a calm, practical format.
+
+This project supports shared travel planning and trip awareness in a calm,
+practical format.
 
 ## Current project status
-Sprint 1 establishes the reusable application foundation. It includes a React,
-TypeScript, Vite, and Tailwind CSS PWA shell with five placeholder destinations,
-light and dark themes, local preference persistence behind a repository boundary,
-and Vercel deployment configuration.
 
-Travel features and the richer domain model remain intentionally deferred.
+Sprints 1–8 establish the reusable PWA shell, structured offline trip data,
+phase-based Home, operational Today, the complete chronological Trip view,
+offline documents, and release-readiness foundations. The app uses one Ocean
+Day appearance and keeps trip-specific facts and editorial content behind
+repository boundaries.
+
+Complete door-to-door journey details remain intentionally deferred until the
+technical foundation has completed independent review.
 
 ## Local development
 
@@ -35,18 +42,24 @@ The production build is written to `dist/`. The included `vercel.json` routes
 client-side URLs back to the application entry point for React Router.
 
 ## Intended architecture
-The long-term structure is a layered app with:
-- a reusable app shell;
-- trip-specific data kept separate from the shell;
-- local-first storage for essential trip information;
-- optional future integrations only after the core experience is stable.
 
-UI code must access browser persistence through repository interfaces. The
-Sprint 1 implementation uses this boundary for theme preferences and contains no
-travel-domain or itinerary logic.
+The application uses a layered structure with:
+
+- a reusable app shell;
+- canonical trip data and editorial content kept separate from the shell;
+- repositories as the ownership boundary for bundled and local data;
+- pure selectors for operational and time-zone-aware derived state;
+- offline precaching for the shell, approved images, and reduced documents;
+- optional future integrations only after the offline core is stable.
+
+UI code must access browser persistence through repository interfaces. See
+`docs/architecture.md` for the current boundaries and
+`docs/development-workflow.md` for the delivery process.
 
 ## Collaboration guidance
 Codex and Claude should keep changes focused on the current sprint, avoid unnecessary scope expansion, and document decisions when architecture or product direction changes. The work should stay small, practical, and privacy-aware.
 
 ## Privacy note
-This is a private family project. Real sensitive travel information must not be added to the repository. Any personal, booking, or identity details should remain outside source control.
+This is a private travel project. Sensitive identity, payment, medical,
+contact, and complete booking information must remain outside source control.
+Only approved reduced operational documents belong in the offline bundle.

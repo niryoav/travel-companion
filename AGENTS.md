@@ -4,7 +4,7 @@
 
 This file gives coding agents shared instructions for working on **Travel Companion**.
 
-Travel Companion is a mobile-first progressive web application for the Nir-Buysse family. Its purpose is not merely to store travel information, but to help the family understand:
+Travel Companion is a mobile-first progressive web application for its travelers. Its purpose is not merely to store travel information, but to help them understand:
 
 - what is happening now;
 - what is happening next;

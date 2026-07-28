@@ -81,7 +81,7 @@ A compact information card sits near the bottom, above the iPhone safe area. It
 contains, in order:
 
 1. Travel Companion
-2. Fam. Nir-Buysse
+2. Your trip
 3. Iceland & British Isles
 4. Oceania Marina
 5. 22 August – 4 September 2026
