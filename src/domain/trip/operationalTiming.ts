@@ -245,23 +245,39 @@ export function selectPortOperationalStatus(
     shipName: cruise?.shipName,
   }
   const nowMs = now.getTime()
+  const allAboardTiming = portCall.allAboardAt
+    ? {
+        allAboardAt: portCall.allAboardAt,
+        allAboardTime: formatLocalTime(
+          portCall.allAboardAt,
+          portCall.timeZone,
+        ),
+        minutesUntilAllAboard: Math.ceil(
+          (Date.parse(portCall.allAboardAt) - nowMs) / 60_000,
+        ),
+      }
+    : undefined
 
   if (portCall.arrivalAt && nowMs < Date.parse(portCall.arrivalAt)) {
-    return { ...base, state: 'NOT_YET_IN_PORT' }
+    return {
+      ...base,
+      ...allAboardTiming,
+      timeRemaining:
+        allAboardTiming !== undefined
+          ? formatDuration(allAboardTiming.minutesUntilAllAboard)
+          : undefined,
+      state: 'NOT_YET_IN_PORT',
+    }
   }
   if (!portCall.allAboardAt) {
     return { ...base, state: 'TIMING_UNAVAILABLE' }
   }
 
-  const minutesUntilAllAboard = Math.ceil(
-    (Date.parse(portCall.allAboardAt) - nowMs) / 60_000,
-  )
+  const minutesUntilAllAboard =
+    allAboardTiming.minutesUntilAllAboard
   const timing = {
-    allAboardAt: portCall.allAboardAt,
-    allAboardTime: formatLocalTime(
-      portCall.allAboardAt,
-      portCall.timeZone,
-    ),
+    allAboardAt: allAboardTiming.allAboardAt,
+    allAboardTime: allAboardTiming.allAboardTime,
     minutesUntilAllAboard,
     timeRemaining: formatDuration(minutesUntilAllAboard),
   }

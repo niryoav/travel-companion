@@ -104,10 +104,10 @@ function TripEventDetail({ event }: { event: TripEventViewModel }) {
       <div className="trip-event-time">
         {event.time ? (
           <time dateTime={event.startsAt}>{event.time}</time>
-        ) : event.scheduleStatusLabel ? (
-          <span>{event.scheduleStatusLabel}</span>
+        ) : event.timingStatusLabel ? (
+          <span>{event.timingStatusLabel}</span>
         ) : (
-          <span>Any time</span>
+          <span>Time unavailable</span>
         )}
         {event.endTime ? (
           <small>
@@ -119,6 +119,9 @@ function TripEventDetail({ event }: { event: TripEventViewModel }) {
         <span className="trip-event-kind">{event.kindLabel}</span>
         <h4>{event.title}</h4>
         {event.organizer ? <p>{event.organizer}</p> : null}
+        {event.timingConfidenceLabel ? (
+          <p>{event.timingConfidenceLabel}</p>
+        ) : null}
         {event.bookingTypeLabel ||
         event.bookingStatusLabel ||
         event.publicCode ? (
@@ -137,7 +140,28 @@ function TripEventDetail({ event }: { event: TripEventViewModel }) {
             Check in <time dateTime={event.checkInAt}>{event.checkInTime}</time>
           </p>
         ) : null}
+        {event.meetingTime ? (
+          <p>
+            Meet <time dateTime={event.meetingAt}>{event.meetingTime}</time>
+          </p>
+        ) : null}
         {event.meetingContext ? <p>{event.meetingContext}</p> : null}
+        {event.leaveBy ? (
+          <p className="trip-operational-note">
+            {event.leaveBy.label}
+            {event.leaveBy.time ? (
+              <>
+                {' '}
+                <time dateTime={event.leaveBy.dateTime}>
+                  {event.leaveBy.time}
+                </time>
+              </>
+            ) : null}
+            {' · '}
+            {event.leaveBy.detail}
+          </p>
+        ) : null}
+        {event.timeZoneNote ? <p>{event.timeZoneNote}</p> : null}
         {event.operationalNotes?.map((note) => (
           <p className="trip-operational-note" key={note}>{note}</p>
         ))}

@@ -27,6 +27,11 @@ function renderTrip(
 }
 
 describe('TripScreen', () => {
+  it('exposes stable day anchors for contextual tomorrow links', () => {
+    renderTrip('/trip')
+
+    expect(document.getElementById('day-2030-05-11')).toBeInTheDocument()
+  })
   it('keeps operational details before collapsed editorial disclosures', () => {
     const { container } = renderTrip('/trip?state=content')
     const portDay = container.querySelector(

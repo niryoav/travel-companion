@@ -71,10 +71,21 @@ export interface TripEventViewModel {
   bookingTypeLabel?: string
   bookingStatusLabel?: string
   scheduleStatusLabel?: string
+  timingStatusLabel?: string
+  timingConfidenceLabel?: string
   publicCode?: string
   checkInTime?: string
   checkInAt?: string
+  meetingTime?: string
+  meetingAt?: string
   meetingContext?: string
+  timeZoneNote?: string
+  leaveBy?: {
+    label: string
+    time?: string
+    dateTime?: string
+    detail: string
+  }
   operationalNotes?: string[]
   experience?: TripExcursionContentViewModel
   relatedDocumentCount: number

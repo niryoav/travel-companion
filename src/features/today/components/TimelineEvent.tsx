@@ -13,7 +13,7 @@ export function TimelineEvent({ event }: TimelineEventProps) {
         {event.time ? (
           <time dateTime={event.startsAt}>{event.time}</time>
         ) : (
-          <span>Any time</span>
+          <span>{event.timingLabel ?? 'Time unavailable'}</span>
         )}
         {event.endTime ? (
           <span>
@@ -27,7 +27,11 @@ export function TimelineEvent({ event }: TimelineEventProps) {
           <span className="timeline-state">{event.stateLabel}</span>
         </div>
         <h3>{event.title}</h3>
+        {event.timingConfidenceLabel ? (
+          <p>{event.timingConfidenceLabel}</p>
+        ) : null}
         {event.location ? <p>{event.location}</p> : null}
+        {event.meetingPointLabel ? <p>{event.meetingPointLabel}</p> : null}
         {event.transport ? <p>{event.transport}</p> : null}
         {event.documentActions?.map((action) => (
           <DocumentActionLink

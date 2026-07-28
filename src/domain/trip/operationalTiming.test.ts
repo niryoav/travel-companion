@@ -9,14 +9,13 @@ import {
   selectPortOperationalStatus,
   selectTripOperationalState,
 } from './operationalTiming'
-import type { TripEvent } from './tripTypes'
+import type { ActivityEvent } from './tripTypes'
 
 const day = tripFixture.days[0]
-type ExcursionEvent = Extract<TripEvent, { kind: 'EXCURSION' }>
 
 function event(
-  overrides: Partial<ExcursionEvent> = {},
-): ExcursionEvent {
+  overrides: Partial<ActivityEvent> = {},
+): ActivityEvent {
   return {
     id: 'event-operational-fixture',
     dayId: day.id,
@@ -292,8 +291,11 @@ describe('port operational status', () => {
         portDay,
         port,
         new Date('2030-05-11T04:00:00Z'),
-      )?.state,
-    ).toBe('NOT_YET_IN_PORT')
+      ),
+    ).toMatchObject({
+      state: 'NOT_YET_IN_PORT',
+      allAboardTime: '17:30',
+    })
     expect(
       selectPortOperationalStatus(
         tripFixture,

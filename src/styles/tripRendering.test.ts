@@ -29,6 +29,14 @@ describe('Trip foreground rendering styles', () => {
     expect(tripCard).not.toMatch(/\bheight\s*:\s*0\b/)
   })
 
+  it('keeps the operational Today foreground immediately visible', () => {
+    const todayScreen = declarationsFor('.today-screen')
+    const fragilePaintProperties =
+      /\b(?:animation|opacity|visibility|transform|content-visibility|contain|will-change)\s*:/
+
+    expect(todayScreen).not.toMatch(fragilePaintProperties)
+  })
+
   it('keeps fixed background layers behind the isolated app foreground', () => {
     expect(declarationsFor('.app-shell')).toMatch(/\bisolation:\s*isolate\b/)
     expect(declarationsFor('.app-shell::before')).toMatch(

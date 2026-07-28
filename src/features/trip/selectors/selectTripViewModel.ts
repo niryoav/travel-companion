@@ -17,6 +17,10 @@ import { selectTripDays } from '../../../domain/trip/selectors/selectTripDays'
 import { selectTripProgress } from '../../../domain/trip/selectors/selectTripProgress'
 import { selectTripDayDocuments } from '../../../domain/trip/selectors/selectTripDayDocuments'
 import {
+  calculateLeaveBy,
+  resolveEventTimeZone,
+} from '../../../domain/trip/operationalTiming'
+import {
   formatDateRange,
   formatLocalTime,
 } from '../../../domain/trip/tripTime'
@@ -104,6 +108,7 @@ function eventKindLabel(event: TripEvent): string {
 function eventViewModel(
   data: TripData,
   content: TripContentBundle,
+  day: TripDay,
   event: TripEvent,
 ): TripEventViewModel {
   const location = data.locations.find(({ id }) => id === event.locationId)
@@ -113,19 +118,33 @@ function eventViewModel(
       : undefined
   const relatedDocuments = selectDayDocuments(data, [event])
   const guide = selectExcursionGuide(content, event.id)
+  const timeZone = resolveEventTimeZone(event, day)
+  const leaveBy = calculateLeaveBy(event)
+  const leaveByLabel =
+    leaveBy.state === 'CONFIRMED'
+      ? 'Leave by'
+      : leaveBy.state === 'ESTIMATED'
+        ? 'Estimated leave by'
+        : leaveBy.state === 'CALCULATED'
+          ? 'Calculated leave by'
+          : leaveBy.state === 'PENDING'
+            ? 'Leave-by pending'
+            : leaveBy.reason === 'TRAVEL_DURATION_MISSING'
+              ? 'Travel duration not added yet'
+              : undefined
 
   return {
     id: event.id,
     kindLabel: eventKindLabel(event),
     title: event.title,
     time:
-      event.startsAt && event.timeZone
-        ? formatLocalTime(event.startsAt, event.timeZone)
+      event.startsAt
+        ? formatLocalTime(event.startsAt, timeZone.timeZone)
         : undefined,
     startsAt: event.startsAt,
     endTime:
-      event.endsAt && event.timeZone
-        ? formatLocalTime(event.endsAt, event.timeZone)
+      event.endsAt
+        ? formatLocalTime(event.endsAt, timeZone.timeZone)
         : undefined,
     endsAt: event.endsAt,
     location: location?.name,
@@ -143,13 +162,54 @@ function eventViewModel(
       event.scheduleStatus === 'TO_BE_CONFIRMED'
         ? 'Time to be confirmed'
         : undefined,
+    timingStatusLabel: !event.startsAt
+      ? event.scheduleStatus === 'TO_BE_CONFIRMED'
+        ? 'Time to be confirmed'
+        : 'Time unavailable'
+      : undefined,
+    timingConfidenceLabel:
+      event.startsAt && event.timingVerification === 'ESTIMATED'
+        ? 'Estimated time'
+        : undefined,
     publicCode: event.publicCode,
     checkInTime:
-      event.checkInAt && event.timeZone
-        ? formatLocalTime(event.checkInAt, event.timeZone)
+      event.checkInAt
+        ? formatLocalTime(event.checkInAt, timeZone.timeZone)
         : undefined,
     checkInAt: event.checkInAt,
+    meetingTime: event.meetingAt
+      ? formatLocalTime(event.meetingAt, timeZone.timeZone)
+      : undefined,
+    meetingAt: event.meetingAt,
     meetingContext: event.meetingContext,
+    timeZoneNote:
+      timeZone.source === 'TRIP_DAY' &&
+      Boolean(
+        event.startsAt ??
+          event.endsAt ??
+          event.meetingAt ??
+          event.checkInAt ??
+          event.leaveByAt,
+      )
+        ? `Event timezone not added; using ${day.timeZone}`
+        : undefined,
+    leaveBy: leaveByLabel
+      ? {
+          label: leaveByLabel,
+          time: leaveBy.leaveByAt
+            ? formatLocalTime(leaveBy.leaveByAt, timeZone.timeZone)
+            : undefined,
+          dateTime: leaveBy.leaveByAt,
+          detail:
+            leaveBy.state === 'PENDING'
+              ? 'Meeting time to be confirmed.'
+              : leaveBy.state === 'UNAVAILABLE'
+                ? 'Leave-by cannot yet be calculated.'
+                : leaveBy.state === 'CONFIRMED'
+                  ? 'Explicit configured time.'
+                  : `${leaveBy.travelDurationMinutes} min travel + ${leaveBy.safetyBufferMinutes} min safety buffer.`,
+        }
+      : undefined,
     operationalNotes: event.operationalNotes,
     experience: guide
       ? {
@@ -240,7 +300,7 @@ function dayViewModel(
   const state = classifyTripDayState(day, now)
   const domainEvents = selectDayEvents(data, day)
   const events = domainEvents.map((event) =>
-    eventViewModel(data, content, event),
+    eventViewModel(data, content, day, event),
   )
   const portCall = selectDayPortCall(data, day)
   const destinationGuide = selectDestinationGuide(

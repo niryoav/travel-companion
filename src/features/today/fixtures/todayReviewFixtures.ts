@@ -40,6 +40,13 @@ export const todayReviewFixtures: Record<
       startsAt: '2030-05-10T09:00:00+02:00',
       location: 'Central Airport',
       transport: 'Example Air',
+      leaveBy: {
+        state: 'CALCULATED',
+        label: 'Calculated leave by',
+        time: '07:45',
+        dateTime: '2030-05-10T07:45:00+02:00',
+        detail: '25 min travel + 20 min safety buffer.',
+      },
       hasRelatedDocuments: true,
       documentActions: [
         {
@@ -82,6 +89,42 @@ export const todayReviewFixtures: Record<
         ],
       },
     ],
+    priorities: [
+      {
+        id: 'event-document',
+        level: 'INFORMATION',
+        title: 'Document available for the next event',
+        detail: 'Example flight document',
+        documentAction: {
+          id: 'review-flight-document',
+          href: '/documents/travel/example-flight-document.pdf',
+          label: 'Open flight document',
+          title: 'Example flight document',
+        },
+      },
+    ],
+    tomorrow: {
+      dayId: 'day-2030-05-11',
+      title: 'Harbor City',
+      date: 'Saturday, 11 May 2030',
+      dateTime: '2030-05-11',
+      firstEvent: {
+        id: 'review-coastal-walk',
+        kindLabel: 'Excursion',
+        title: 'Coastal walk',
+        state: 'UPCOMING',
+        stateLabel: 'Later',
+        time: '08:00',
+        startsAt: '2030-05-11T08:00:00+02:00',
+        meetingPointLabel: 'Fictional pier entrance',
+        hasRelatedDocuments: false,
+      },
+      earlyStart: true,
+      requiredItems: ['Photo ID'],
+      preparationNotes: ['Keep the local plan available offline.'],
+      documentActions: [],
+      tripHref: '/trip#day-2030-05-11',
+    },
   },
   'port-day': {
     state: 'ACTIVE_DAY',
@@ -94,13 +137,15 @@ export const todayReviewFixtures: Record<
       dateTime: '2030-05-11',
       timeZoneLabel: 'Europe/Brussels',
     },
-    criticalInfo: {
-      label: 'Critical time',
-      title: 'All aboard',
-      prominence: 'SUPPORTING',
+    operationalStatus: {
+      state: 'ALONGSIDE',
+      label: 'Alongside',
+      title: 'Harbor Terminal',
+      detail: 'Verified All Aboard time',
       time: '17:30',
       dateTime: '2030-05-11T17:30:00+02:00',
-      detail: 'Be back on board before this verified time.',
+      timeRemaining: '8h remaining',
+      urgency: 'CALM',
     },
     port: {
       location: 'Harbor Terminal',
@@ -133,6 +178,13 @@ export const todayReviewFixtures: Record<
         hasRelatedDocuments: false,
       },
     ],
+    priorities: [],
+    returnGuidance: {
+      state: 'CANNOT_CALCULATE',
+      label: 'Return to ship',
+      title: 'Return buffer unavailable',
+      detail: 'Excursion return time is not configured.',
+    },
   },
   'port-day-late': {
     state: 'ACTIVE_DAY',
@@ -145,13 +197,15 @@ export const todayReviewFixtures: Record<
       dateTime: '2030-05-11',
       timeZoneLabel: 'Europe/Brussels',
     },
-    criticalInfo: {
-      label: 'Critical time',
-      title: 'All aboard',
-      prominence: 'PRIMARY',
+    operationalStatus: {
+      state: 'APPROACHING_ALL_ABOARD',
+      label: 'Return to ship',
+      title: 'All Aboard approaching',
+      detail: 'Harbor Terminal',
       time: '17:30',
       dateTime: '2030-05-11T17:30:00+02:00',
-      detail: 'Be back on board before this verified time.',
+      timeRemaining: '1h remaining',
+      urgency: 'ATTENTION',
     },
     port: {
       location: 'Harbor Terminal',
@@ -173,6 +227,7 @@ export const todayReviewFixtures: Record<
         hasRelatedDocuments: false,
       },
     ],
+    priorities: [],
   },
   'port-day-no-excursion': {
     state: 'ACTIVE_DAY',
@@ -185,13 +240,15 @@ export const todayReviewFixtures: Record<
       dateTime: '2030-05-11',
       timeZoneLabel: 'Europe/Brussels',
     },
-    criticalInfo: {
-      label: 'Critical time',
-      title: 'All aboard',
-      prominence: 'PRIMARY',
+    operationalStatus: {
+      state: 'ALONGSIDE',
+      label: 'Alongside',
+      title: 'Quiet Harbor Terminal',
+      detail: 'Verified All Aboard time',
       time: '17:30',
       dateTime: '2030-05-11T17:30:00+02:00',
-      detail: 'Be back on board before this verified time.',
+      timeRemaining: '8h remaining',
+      urgency: 'CALM',
     },
     port: {
       location: 'Quiet Harbor Terminal',
@@ -199,6 +256,7 @@ export const todayReviewFixtures: Record<
       departureAt: '2030-05-11T18:00:00+02:00',
     },
     timeline: [],
+    priorities: [],
     emptyMessage: 'No timed plans are configured for today.',
   },
   'port-day-unverified': {
@@ -217,7 +275,16 @@ export const todayReviewFixtures: Record<
       departureTime: '18:00',
       departureAt: '2030-05-11T18:00:00+02:00',
     },
+    operationalStatus: {
+      state: 'TIMING_UNAVAILABLE',
+      label: 'Current port',
+      title: 'Open Harbor Terminal',
+      detail:
+        'All Aboard time unavailable. Ship departure is shown separately.',
+      urgency: 'CALM',
+    },
     timeline: [],
+    priorities: [],
     emptyMessage: 'No timed plans are configured for today.',
   },
   'sea-day': {
@@ -230,6 +297,13 @@ export const todayReviewFixtures: Record<
       date: 'Sunday, 12 May 2030',
       dateTime: '2030-05-12',
       timeZoneLabel: 'Europe/Brussels',
+    },
+    operationalStatus: {
+      state: 'SEA_DAY',
+      label: 'Current status',
+      title: 'At sea',
+      detail: 'A day aboard MV Example.',
+      urgency: 'CALM',
     },
     nextEvent: {
       id: 'review-dinner',
@@ -253,6 +327,7 @@ export const todayReviewFixtures: Record<
         hasRelatedDocuments: false,
       },
     ],
+    priorities: [],
   },
   'final-travel-day': {
     state: 'ACTIVE_DAY',

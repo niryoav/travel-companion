@@ -13,6 +13,7 @@ export function TripDayCard({ day }: TripDayCardProps) {
 
   return (
     <details
+      id={day.id}
       className={`trip-day-card trip-day-card-${day.state.toLowerCase()}`}
       open={day.isOpenByDefault}
     >
@@ -35,8 +36,12 @@ export function TripDayCard({ day }: TripDayCardProps) {
                 <time dateTime={day.leadEvent.startsAt}>
                   {day.leadEvent.time}
                 </time>
-              ) : null}
-              {day.leadEvent.time ? ' · ' : null}
+              ) : (
+                day.leadEvent.timingStatusLabel
+              )}
+              {day.leadEvent.time || day.leadEvent.timingStatusLabel
+                ? ' · '
+                : null}
               {day.leadEvent.title}
             </strong>
             {day.additionalEventCount > 0 ? (

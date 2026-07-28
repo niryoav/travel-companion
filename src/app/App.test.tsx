@@ -420,7 +420,7 @@ describe('App', () => {
         name: 'Harbor City',
       }),
     ).toBeInTheDocument()
-    expect(screen.getByText('All aboard')).toBeInTheDocument()
+    expect(screen.getByText('All Aboard')).toBeInTheDocument()
     expect(window.location.pathname).toBe('/today')
     expect(window.location.search).toBe('?state=port-day-late')
   })

@@ -22,16 +22,16 @@ describe('TodayScreen', () => {
     expect(
       screen.getByRole('heading', { level: 1, name: 'Harbor City' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('All aboard')).toBeInTheDocument()
+    expect(screen.getByText('All Aboard')).toBeInTheDocument()
     expect(screen.getByText('17:30').tagName).toBe('TIME')
     expect(
       screen.getAllByText('09:30').every(({ tagName }) => tagName === 'TIME'),
     ).toBe(true)
     expect(screen.getByRole('list')).toBeInTheDocument()
     const nextEvent = screen.getByText('Next event').closest('section')
-    const allAboard = screen.getByText('All aboard').closest('section')
+    const allAboard = screen.getByText('All Aboard').closest('section')
     expect(
-      nextEvent!.compareDocumentPosition(allAboard!) &
+      allAboard!.compareDocumentPosition(nextEvent!) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy()
   })
@@ -42,7 +42,7 @@ describe('TodayScreen', () => {
     expect(screen.getByText('Port day')).toBeInTheDocument()
     expect(screen.getByText('Coastal walk')).toBeInTheDocument()
     expect(screen.getByText('Completed')).toBeInTheDocument()
-    expect(screen.getAllByText('All aboard')).toHaveLength(1)
+    expect(screen.getAllByText(/^All Aboard$/i)).toHaveLength(1)
     expect(screen.queryByText('Next event')).not.toBeInTheDocument()
     expect(screen.getByText('17:30')).toBeInTheDocument()
     expect(
@@ -56,14 +56,14 @@ describe('TodayScreen', () => {
   it('keeps verified all aboard prominent without an excursion', () => {
     renderToday('/today?state=port-day-no-excursion')
 
-    expect(screen.getByText('All aboard')).toBeInTheDocument()
+    expect(screen.getByText('All Aboard')).toBeInTheDocument()
     expect(screen.queryByText('Next event')).not.toBeInTheDocument()
   })
 
   it('omits unverified all aboard without inferring shore availability', () => {
     renderToday('/today?state=port-day-unverified')
 
-    expect(screen.queryByText('All aboard')).not.toBeInTheDocument()
+    expect(screen.queryByText(/^All Aboard$/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/gangway|go ashore|leave the ship/i)).not.toBeInTheDocument()
     expect(screen.getByText('Departure')).toBeInTheDocument()
   })
@@ -75,7 +75,7 @@ describe('TodayScreen', () => {
       screen.getByRole('heading', { level: 1, name: 'At sea' }),
     ).toBeInTheDocument()
     expect(screen.getAllByText('Dinner reservation')).toHaveLength(2)
-    expect(screen.queryByText('All aboard')).not.toBeInTheDocument()
+    expect(screen.queryByText(/^All Aboard$/i)).not.toBeInTheDocument()
     expect(screen.queryByText('Port context')).not.toBeInTheDocument()
   })
 
@@ -128,5 +128,52 @@ describe('TodayScreen', () => {
     expect(
       screen.queryByRole('link', { name: 'View related documents' }),
     ).not.toBeInTheDocument()
+  })
+
+  it('keeps tomorrow preparation collapsed and operational content first', () => {
+    const viewModel = {
+      ...todayReviewFixtures['departure-day'],
+      operationalStatus: {
+        state: 'SEA_DAY' as const,
+        label: 'Current status',
+        title: 'At sea',
+        detail: 'A calm fictional day aboard.',
+        urgency: 'CALM' as const,
+      },
+      priorities: [],
+      tomorrow: {
+        dayId: 'day-2030-05-11',
+        title: 'Harbor City',
+        date: 'Saturday, 11 May 2030',
+        dateTime: '2030-05-11',
+        earlyStart: true,
+        requiredItems: ['Photo ID'],
+        preparationNotes: ['Keep the confirmation available offline.'],
+        documentActions: [],
+        emptyMessage: undefined,
+        tripHref: '/trip#day-2030-05-11',
+      },
+    }
+
+    render(
+      <MemoryRouter>
+        <TodayView viewModel={viewModel} />
+      </MemoryRouter>,
+    )
+
+    const disclosure = screen
+      .getByText('Prepare for tomorrow')
+      .closest('details')
+    expect(disclosure).not.toHaveAttribute('open')
+    expect(
+      screen.getByRole('link', { name: 'View tomorrow’s trip day' }),
+    ).toHaveAttribute('href', '/trip#day-2030-05-11')
+
+    const status = screen.getByText('Current status').closest('section')
+    const timeline = screen.getByText('Today’s plan').closest('section')
+    expect(
+      status!.compareDocumentPosition(timeline!) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
   })
 })

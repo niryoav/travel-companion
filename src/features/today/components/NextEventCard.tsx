@@ -18,7 +18,11 @@ export function NextEventCard({
       <div className="today-event-heading">
         {event.time ? (
           <time dateTime={event.startsAt}>{event.time}</time>
-        ) : null}
+        ) : (
+          <span className="today-event-time-pending">
+            {event.timingLabel ?? 'Time unavailable'}
+          </span>
+        )}
         <div>
           <p className="today-event-kind">{event.kindLabel}</p>
           <h2 id="next-event-title">{event.title}</h2>
@@ -29,8 +33,41 @@ export function NextEventCard({
           Until <time dateTime={event.endsAt}>{event.endTime}</time>
         </p>
       ) : null}
+      {event.timingConfidenceLabel ? (
+        <p className="today-event-detail">
+          {event.timingConfidenceLabel}
+        </p>
+      ) : null}
       {event.location ? (
-        <p className="today-event-detail">Meet at {event.location}</p>
+        <p className="today-event-detail">Location · {event.location}</p>
+      ) : null}
+      {event.meetingTime ? (
+        <p className="today-event-detail">
+          Meeting/check-in{' '}
+          <time dateTime={event.meetingAt}>{event.meetingTime}</time>
+        </p>
+      ) : null}
+      {event.meetingPointLabel ? (
+        <p className="today-event-detail">{event.meetingPointLabel}</p>
+      ) : null}
+      {event.leaveBy ? (
+        <div className="today-leave-by">
+          <strong>
+            {event.leaveBy.label}
+            {event.leaveBy.time ? (
+              <>
+                {' '}
+                <time dateTime={event.leaveBy.dateTime}>
+                  {event.leaveBy.time}
+                </time>
+              </>
+            ) : null}
+          </strong>
+          <span>{event.leaveBy.detail}</span>
+        </div>
+      ) : null}
+      {event.timeZoneNote ? (
+        <p className="today-event-detail">{event.timeZoneNote}</p>
       ) : null}
       {event.transport ? (
         <p className="today-event-detail">{event.transport}</p>
