@@ -38,15 +38,33 @@
   information from bundled trip data.
 - Keep the experience read-only, mobile-first, offline-first, and deterministic.
 
-## Sprint 6: Notifications and offline status
-- Introduce actionable notifications and explicit offline/freshness status.
+## Sprint 6: Full Trip experience
+- Replace the Trip placeholder with the complete chronological journey.
+- Show every configured travel day with explicit past, today, and upcoming
+  status.
+- Add accessible day details for verified events, transport, port context, and
+  document references.
+- Keep the experience read-only, repository-backed, mobile-first, and fully
+  available offline.
 
-## Sprint 7: Shared and personal profiles/data
-- Separate shared trip context from traveler-owned preferences and actions.
-- Define synchronization and conflict behavior before adding cloud services.
+## Sprint 7: Operational travel logic
+- Add reusable timezone-aware current-status and event-timing derivations.
+- Surface verified All Aboard separately from ship departure.
+- Add leave-by guidance, return-buffer planning, daily priorities, and a concise
+  Prepare for tomorrow briefing.
+- Keep incomplete production data explicitly pending or unavailable.
+- Preserve deterministic offline operation without live services or new
+  persistence.
 
 ## Later
+- Separate shared trip context from traveler-owned preferences and actions, and
+  define synchronization and conflict behavior before adding cloud services.
 - Add carefully scoped live weather, provider status, and travel-timing
   integrations with visible freshness and useful cached states.
+- Introduce actionable notifications and explicit offline/freshness status only
+  after their product workflows and data sources are defined.
 - Introduce AI only where it improves an already useful core experience.
 - Add expenses and memories incrementally after the travel foundation is stable.
+- Daily Love Messages are currently fixed bundled content. Any future authoring,
+  mutable storage, traveler-specific visibility, or optional photo support
+  requires separate product and privacy review.

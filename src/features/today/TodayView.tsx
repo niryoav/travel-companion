@@ -2,7 +2,11 @@ import type { TodayViewModel } from './todayTypes'
 import { CriticalInfoBanner } from './components/CriticalInfoBanner'
 import { DayTimeline } from './components/DayTimeline'
 import { NextEventCard } from './components/NextEventCard'
+import { OperationalPriorities } from './components/OperationalPriorities'
+import { OperationalStatusBanner } from './components/OperationalStatusBanner'
 import { PortDaySummary } from './components/PortDaySummary'
+import { PrepareForTomorrow } from './components/PrepareForTomorrow'
+import { ReturnGuidanceCard } from './components/ReturnGuidanceCard'
 import { TodayEmptyState } from './components/TodayEmptyState'
 import { TodayHeader } from './components/TodayHeader'
 
@@ -23,6 +27,10 @@ export function TodayView({ viewModel }: TodayViewProps) {
   return (
     <main className="today-screen" id="main-content">
       <TodayHeader header={viewModel.header} />
+
+      {viewModel.operationalStatus ? (
+        <OperationalStatusBanner status={viewModel.operationalStatus} />
+      ) : null}
 
       {primaryCriticalInfo ? (
         <CriticalInfoBanner information={primaryCriticalInfo} />
@@ -45,8 +53,19 @@ export function TodayView({ viewModel }: TodayViewProps) {
         <TodayEmptyState message={viewModel.emptyMessage} />
       ) : null}
 
+      {viewModel.priorities ? (
+        <OperationalPriorities priorities={viewModel.priorities} />
+      ) : null}
+
+      {viewModel.returnGuidance ? (
+        <ReturnGuidanceCard guidance={viewModel.returnGuidance} />
+      ) : null}
+
       {viewModel.port ? <PortDaySummary port={viewModel.port} /> : null}
 
+      {viewModel.tomorrow ? (
+        <PrepareForTomorrow tomorrow={viewModel.tomorrow} />
+      ) : null}
     </main>
   )
 }

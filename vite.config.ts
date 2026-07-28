@@ -2,13 +2,31 @@ import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vitest/config'
+import { readFileSync } from 'node:fs'
+
+const packageMetadata = JSON.parse(
+  readFileSync(new URL('./package.json', import.meta.url), 'utf8'),
+) as { version?: unknown }
+
+if (typeof packageMetadata.version !== 'string') {
+  throw new Error('package.json must define a string version')
+}
+
+const sourceDateEpoch = process.env.SOURCE_DATE_EPOCH
+const buildDate = sourceDateEpoch
+  ? new Date(Number(sourceDateEpoch) * 1000).toISOString()
+  : new Date().toISOString()
 
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(packageMetadata.version),
+    __APP_BUILD_DATE__: JSON.stringify(buildDate),
+  },
   plugins: [
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['apple-touch-icon.png'],
       manifest: {
         name: 'Travel Companion',
@@ -39,8 +57,11 @@ export default defineConfig({
         ],
       },
       workbox: {
+        cleanupOutdatedCaches: true,
         navigateFallback: '/index.html',
-        globPatterns: ['**/*.{js,css,html,svg,png,jpg,jpeg,webp,woff2}'],
+        globPatterns: [
+          '**/*.{js,css,html,svg,png,jpg,jpeg,webp,woff2,pdf}',
+        ],
       },
       devOptions: {
         enabled: true,

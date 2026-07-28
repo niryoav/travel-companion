@@ -80,6 +80,8 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   margin: 0;
+  overflow-x: hidden;
+  overflow-x: clip;
   background:
     radial-gradient(circle at 82% 7%, var(--page-glow), transparent 24rem),
     radial-gradient(
@@ -96,6 +98,21 @@ body {
     );
   background-attachment: fixed;
   color: var(--text);
+}
+
+#root {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--surface);
+}
+
+.startup-route-fallback {
+  position: fixed;
+  inset: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--surface);
+  pointer-events: none;
 }
 
 button,
@@ -157,13 +174,19 @@ a:focus-visible {
   margin: 0 auto;
   border: 1px solid rgb(255 255 255 / 24%);
   border-radius: 1.65rem;
-  background: rgb(5 28 43 / 72%);
+  background:
+    linear-gradient(
+      160deg,
+      rgb(9 45 68 / 88%),
+      rgb(4 27 43 / 94%)
+    );
   box-shadow: 0 24px 70px rgb(0 10 18 / 34%);
   color: #fff;
   padding: clamp(1.15rem, 5vw, 1.5rem);
-  -webkit-backdrop-filter: blur(18px) saturate(120%);
-  backdrop-filter: blur(18px) saturate(120%);
-  animation: welcome-in 420ms ease-out both;
+}
+
+.welcome-card-content {
+  display: block;
 }
 
 .welcome-label {
@@ -234,13 +257,6 @@ a:focus-visible {
 
 .welcome-enter:focus-visible {
   outline-color: #fff;
-}
-
-@keyframes welcome-in {
-  from {
-    opacity: 0;
-    transform: translateY(0.6rem);
-  }
 }
 
 @media (min-width: 48rem) {
@@ -355,7 +371,6 @@ a:focus-visible {
   width: 100%;
   max-width: 48rem;
   margin: 0 auto;
-  animation: page-in 240ms ease-out both;
 }
 
 .home-screen {
@@ -365,7 +380,6 @@ a:focus-visible {
   width: 100%;
   max-width: 52rem;
   margin: 0 auto;
-  animation: page-in 240ms ease-out both;
 }
 
 .today-screen {
@@ -375,7 +389,6 @@ a:focus-visible {
   width: 100%;
   max-width: 48rem;
   margin: 0 auto;
-  animation: page-in 240ms ease-out both;
 }
 
 .today-header {
@@ -424,13 +437,76 @@ a:focus-visible {
 }
 
 .today-card,
-.today-critical {
+.today-critical,
+.today-operational-status {
   border: 1px solid var(--border);
   border-radius: 1.35rem;
   background:
     linear-gradient(145deg, var(--home-card-start), var(--home-card-end));
   box-shadow: var(--shadow), inset 0 1px rgb(255 255 255 / 5%);
   padding: 1.15rem;
+}
+
+.today-operational-status {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  border-color: color-mix(in srgb, var(--champagne) 38%, transparent);
+}
+
+.today-operational-status h2 {
+  margin: 0.3rem 0 0;
+  color: var(--text);
+  font-size: clamp(1.25rem, 5vw, 1.65rem);
+  line-height: 1.2;
+}
+
+.today-operational-status p:last-child {
+  margin: 0.4rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.today-operational-status-attention {
+  border-color: color-mix(in srgb, var(--attention) 52%, transparent);
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--attention-soft) 35%, var(--home-card-start)),
+      var(--home-card-end)
+    );
+}
+
+.today-operational-status-urgent {
+  border-color: var(--attention);
+}
+
+.today-operational-deadline {
+  display: grid;
+  min-width: 6.2rem;
+  text-align: right;
+}
+
+.today-operational-deadline span {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.today-operational-deadline time {
+  color: var(--champagne);
+  font-size: clamp(1.65rem, 7vw, 2.25rem);
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+
+.today-operational-deadline strong {
+  color: var(--text);
+  font-size: 0.8rem;
 }
 
 .today-card h2,
@@ -507,6 +583,14 @@ a:focus-visible {
   letter-spacing: -0.03em;
 }
 
+.today-event-time-pending {
+  max-width: 7rem;
+  color: var(--champagne);
+  font-size: 0.88rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
 .today-event-kind {
   margin: 0;
   color: var(--text-muted);
@@ -516,6 +600,25 @@ a:focus-visible {
 
 .today-event-heading h2 {
   margin-top: 0.15rem;
+}
+
+.today-leave-by {
+  display: grid;
+  gap: 0.2rem;
+  margin-top: 0.8rem;
+  border-left: 3px solid var(--champagne);
+  padding-left: 0.75rem;
+}
+
+.today-leave-by strong {
+  color: var(--champagne);
+  font-size: 1rem;
+}
+
+.today-leave-by span {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
 }
 
 .today-timeline > h2 {
@@ -663,6 +766,802 @@ a:focus-visible {
   text-underline-offset: 0.2rem;
 }
 
+.today-priorities ul {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0.9rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.today-priority {
+  display: grid;
+  min-width: 0;
+  border-left: 3px solid var(--border);
+  padding-left: 0.75rem;
+}
+
+.today-priority-action {
+  border-color: var(--attention);
+}
+
+.today-priority-attention {
+  border-color: var(--champagne);
+}
+
+.today-priority-information {
+  border-color: var(--accent);
+}
+
+.today-priority strong {
+  color: var(--text);
+  font-size: 0.98rem;
+}
+
+.today-priority p {
+  margin: 0.2rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.today-return-guidance {
+  border-color: color-mix(in srgb, var(--champagne) 32%, var(--border));
+}
+
+.today-return-tight {
+  border-color: color-mix(in srgb, var(--attention) 58%, transparent);
+}
+
+.today-return-buffer {
+  margin: 0.55rem 0 0;
+  color: var(--champagne);
+  font-size: 1.2rem;
+  font-weight: 850;
+}
+
+.tomorrow-preparation {
+  padding: 0;
+}
+
+.tomorrow-preparation > summary {
+  display: flex;
+  min-height: 4.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  cursor: pointer;
+  padding: 1.15rem;
+  list-style: none;
+}
+
+.tomorrow-preparation > summary::-webkit-details-marker {
+  display: none;
+}
+
+.tomorrow-preparation > summary:focus-visible {
+  border-radius: 1.2rem;
+  outline: 3px solid var(--champagne);
+  outline-offset: 3px;
+}
+
+.tomorrow-preparation > summary strong {
+  display: block;
+  margin-top: 0.3rem;
+  color: var(--text);
+  font-size: 1.05rem;
+}
+
+.tomorrow-preparation > summary time {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  text-align: right;
+}
+
+.tomorrow-preparation-content {
+  display: grid;
+  gap: 0.9rem;
+  border-top: 1px solid var(--border);
+  padding: 1.15rem;
+}
+
+.tomorrow-preparation-content h3,
+.tomorrow-preparation-content p {
+  margin: 0.25rem 0 0;
+}
+
+.tomorrow-preparation-content h3 {
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.tomorrow-preparation-content p,
+.tomorrow-preparation-content li {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.tomorrow-preparation-content ul {
+  margin: 0.45rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.tomorrow-trip-link {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  color: var(--champagne);
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-underline-offset: 0.2rem;
+}
+
+@media (max-width: 22rem) {
+  .today-operational-status {
+    grid-template-columns: 1fr;
+  }
+
+  .today-operational-deadline {
+    text-align: left;
+  }
+}
+
+.trip-screen {
+  display: grid;
+  align-content: start;
+  gap: 1.15rem;
+  width: 100%;
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+.trip-header {
+  padding-bottom: 0.15rem;
+}
+
+.trip-eyebrow,
+.trip-card-label {
+  margin: 0;
+  color: var(--champagne);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.trip-header h1 {
+  max-width: 40rem;
+  margin: 0.35rem 0 0;
+  font-size: clamp(2.25rem, 9vw, 4rem);
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  line-height: 1.02;
+  text-wrap: balance;
+}
+
+.trip-date-range,
+.trip-cruise-context {
+  margin: 0.55rem 0 0;
+  color: var(--text);
+  font-size: 1.02rem;
+  line-height: 1.45;
+}
+
+.trip-cruise-context {
+  margin-top: 0.2rem;
+  color: var(--text-muted);
+}
+
+.trip-progress,
+.trip-empty {
+  border: 1px solid var(--border);
+  border-radius: 1.35rem;
+  background:
+    linear-gradient(145deg, var(--home-card-start), var(--home-card-end));
+  box-shadow: var(--shadow), inset 0 1px rgb(255 255 255 / 5%);
+  padding: 1.15rem;
+}
+
+.trip-progress h2,
+.trip-empty h2,
+.trip-list-heading h2 {
+  margin: 0.3rem 0 0;
+  color: var(--text);
+  font-size: clamp(1.25rem, 5vw, 1.6rem);
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+}
+
+.trip-progress p:last-of-type,
+.trip-empty p:last-child {
+  margin: 0.3rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.trip-progress-track {
+  overflow: hidden;
+  height: 0.55rem;
+  margin-top: 0.9rem;
+  border-radius: 999px;
+  background: rgb(216 237 247 / 13%);
+}
+
+.trip-progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--champagne);
+}
+
+.trip-list-heading {
+  margin: 0.4rem 0 0.75rem;
+}
+
+.trip-day-list {
+  display: grid;
+  gap: 0.85rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.trip-day-card {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 1.3rem;
+  background:
+    linear-gradient(145deg, var(--home-card-start), var(--home-card-end));
+  box-shadow: var(--shadow), inset 0 1px rgb(255 255 255 / 5%);
+}
+
+.trip-day-card-today {
+  border-color: color-mix(in srgb, var(--champagne) 68%, transparent);
+  box-shadow:
+    var(--shadow),
+    inset 0 0 0 1px
+      color-mix(in srgb, var(--champagne) 18%, transparent);
+}
+
+.trip-day-card-past {
+  border-color: color-mix(in srgb, var(--positive) 24%, transparent);
+}
+
+.trip-day-card summary {
+  display: grid;
+  min-height: 4rem;
+  gap: 0.75rem;
+  padding: 1.05rem 1.1rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.trip-day-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.trip-day-card summary:focus-visible {
+  outline: 3px solid var(--champagne);
+  outline-offset: -3px;
+}
+
+.trip-day-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.trip-day-status {
+  display: inline-flex;
+  min-height: 1.65rem;
+  align-items: center;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  color: var(--text);
+  padding: 0.2rem 0.6rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.trip-day-card-past .trip-day-status {
+  background: var(--positive-soft);
+  color: var(--positive);
+}
+
+.trip-day-card-today .trip-day-status {
+  background: var(--accent-soft);
+  color: var(--champagne);
+}
+
+.trip-day-primary > time {
+  display: block;
+  margin-top: 0.55rem;
+  color: var(--champagne);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.trip-day-primary h3 {
+  margin: 0.25rem 0 0;
+  color: var(--text);
+  font-size: clamp(1.3rem, 5.4vw, 1.7rem);
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+.trip-day-primary p {
+  margin: 0.25rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.trip-lead-event,
+.trip-all-aboard {
+  display: grid;
+  gap: 0.2rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.7rem;
+}
+
+.trip-lead-event > span,
+.trip-all-aboard > span {
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 750;
+}
+
+.trip-lead-event strong {
+  color: var(--text);
+  font-size: 0.94rem;
+  line-height: 1.4;
+}
+
+.trip-lead-event strong time,
+.trip-all-aboard time {
+  color: var(--champagne);
+  font-variant-numeric: tabular-nums;
+}
+
+.trip-lead-event small {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.trip-all-aboard {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.trip-all-aboard > span {
+  color: var(--champagne);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.trip-all-aboard time {
+  font-size: 1.25rem;
+  font-weight: 850;
+}
+
+.trip-disclosure-label {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: flex-end;
+  color: var(--champagne);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.trip-disclosure-label::after {
+  margin-left: 0.45rem;
+  content: "⌄";
+  font-size: 1.15rem;
+}
+
+.trip-hide-details {
+  display: none;
+}
+
+.trip-day-card[open] .trip-show-details {
+  display: none;
+}
+
+.trip-day-card[open] .trip-hide-details {
+  display: inline;
+}
+
+.trip-day-card[open] .trip-disclosure-label::after {
+  content: "⌃";
+}
+
+.trip-day-details {
+  display: grid;
+  gap: 1rem;
+  border-top: 1px solid var(--border);
+  padding: 1rem 1.1rem 1.15rem;
+}
+
+.trip-time-zone {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.trip-day-details h4 {
+  margin: 0.3rem 0 0;
+  color: var(--text);
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
+.trip-port-times {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin: 0.75rem 0 0;
+}
+
+.trip-port-times div {
+  border-top: 1px solid var(--border);
+  padding-top: 0.6rem;
+}
+
+.trip-port-times dt {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.trip-port-times dd {
+  margin: 0.15rem 0 0;
+  color: var(--champagne);
+  font-size: 1.08rem;
+  font-weight: 800;
+}
+
+.trip-port-times .trip-port-critical {
+  grid-column: 1 / -1;
+}
+
+.trip-event-list {
+  display: grid;
+  gap: 0.9rem;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.trip-event {
+  display: grid;
+  grid-template-columns: 3.75rem minmax(0, 1fr);
+  gap: 0.7rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
+}
+
+.trip-event-time {
+  display: grid;
+  align-content: start;
+  color: var(--champagne);
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.trip-event-time small {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+.trip-event-kind {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+
+.trip-event h4 {
+  margin-top: 0.15rem;
+}
+
+.trip-event p,
+.trip-supporting-copy {
+  margin: 0.25rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.trip-document-link {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  margin-top: 0.4rem;
+  border-radius: 0.75rem;
+  color: var(--champagne);
+  font-size: 0.86rem;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 0.2rem;
+}
+
+.trip-operational-note {
+  color: var(--champagne) !important;
+  font-weight: 750;
+}
+
+.trip-event-note {
+  color: var(--text-muted) !important;
+}
+
+.trip-estimated-timing {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.45rem 0 0;
+}
+
+.trip-estimated-timing div {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.trip-estimated-timing dt {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.trip-estimated-timing dd {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.trip-enrichment {
+  margin-top: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--surface-raised) 72%, transparent);
+}
+
+.trip-enrichment > summary,
+.trip-content-sources > summary {
+  min-height: 2.75rem;
+  padding: 0.75rem;
+  color: var(--champagne);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.trip-enrichment > summary:focus-visible,
+.trip-content-sources > summary:focus-visible {
+  outline: 3px solid var(--champagne);
+  outline-offset: 2px;
+}
+
+.trip-enrichment-body {
+  display: grid;
+  gap: 0.85rem;
+  padding: 0 0.8rem 0.9rem;
+}
+
+.trip-enrichment-body p,
+.trip-enrichment-body ul,
+.trip-enrichment-body dl {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.trip-enrichment-body h5 {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.trip-enrichment-body ul {
+  padding-left: 1.2rem;
+}
+
+.trip-enrichment-body dl div {
+  display: grid;
+  grid-template-columns: minmax(5rem, auto) 1fr;
+  gap: 0.6rem;
+}
+
+.trip-enrichment-body dt {
+  color: var(--text);
+  font-weight: 750;
+}
+
+.trip-enrichment-body dd {
+  margin: 0;
+}
+
+.trip-seasonal-note {
+  border-left: 3px solid var(--champagne);
+  padding-left: 0.75rem;
+}
+
+.trip-destination-image {
+  overflow: hidden;
+  margin: 0;
+  border-radius: 0.75rem;
+  background: var(--surface-muted);
+}
+
+.trip-destination-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.trip-destination-image figcaption {
+  padding: 0.35rem 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+
+.trip-content-sources {
+  border-top: 1px solid var(--border);
+}
+
+.trip-content-sources a {
+  color: var(--champagne);
+}
+
+.trip-day-document-actions {
+  display: grid;
+  justify-items: start;
+}
+
+.documents-screen {
+  display: grid;
+  align-content: start;
+  gap: 1.15rem;
+  width: 100%;
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+.documents-viewer-note {
+  margin: 0;
+  border-left: 3px solid var(--champagne);
+  color: var(--text-muted);
+  padding-left: 0.8rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.document-group h2 {
+  margin: 0 0 0.7rem;
+  color: var(--text);
+  font-size: 1.25rem;
+}
+
+.document-group ul {
+  display: grid;
+  gap: 0.8rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.document-card {
+  border: 1px solid var(--border);
+  border-radius: 1.2rem;
+  background:
+    linear-gradient(145deg, var(--home-card-start), var(--home-card-end));
+  box-shadow: var(--shadow), inset 0 1px rgb(255 255 255 / 5%);
+  padding: 1rem;
+}
+
+.document-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: var(--champagne);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.document-offline-status {
+  color: var(--positive);
+  letter-spacing: 0;
+  text-align: right;
+  text-transform: none;
+}
+
+.document-card h3 {
+  margin: 0.55rem 0 0;
+  color: var(--text);
+  font-size: 1.15rem;
+  line-height: 1.3;
+}
+
+.document-card p {
+  margin: 0.4rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.document-card .document-date-context {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.document-card .document-operational-notice {
+  border-left: 3px solid var(--attention);
+  color: var(--text);
+  padding-left: 0.7rem;
+  font-weight: 700;
+}
+
+.document-card .document-verification {
+  font-size: 0.78rem;
+}
+
+.document-action {
+  display: inline-flex;
+  min-height: 2.9rem;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--champagne) 72%, transparent);
+  border-radius: 0.85rem;
+  background: var(--accent-soft);
+  color: var(--champagne);
+  padding: 0.65rem 0.9rem;
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.document-action:focus-visible {
+  outline: 3px solid var(--champagne);
+  outline-offset: 3px;
+}
+
+.documents-empty-state {
+  border: 1px solid var(--border);
+  border-radius: 1.2rem;
+  background: var(--surface-raised);
+  padding: 1.15rem;
+}
+
+.documents-empty-state h2,
+.documents-empty-state p {
+  margin: 0;
+}
+
+.documents-empty-state h2 {
+  font-size: 1.2rem;
+}
+
+.documents-empty-state p {
+  margin-top: 0.45rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
 
 .home-hero {
   display: grid;
@@ -670,7 +1569,8 @@ a:focus-visible {
 }
 
 .home-eyebrow,
-.home-card-label {
+.home-card-label,
+.daily-love-message-label {
   margin: 0;
   color: var(--champagne);
   font-size: 0.78rem;
@@ -748,6 +1648,67 @@ a:focus-visible {
   gap: 1rem;
 }
 
+.daily-love-message-home {
+  padding: 1rem 1.15rem;
+  border: 1px solid
+    color-mix(in srgb, var(--champagne) 28%, var(--border));
+  border-radius: 1.15rem;
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--home-card-start) 88%, transparent),
+      color-mix(in srgb, var(--home-card-end) 94%, transparent)
+    );
+  box-shadow: inset 0 1px rgb(255 255 255 / 5%);
+}
+
+.daily-love-message h2 {
+  margin: 0.4rem 0 0;
+  color: var(--text);
+  font-size: clamp(1.15rem, 4.5vw, 1.4rem);
+  line-height: 1.3;
+}
+
+.daily-love-message-body {
+  margin: 0.65rem 0 0;
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.daily-love-message-signature {
+  margin-top: 0.75rem;
+  color: var(--champagne);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.daily-love-message-signature p {
+  margin: 0;
+}
+
+.daily-love-message-welcome {
+  margin-top: 0.9rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgb(255 255 255 / 20%);
+}
+
+.daily-love-message-welcome h2 {
+  font-size: 1.05rem;
+}
+
+.daily-love-message-welcome .daily-love-message-body {
+  margin-top: 0.45rem;
+  color: rgb(255 255 255 / 90%);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.daily-love-message-welcome .daily-love-message-signature {
+  margin-top: 0.55rem;
+  font-size: 0.82rem;
+}
+
 .home-card {
   overflow: hidden;
   border: 1px solid var(--border);
@@ -815,6 +1776,13 @@ a:focus-visible {
   align-items: start;
   margin-top: 1rem;
   padding-left: 1.2rem;
+}
+
+.milestone-date {
+  margin: 0.9rem 0 0 1.2rem;
+  color: var(--text);
+  font-size: 0.94rem;
+  font-weight: 750;
 }
 
 .milestone-time {
@@ -1027,43 +1995,6 @@ a:focus-visible {
   border-radius: 1.5rem;
   background: var(--surface-raised);
   box-shadow: var(--shadow);
-}
-
-.placeholder-state {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  max-width: 38rem;
-  margin-top: clamp(2rem, 8vw, 4rem);
-  padding: 1.35rem;
-}
-
-.placeholder-icon {
-  display: grid;
-  flex: 0 0 auto;
-  width: 2.75rem;
-  height: 2.75rem;
-  place-items: center;
-  border-radius: 0.9rem;
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-
-.placeholder-copy {
-  min-width: 0;
-}
-
-.placeholder-copy h2 {
-  margin: 0.85rem 0 0;
-  font-size: 1.05rem;
-  line-height: 1.35;
-}
-
-.placeholder-copy p {
-  margin: 0.45rem 0 0;
-  color: var(--text-muted);
-  font-size: 0.92rem;
-  line-height: 1.55;
 }
 
 .status-badge {
@@ -1297,16 +2228,146 @@ a:focus-visible {
   line-height: 1.55;
 }
 
+.app-status-card,
+.app-information-card {
+  max-width: 38rem;
+  margin-top: 1rem;
+  padding: 1.25rem;
+}
+
+.app-status-card h2,
+.app-information-card h2 {
+  margin: 0.45rem 0 0;
+  font-size: clamp(1.25rem, 5vw, 1.55rem);
+}
+
+.app-status-card p,
+.app-information-card p {
+  margin: 0.55rem 0 0;
+  overflow-wrap: anywhere;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.app-status-card .app-offline-status-ready {
+  color: var(--positive);
+  font-weight: 750;
+}
+
+.app-status-card .app-offline-status-checking,
+.app-status-card .app-offline-status-unavailable {
+  color: var(--text-muted);
+}
+
+.app-status-card button,
+.application-error-card button {
+  min-height: 3rem;
+  margin-top: 1rem;
+  border: 1px solid var(--champagne);
+  border-radius: 0.9rem;
+  background: var(--champagne);
+  color: var(--ocean-950);
+  padding: 0.7rem 1rem;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.app-status-card button:focus-visible,
+.application-error-card button:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 3px;
+}
+
+.app-information-card dl {
+  display: grid;
+  gap: 0.65rem;
+  margin: 1rem 0 0;
+}
+
+.app-information-card dl div {
+  display: grid;
+  grid-template-columns: minmax(7rem, 0.7fr) minmax(0, 1.3fr);
+  gap: 0.75rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.app-information-card dt {
+  color: var(--text-muted);
+}
+
+.app-information-card dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--text);
+  font-weight: 750;
+  text-align: right;
+}
+
+.application-error {
+  display: grid;
+  min-height: 100vh;
+  min-height: 100dvh;
+  place-items: center;
+  background: var(--surface);
+  color: var(--text);
+  padding:
+    max(1.25rem, env(safe-area-inset-top))
+    max(1.25rem, env(safe-area-inset-right))
+    max(1.25rem, env(safe-area-inset-bottom))
+    max(1.25rem, env(safe-area-inset-left));
+}
+
+.application-error-card,
+.route-error {
+  width: min(100%, 34rem);
+  border: 1px solid var(--border);
+  border-radius: 1.5rem;
+  background: var(--surface-raised);
+  box-shadow: var(--shadow);
+  padding: clamp(1.25rem, 5vw, 2rem);
+}
+
+.application-error-card h1,
+.route-error h1 {
+  margin: 0.45rem 0 0;
+  font-size: clamp(1.8rem, 8vw, 2.6rem);
+  line-height: 1.08;
+}
+
+.application-error-card > p:not(.card-eyebrow),
+.route-error > p:not(.card-eyebrow) {
+  margin: 0.75rem 0 0;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.route-error a {
+  display: inline-flex;
+  min-height: 3rem;
+  align-items: center;
+  margin-top: 1rem;
+  border-radius: 0.9rem;
+  background: var(--champagne);
+  color: var(--ocean-950);
+  padding: 0.7rem 1rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.trip-image-unavailable {
+  margin: 0;
+  border-left: 3px solid var(--text-muted);
+  color: var(--text-muted);
+  padding-left: 0.75rem;
+  line-height: 1.5;
+}
+
 .app-icon {
   width: 1.35rem;
   height: 1.35rem;
-}
-
-@keyframes page-in {
-  from {
-    opacity: 0;
-    transform: translateY(0.4rem);
-  }
 }
 
 @media (min-width: 48rem) {
@@ -1348,6 +2409,25 @@ a:focus-visible {
 
   .traveler-choice-options {
     grid-template-columns: 1fr;
+  }
+
+  .app-information-card dl div {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
+  }
+
+  .app-information-card dd {
+    text-align: left;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 31rem) {
+  .app-header {
+    min-height: auto;
+  }
+
+  .app-content {
+    padding-top: 1rem;
   }
 }
 

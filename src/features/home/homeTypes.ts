@@ -29,6 +29,8 @@ export type MilestoneTone = 'default' | 'urgent'
 export interface Milestone {
   label: string
   title: string
+  date?: string
+  dateTime?: string
   time?: string
   location?: string
   detail?: string

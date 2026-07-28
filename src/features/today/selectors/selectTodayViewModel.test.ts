@@ -4,6 +4,8 @@ import { selectCurrentEvent } from '../../../domain/trip/selectors/selectCurrent
 import { selectTodayEvents } from '../../../domain/trip/selectors/selectTodayEvents'
 import type { TripData } from '../../../domain/trip/tripTypes'
 import { tripFixture } from '../../../test/fixtures/tripFixture'
+import { createDocumentFixture } from '../../../test/fixtures/documentFixture'
+import { oceaniaMarina2026TripData } from '../../../trips/oceania-marina-2026/tripData'
 import { selectTodayViewModel } from './selectTodayViewModel'
 
 describe('selectTodayViewModel', () => {
@@ -33,6 +35,28 @@ describe('selectTodayViewModel', () => {
     })
   })
 
+  it('shows verified flight codes and destination-local arrival times', () => {
+    const outbound = selectTodayViewModel(
+      oceaniaMarina2026TripData,
+      new Date('2026-08-22T12:00:00Z'),
+    ).timeline.find(({ id }) => id === 'event-outbound-flight')
+    const returnFlight = selectTodayViewModel(
+      oceaniaMarina2026TripData,
+      new Date('2026-09-04T14:00:00Z'),
+    ).timeline.find(({ id }) => id === 'event-return-flight')
+
+    expect(outbound).toMatchObject({
+      publicCode: 'FI555',
+      time: '13:50',
+      endTime: '15:10',
+    })
+    expect(returnFlight).toMatchObject({
+      publicCode: 'BA386',
+      time: '13:55',
+      endTime: '16:10',
+    })
+  })
+
   it('maps verified port context and all-aboard information', () => {
     const result = selectTodayViewModel(
       tripFixture,
@@ -45,10 +69,10 @@ describe('selectTodayViewModel', () => {
       arrivalTime: '07:00',
       departureTime: '18:00',
     })
-    expect(result.criticalInfo).toMatchObject({
-      title: 'All aboard',
-      prominence: 'SUPPORTING',
+    expect(result.operationalStatus).toMatchObject({
+      state: 'ALONGSIDE',
       time: '17:30',
+      timeRemaining: '9h 30m remaining',
     })
   })
 
@@ -59,9 +83,8 @@ describe('selectTodayViewModel', () => {
     )
 
     expect(result.nextEvent).toBeUndefined()
-    expect(result.criticalInfo).toMatchObject({
-      title: 'All aboard',
-      prominence: 'PRIMARY',
+    expect(result.operationalStatus).toMatchObject({
+      state: 'ALONGSIDE',
       time: '17:30',
     })
   })
@@ -79,9 +102,8 @@ describe('selectTodayViewModel', () => {
     )
 
     expect(result.nextEvent).toBeUndefined()
-    expect(result.criticalInfo).toMatchObject({
-      title: 'All aboard',
-      prominence: 'PRIMARY',
+    expect(result.operationalStatus).toMatchObject({
+      state: 'ALONGSIDE',
     })
   })
 
@@ -97,7 +119,9 @@ describe('selectTodayViewModel', () => {
       new Date('2030-05-11T10:00:00Z'),
     )
 
-    expect(result.criticalInfo).toBeUndefined()
+    expect(result.operationalStatus).toMatchObject({
+      state: 'TIMING_UNAVAILABLE',
+    })
     expect(result.port?.departureTime).toBe('18:00')
   })
 
@@ -110,6 +134,7 @@ describe('selectTodayViewModel', () => {
     expect(result.dayKind).toBe('SEA_DAY')
     expect(result.port).toBeUndefined()
     expect(result.criticalInfo).toBeUndefined()
+    expect(result.operationalStatus?.state).toBe('SEA_DAY')
     expect(result.timeline[0]?.title).toBe('Dinner reservation')
   })
 
@@ -272,11 +297,10 @@ describe('selectTodayViewModel', () => {
           : event,
       ),
       documentReferences: [
-        {
+        createDocumentFixture({
           id: 'document-flight',
           title: 'Example flight summary',
-          category: 'FLIGHT',
-        },
+        }),
       ],
     }
 
@@ -289,8 +313,212 @@ describe('selectTodayViewModel', () => {
     expect(
       selectTodayViewModel(
         data,
+        new Date('2030-05-10T06:00:00Z'),
+      ).timeline[0]?.documentActions?.[0],
+    ).toMatchObject({
+      href: '/documents/travel/example-travel-document.pdf',
+      label: 'Open document',
+    })
+    expect(
+      selectTodayViewModel(
+        data,
         new Date('2030-05-12T06:00:00Z'),
       ).timeline[0]?.hasRelatedDocuments,
     ).toBe(false)
+  })
+
+  it('derives a concise early-start Prepare for tomorrow briefing', () => {
+    const data: TripData = {
+      ...tripFixture,
+      events: tripFixture.events.map((event) =>
+        event.id === 'event-excursion'
+          ? {
+              ...event,
+              startsAt: '2030-05-11T07:30:00+02:00',
+              meetingAt: '2030-05-11T07:15:00+02:00',
+              meetingContext: 'Fictional pier entrance',
+              requiredItems: ['Photo ID'],
+              preparationNotes: ['Keep the local document available offline.'],
+              documentReferenceIds: ['document-excursion'],
+            }
+          : event,
+      ),
+      documentReferences: [
+        createDocumentFixture({
+          id: 'document-excursion',
+          dayId: 'day-2030-05-11',
+          associatedDate: '2030-05-11',
+          title: 'Fictional excursion confirmation',
+        }),
+      ],
+    }
+
+    const result = selectTodayViewModel(
+      data,
+      new Date('2030-05-10T12:00:00Z'),
+    )
+
+    expect(result.tomorrow).toMatchObject({
+      title: 'Harbor City',
+      earlyStart: true,
+      timingNote: undefined,
+      requiredItems: ['Photo ID'],
+      preparationNotes: ['Keep the local document available offline.'],
+      tripHref: '/trip#day-2030-05-11',
+    })
+    expect(result.tomorrow?.firstEvent).toMatchObject({
+      title: 'Coastal walk',
+      time: '07:30',
+      meetingTime: '07:15',
+      meetingPointLabel: 'Fictional pier entrance',
+    })
+    expect(result.tomorrow?.documentActions[0]?.title).toBe(
+      'Fictional excursion confirmation',
+    )
+  })
+
+  it('shows pending tomorrow timing without inventing a time', () => {
+    const data: TripData = {
+      ...tripFixture,
+      events: tripFixture.events.map((event) =>
+        event.id === 'event-excursion'
+          ? {
+              ...event,
+              startsAt: undefined,
+              scheduleStatus: 'TO_BE_CONFIRMED' as const,
+            }
+          : event,
+      ),
+    }
+
+    const result = selectTodayViewModel(
+      data,
+      new Date('2030-05-10T12:00:00Z'),
+    )
+
+    expect(result.tomorrow?.firstEvent).toMatchObject({
+      timingLabel: 'Time to be confirmed',
+      time: undefined,
+    })
+    expect(result.tomorrow?.timingNote).toBe(
+      'First event time to be confirmed.',
+    )
+  })
+
+  it('uses a calm tomorrow empty state and stops at the final trip day', () => {
+    const dataWithoutSeaDayPlans: TripData = {
+      ...tripFixture,
+      days: tripFixture.days.map((day) =>
+        day.id === 'day-2030-05-12'
+          ? { ...day, eventIds: [] }
+          : day,
+      ),
+    }
+    const seaDayResult = selectTodayViewModel(
+      dataWithoutSeaDayPlans,
+      new Date('2030-05-11T12:00:00Z'),
+    )
+    expect(seaDayResult.tomorrow?.emptyMessage).toBe(
+      'No specific preparation is configured for this sea day.',
+    )
+
+    const finalDayResult = selectTodayViewModel(
+      tripFixture,
+      new Date('2030-05-14T12:00:00Z'),
+    )
+    expect(finalDayResult.tomorrow).toBeUndefined()
+  })
+
+  it('sorts, deduplicates, and caps actionable daily priorities', () => {
+    const data: TripData = {
+      ...tripFixture,
+      events: tripFixture.events.map((event) =>
+        event.id === 'event-flight-outbound'
+          ? {
+              ...event,
+              leaveByAt: '2030-05-10T08:15:00+02:00',
+              documentReferenceIds: ['document-flight'],
+            }
+          : event.id === 'event-excursion'
+            ? {
+                ...event,
+                startsAt: '2030-05-11T07:30:00+02:00',
+              }
+            : event,
+      ),
+      documentReferences: [
+        createDocumentFixture({
+          id: 'document-flight',
+          title: 'Fictional flight summary',
+        }),
+      ],
+    }
+
+    const result = selectTodayViewModel(
+      data,
+      new Date('2030-05-10T05:30:00Z'),
+    )
+
+    expect(result.priorities).toHaveLength(3)
+    expect(result.priorities?.map(({ id }) => id)).toEqual([
+      'leave-soon',
+      'event-document',
+      'early-tomorrow',
+    ])
+    expect(new Set(result.priorities?.map(({ id }) => id)).size).toBe(3)
+  })
+
+  it('shows a no-priority state when no action is derivable', () => {
+    const result = selectTodayViewModel(
+      tripFixture,
+      new Date('2030-05-12T12:00:00Z'),
+    )
+
+    expect(result.priorities).toEqual([])
+  })
+
+  it('discloses a missing event timezone fallback', () => {
+    const data: TripData = {
+      ...tripFixture,
+      events: tripFixture.events.map((event) =>
+        event.id === 'event-flight-outbound'
+          ? { ...event, timeZone: undefined }
+          : event,
+      ),
+    }
+
+    const result = selectTodayViewModel(
+      data,
+      new Date('2030-05-10T06:00:00Z'),
+    )
+
+    expect(result.nextEvent).toMatchObject({
+      time: '09:00',
+      timeZoneNote:
+        'Event timezone not added; using Europe/Brussels',
+    })
+  })
+
+  it('keeps incomplete production operations explicit without inventing values', () => {
+    const result = selectTodayViewModel(
+      oceaniaMarina2026TripData,
+      new Date('2026-08-25T08:00:00Z'),
+    )
+
+    expect(result.operationalStatus).toMatchObject({
+      state: 'TIMING_UNAVAILABLE',
+      detail:
+        'All Aboard time unavailable. Ship departure is shown separately.',
+    })
+    expect(result.nextEvent).toMatchObject({
+      title: 'GG2 Big Whale Safari & Puffins',
+      meetingTime: '08:50',
+      leaveBy: undefined,
+    })
+    expect(result.returnGuidance).toMatchObject({
+      state: 'CANNOT_CALCULATE',
+      detail:
+        'All Aboard time is not verified, so no buffer is calculated.',
+    })
   })
 })

@@ -8,6 +8,30 @@ export type CruiseId = string
 export type PortCallId = string
 export type BookingReferenceId = string
 export type DocumentReferenceId = string
+export type OperationalTimingVerification =
+  | 'CONFIRMED'
+  | 'ESTIMATED'
+  | 'PENDING'
+  | 'UNAVAILABLE'
+export type TravelDurationVerification = 'CONFIRMED' | 'ESTIMATED'
+
+export interface MinuteRange {
+  minimum: number
+  maximum: number
+}
+
+export interface EstimatedEventSchedule {
+  anchorEventId: EventId
+  startOffsetMinutes: MinuteRange
+}
+export type DocumentCategory =
+  | 'FLIGHT'
+  | 'HOTEL'
+  | 'TRANSFER'
+  | 'CRUISE'
+  | 'EXCURSION'
+  | 'EXCURSION_TICKET'
+  | 'EXCURSION_CONFIRMATION'
 
 export type TripPhase =
   | 'PRE_TRIP'
@@ -64,12 +88,36 @@ interface BaseEvent {
   id: EventId
   dayId: TripDayId
   title: string
+  travelerIds?: TravelerId[]
   startsAt?: string
   endsAt?: string
   timeZone?: string
+  endTimeZone?: string
   locationId?: LocationId
   bookingReferenceIds?: BookingReferenceId[]
   documentReferenceIds?: DocumentReferenceId[]
+  organizer?: string
+  bookingType?: 'OCEANIA' | 'INDEPENDENT'
+  bookingStatus?: 'CONFIRMED'
+  scheduleStatus?: 'TO_BE_CONFIRMED'
+  publicCode?: string
+  meetingAt?: string
+  checkInAt?: string
+  leaveByAt?: string
+  travelDurationMinutes?: number
+  travelDurationRangeMinutes?: MinuteRange
+  travelDurationVerification?: TravelDurationVerification
+  estimatedSchedule?: EstimatedEventSchedule
+  travelOriginLocationId?: LocationId
+  safetyBufferMinutes?: number
+  timingVerification?: Extract<
+    OperationalTimingVerification,
+    'CONFIRMED' | 'ESTIMATED'
+  >
+  meetingContext?: string
+  operationalNotes?: string[]
+  preparationNotes?: string[]
+  requiredItems?: string[]
 }
 
 export interface TransportEvent extends BaseEvent {
@@ -91,7 +139,7 @@ export type TripEvent = TransportEvent | ActivityEvent
 
 export interface TransportSegment {
   id: TransportId
-  mode: 'AIR' | 'PRIVATE_TRANSFER' | 'RAIL' | 'SHIP'
+  mode: 'AIR' | 'BUS' | 'PRIVATE_TRANSFER' | 'RAIL' | 'SHIP'
   label: string
   publicCode?: string
   fromLocationId?: LocationId
@@ -126,7 +174,17 @@ export interface BookingReference {
 export interface DocumentReference {
   id: DocumentReferenceId
   title: string
-  category: 'FLIGHT' | 'HOTEL' | 'TRANSFER' | 'CRUISE' | 'EXCURSION'
+  category: DocumentCategory
+  assetPath: string
+  mimeType: 'application/pdf'
+  associatedDate: string
+  dayId: TripDayId
+  locationId?: LocationId
+  description: string
+  actionLabel: string
+  offlineAvailable: true
+  verificationStatus: 'ISSUED' | 'ISSUED_WITH_SUPERSEDED_DETAILS'
+  operationalNotice?: string
 }
 
 export interface TripData {

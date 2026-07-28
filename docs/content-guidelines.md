@@ -1,0 +1,226 @@
+# Destination content guidelines
+
+## Purpose
+
+Destination content gives travelers concise, offline orientation without
+competing with the operational itinerary. It should explain where they are
+going, why it is interesting, what they may experience, and which stable local
+context is useful before going ashore.
+
+Home remains the concise briefing, Today remains the current-day operational
+view, and Trip remains the complete chronological journey. Editorial content
+belongs inside an expanded Trip day after verified operational information.
+
+## Content boundary
+
+Keep operational `TripData` and editorial content separate:
+
+```text
+TripData
+  dates, times, events, transport, port calls, locations
+
+TripContentBundle
+  destination and confirmed-excursion background, sources, review dates
+```
+
+Destination guides relate to `Location` by stable `locationId`. Excursion guides
+relate to a confirmed `EXCURSION` event by stable `eventId`. Do not add editorial
+fields to `Location`, `TripDay`, `TripEvent`, `PortCall`, or `TripData`.
+
+## Destination format
+
+An initial destination guide contains:
+
+- one original introduction of approximately 50–80 words;
+- three to five concise, stable highlights;
+- two to four practical facts;
+- up to three good-to-know items;
+- source references and a reviewed date;
+- optionally, one approved destination image.
+
+Keep the complete guide to approximately 100–160 words. Do not repeat arrival,
+departure, all-aboard, excursion times, meeting points, or transport already
+represented by operational data.
+
+An excursion guide may be added only for a confirmed excursion event. It may
+describe the public itinerary, operator, stable context, and likely highlights,
+but must not include private confirmation details.
+
+An excursion guide may contain a concise summary, three to five highlights,
+optional look-out-for items, fun facts, preparation guidance, stable context,
+and a clearly labelled seasonal note. Optional sections are omitted cleanly.
+Wildlife, weather-dependent routes, and seasonal inclusions must never be
+presented as guaranteed.
+
+## Sources and writing
+
+Use:
+
+1. a confirmed user document;
+2. the official excursion operator;
+3. an official Oceania source;
+4. a government, port authority, or official tourism authority.
+
+Write concise original summaries. Do not copy substantial source text. Record:
+
+- source name;
+- source type;
+- public URL when applicable;
+- the date the source was reviewed;
+- whether the guide was reviewed against a primary source or confirmed from a
+  user document.
+
+Source names and the guide review date appear compactly in the interface. Public
+links may appear inside a small Sources disclosure, while all useful guide
+content remains available without connectivity.
+
+The production itinerary has twelve destination guides, one for each canonical
+port location. They were reviewed against official tourism, local-government,
+or other public primary sources on 27 July 2026. Dual-name destinations keep
+the cruise port distinct from the wider regional city. Sea days, superseded
+ports, and excursion-only stops do not receive destination guides.
+
+The initial excursion inventory contains eleven reviewed guides: eight based on
+official Oceania shore excursion material and three for independent bookings.
+Two independent guides use official operator sources; the Isle of Lewis guide
+uses the user-supplied Hebridean Isle Tours booking confirmation while revised
+written timing remains pending. A source without an approved stable public URL
+keeps its source name and review date but does not expose a private local
+document path.
+
+## Stable and changing information
+
+Suitable bundled content includes geography, established history, cultural
+context, major landmarks, language, currency, and stable landscape context.
+
+Do not bundle changing opening hours, prices, closures, availability, weather,
+transport disruptions, excursion changes, gangway information, or unverified
+all-aboard values as editorial facts. These require a future freshness and
+update workflow. The twelve production destination guides contain no live or
+rapidly changing destination data.
+
+## Images
+
+A destination guide may contain one optional local image. For production
+images:
+
+- use WebP;
+- target 1200 × 675 pixels;
+- target approximately 150–300 KB;
+- include no embedded text;
+- provide descriptive alternative text;
+- record credit, public source URL, license, and license URL when required;
+- confirm that offline redistribution is permitted.
+
+Place the image inside the closed-by-default destination disclosure, below all
+operational content. Reserve its 16:9 space with intrinsic dimensions or CSS,
+use `loading="lazy"`, and omit the entire image treatment when no approved asset
+exists. Do not generate, download, or add an unlicensed image.
+
+All twelve production destination guides use locally bundled 1200 × 675 WebP
+images. Nine were selected and supplied directly by the user for private family
+use; they carry a simple user-supplied designation without invented
+photographer, license, or source metadata. The existing Tórshavn, Falmouth, and
+Southampton Commons images retain their verified source and license metadata.
+Practical ticket and confirmation assets are handled through the operational
+document boundary described below. Bilingual interface and editorial content
+remain a later, separate step.
+
+## Practical travel documents
+
+The app bundles a deliberately small offline travel folder containing only
+operational confirmations needed during the journey. Document metadata belongs
+to canonical `TripData`; binary PDF copies live under
+`public/documents/travel/` and are precached by Workbox.
+
+Current bundled copies cover the pre-cruise hotel, arrival Flybus, three
+independent excursions, and the Southampton-to-Heathrow transfer. Each file
+uses a privacy-safe filename, stable metadata, a trip-day relationship, and an
+event relationship only where a matching event already exists.
+
+Uploaded originals remain outside the repository. The bundled travel copies
+retain only useful pages:
+
+- Hotel Viking: page 1 of 6;
+- Tanni Travel / Arctic Shorex: the practical ticket portion of page 1 of 2;
+- Hebridean Isle Tours: page 1 of 3, with non-operational details removed;
+- BA Transfer: the practical first page of 2;
+- Gentle Giants: pages 1–2 because the second page contains practical safety
+  guidance;
+- Flybus: its single voucher page.
+
+The duplicate Tanni upload and the redundant Bokun portal confirmation are not
+bundled. The Stornoway confirmation is preserved as originally issued, while
+the UI clearly states that its printed schedule is superseded and revised
+written timing remains pending.
+
+Document actions open the local PDF in the device viewer. The source file is
+available offline; no runtime OneDrive, email, booking-provider, or operator
+login is required.
+
+## Privacy
+
+Never include:
+
+- full booking references;
+- cabin or identity details;
+- private phone numbers;
+- payment or medical information;
+- ticket identifiers, QR contents, or private document details transcribed
+  into source metadata, tests, or editorial copy;
+- traveler-specific private arrangements.
+
+Confirmed excursion content may include its public title, operator, general
+route, highlights, and a public meeting context when operationally required.
+Private originals are reviewed locally. When the product owner explicitly
+approves an operational travel copy for offline use, keep it separate from
+editorial content, remove unrelated pages and details, and never duplicate its
+private identifiers in metadata or tests.
+
+## Personal daily content
+
+Personal messages are a separate, deliberately controlled form of bundled
+content. They must not be mixed into operational `TripData`, destination
+guides, or excursion guides. For the initial experience:
+
+- English is the only variable-content language;
+- the approved opening `Mon amour pour toujours,` remains fixed in French;
+- every dated body is reviewed and stored locally;
+- selection is deterministic by local calendar date;
+- no AI, randomization, network request, or storage counter is used;
+- messages contain no sensitive identity, booking, document, or medical data.
+
+The current schedule covers 27 July through 4 September 2026 with forty unique
+messages and a fixed post-trip fallback. Before departure, the selected message
+appears on Welcome and is omitted from pre-trip Home to avoid duplication in the
+normal entry flow. During the trip it remains available on Home; after the trip
+Home presents the fixed fallback. Future authoring, synchronization,
+traveler-specific visibility, and mutable storage require separate product and
+privacy review.
+
+## Presentation
+
+Inside an expanded Trip day, preserve this order:
+
+1. operational day information;
+2. port and critical information;
+3. events and transport;
+4. source-reviewed experience background directly under its matching event;
+5. one nested `About [destination]` disclosure for the day;
+6. concrete document references.
+
+The destination disclosure remains closed by default, including when the outer
+Today card is open. Experience disclosures are also closed by default. Missing
+content produces no empty guide block.
+
+## Review checklist
+
+- [ ] Text is concise, original, stable, and useful offline.
+- [ ] Every guide references a known location or confirmed excursion event.
+- [ ] Sources, verification, and review dates are recorded.
+- [ ] Operational facts are not duplicated or inferred.
+- [ ] Changing information is omitted.
+- [ ] Private confirmation details are excluded.
+- [ ] Optional image rights, credit, metadata, optimization, and alt text are
+      verified.
+- [ ] Production content and fictional review fixtures remain separate.

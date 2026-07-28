@@ -21,7 +21,7 @@ describe('LocalTripStateRepository', () => {
         window.localStorage.getItem('travel-companion:trip-state') ?? '',
       ),
     ).toEqual({
-      schemaVersion: 1,
+      schemaVersion: 2,
       activeTripId,
       travelerId: 'traveler-sam',
     })
@@ -47,7 +47,7 @@ describe('LocalTripStateRepository', () => {
         window.localStorage.getItem('travel-companion:trip-state') ?? '',
       ),
     ).toMatchObject({
-      schemaVersion: 1,
+      schemaVersion: 2,
       travelerId: expected,
     })
   })
@@ -70,6 +70,81 @@ describe('LocalTripStateRepository', () => {
     expect(repository.getTravelerId()).toBeNull()
   })
 
+  it('persists the active trip without requiring a traveler selection', () => {
+    const repository = new LocalTripStateRepository(
+      window.localStorage,
+      activeTripId,
+      travelerIds,
+    )
+
+    expect(repository.getActiveTripId()).toBeNull()
+    repository.activateTrip()
+
+    const restarted = new LocalTripStateRepository(
+      window.localStorage,
+      activeTripId,
+      travelerIds,
+    )
+    expect(restarted.getActiveTripId()).toBe(activeTripId)
+    expect(restarted.getTravelerId()).toBeNull()
+  })
+
+  it('persists route and document round-trip state across process restart', () => {
+    const repository = new LocalTripStateRepository(
+      window.localStorage,
+      activeTripId,
+      travelerIds,
+    )
+    repository.activateTrip()
+    repository.setLastMeaningfulRoute('/trip')
+    repository.beginDocumentRoundTrip({
+      originatedFromDocumentAction: true,
+      sourceRoute: '/trip',
+      documentId: 'document-example',
+      openedAt: '2030-05-01T12:00:00.000Z',
+    })
+
+    const restarted = new LocalTripStateRepository(
+      window.localStorage,
+      activeTripId,
+      travelerIds,
+    )
+    expect(restarted.getLastMeaningfulRoute()).toBe('/trip')
+    expect(restarted.getDocumentRoundTrip()).toEqual({
+      originatedFromDocumentAction: true,
+      sourceRoute: '/trip',
+      documentId: 'document-example',
+      openedAt: '2030-05-01T12:00:00.000Z',
+    })
+
+    restarted.clearDocumentRoundTrip()
+    expect(restarted.getDocumentRoundTrip()).toBeNull()
+  })
+
+  it('keeps the active trip when a malformed document marker is discarded', () => {
+    window.localStorage.setItem(
+      'travel-companion:trip-state',
+      JSON.stringify({
+        schemaVersion: 2,
+        activeTripId,
+        documentRoundTrip: {
+          sourceRoute: '/trip',
+          documentId: 'document-example',
+          openedAt: '2030-05-01T12:00:00.000Z',
+        },
+      }),
+    )
+
+    const repository = new LocalTripStateRepository(
+      window.localStorage,
+      activeTripId,
+      travelerIds,
+    )
+
+    expect(repository.getActiveTripId()).toBe(activeTripId)
+    expect(repository.getDocumentRoundTrip()).toBeNull()
+  })
+
   it('degrades safely when browser storage is unavailable', () => {
     const unavailableStorage = {
       getItem: vi.fn(() => {
@@ -86,6 +161,8 @@ describe('LocalTripStateRepository', () => {
     )
 
     expect(repository.getTravelerId()).toBeNull()
+    expect(() => repository.activateTrip()).not.toThrow()
+    expect(repository.getActiveTripId()).toBe(activeTripId)
     expect(() => repository.setTravelerId('traveler-alex')).not.toThrow()
     expect(repository.getTravelerId()).toBe('traveler-alex')
   })

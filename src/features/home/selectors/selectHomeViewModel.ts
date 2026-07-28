@@ -33,18 +33,38 @@ function daysUntilTrip(data: TripData, now: Date): number {
 function milestoneFromEvent(
   data: TripData,
   event: TripEvent | null,
+  now: Date,
 ): Milestone | undefined {
   if (!event) {
     return undefined
   }
 
   const location = data.locations.find(({ id }) => id === event.locationId)
+  const eventTimeZone = event.timeZone ?? data.trip.homeTimeZone
+  const eventLocalDate = event.startsAt
+    ? calendarDateInTimeZone(new Date(event.startsAt), eventTimeZone)
+    : undefined
+  const currentLocalDate = calendarDateInTimeZone(now, eventTimeZone)
   return {
     label: 'Next milestone',
     title: event.title,
+    date:
+      eventLocalDate === currentLocalDate
+        ? 'Today'
+        : eventLocalDate
+          ? new Intl.DateTimeFormat('en-GB', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+              timeZone: 'UTC',
+            })
+              .format(new Date(`${eventLocalDate}T12:00:00Z`))
+              .replace(/^(\S+)/, '$1,')
+          : undefined,
+    dateTime: event.startsAt,
     time:
-      event.startsAt && event.timeZone
-        ? formatLocalTime(event.startsAt, event.timeZone)
+      event.startsAt
+        ? formatLocalTime(event.startsAt, eventTimeZone)
         : undefined,
     location: location?.name,
   }
@@ -78,8 +98,6 @@ export function selectHomeViewModel(
   const phase = resolveTripPhase(data, now)
   const today = selectToday(data, now)
   const cruiseContext = selectCruiseContext(data, today)
-  const cruise = cruiseContext?.cruise ??
-    data.cruises.find(({ id }) => id === data.trip.cruiseId)
 
   if (phase === 'COMPLETED') {
     return {
@@ -99,12 +117,17 @@ export function selectHomeViewModel(
       phase: HOME_PHASES.PRE_TRIP,
       context: {
         eyebrow: 'Before your trip',
-        title: data.trip.title,
-        summary: cruise?.shipName ?? 'Upcoming journey',
+        title: 'Our journey begins soon',
+        summary:
+          'Two weeks to explore, enjoy, and create beautiful memories together.',
         tripDates: formatDateRange(data.trip.startDate, data.trip.endDate),
         countdown: `${days} ${days === 1 ? 'day' : 'days'} to departure`,
       },
-      milestone: milestoneFromEvent(data, selectNextEvent(data, now)),
+      milestone: milestoneFromEvent(
+        data,
+        selectNextEvent(data, now),
+        now,
+      ),
     }
   }
 
@@ -128,6 +151,7 @@ export function selectHomeViewModel(
       },
       now,
     ),
+    now,
   )
   const portMilestone = milestoneFromPortCall(
     data,

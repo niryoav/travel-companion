@@ -73,10 +73,10 @@ feature requires them.
 
 ## Sprint 4 trip-data foundation
 
-Approved non-sensitive operational facts for the active trip live in one
-controlled trip configuration under `src/trips/`. The configuration is imported
-only by a bundled `TripRepository`, so Home, Welcome, profile flows, and tests do
-not own copies of production trip data.
+Approved operational facts for the active trip live in one controlled trip
+configuration under `src/trips/`. The configuration is imported only by a
+bundled `TripRepository`, so Home, Welcome, profile flows, and tests do not own
+copies of production trip data.
 
 The trip configuration is compiled into the application bundle and therefore
 covered by the existing PWA application-shell precache. Only small mutable
@@ -88,9 +88,84 @@ from explicit trip-day windows and offset-aware timestamps. A feature adapter
 maps those results to the existing `HomeViewModel`. Privacy-safe fixtures remain
 separate and power deterministic review routes.
 
-Real identity details, full booking references, payment details, cabin numbers,
-private addresses and phone numbers, medical information, tickets, codes, and
-sensitive document files must not be stored in the trip configuration.
+Private operational facts such as a pickup address or stateroom may be included
+only when the product owner explicitly supplies and approves them for offline
+use. They remain confined to the canonical trip configuration and must not be
+copied into fixtures, components, or general documentation. Passport and
+identity data, payment details, credentials, account-access links, full booking
+references, private phone numbers, medical information, and unapproved source
+documents must never be stored there.
+
+Practical document metadata is part of the controlled trip configuration, while
+approved reduced PDF travel copies are separate local assets under
+`public/documents/travel/`. Components receive display-ready document actions
+through selectors and never contain booking facts or file paths directly.
+Workbox precaches the approved PDFs so Documents and matching event actions do
+not depend on provider portals or connectivity. Private identifiers present
+inside a necessary ticket are not duplicated into TypeScript metadata, tests,
+or editorial content.
+
+## Date-aware startup routing
+
+Application initialization derives its destination from the canonical trip
+dates and a local calendar date. It opens Welcome before the trip, Today during
+the inclusive active-trip date range, and Home after the trip. Welcome remains
+the introduction screen; Home remains the regular trip briefing. This decision
+is applied only to the browser location present when the React application
+mounts. Internal navigation then remains entirely under React Router control.
+
+Small versioned local state records the active trip and last meaningful
+internal route. Before a local PDF is opened, the application also records its
+document ID, source route, timestamp, and document-action origin. A valid,
+recent document round-trip takes precedence over date-based startup routing on
+startup, `pageshow`, and foreground resume. Invalid document source routes fall
+back to Documents; ordinary launches still use the date matrix and do not
+restore a general last-route preference. Query-driven `state` and `phase`
+review routes, and an explicitly opened `/welcome` route, continue to bypass
+the ordinary startup decision when no document restoration is pending.
+
+Daily personal messages are bundled content, not mutable trip state. A pure
+selector maps the current trip-local calendar date to a fixed message. This
+keeps selection deterministic and offline without a storage counter, network
+request, or runtime generation. Before the trip the message appears on Welcome;
+during the trip it remains available on Home; after the trip Home shows the
+fixed reflective message.
+
+## Sprint 7 operational derivation
+
+Operational timing remains an application-layer derivation over canonical
+`TripData`. Optional structured event inputs describe known meeting, check-in,
+leave-by, travel-duration, safety-buffer, preparation, and verification facts.
+Pure selectors derive port status, leave-by guidance, excursion-return buffers,
+daily priorities, and tomorrow preparation. UI view models receive the derived
+wording and never calculate operational times.
+
+Event-local calculations use the event's IANA timezone. A missing event timezone
+falls back explicitly to its trip-day timezone and remains identifiable as a
+fallback; it is never silently replaced with the device timezone. Ship
+departure and All Aboard remain separate port-call facts.
+
+The operational layer has no runtime service or storage dependency. It is
+compiled into the existing offline application bundle and uses only `Date` and
+`Intl`.
+
+## Sprint 8 release foundation
+
+Service-worker registration is owned by one app-level update manager. It
+exposes stable update and offline-readiness state to More while keeping
+registration APIs out of presentation components. A waiting worker is applied
+only after an explicit traveler action; registration or update-check failure
+does not block the app.
+
+Vite injects the package version and build timestamp. More also reads the
+canonical bundled trip `dataVersion`; no source-control path, repository URL,
+commit identifier, booking value, or secret is exposed.
+
+A root error boundary handles initialization failure, while a route boundary
+keeps the shared shell and navigation available if one main screen fails.
+Loading, empty, unavailable, and image-failure states remain distinct.
+Workbox precaches only local production assets and cleans obsolete generated
+caches.
 
 ## Guidance
 

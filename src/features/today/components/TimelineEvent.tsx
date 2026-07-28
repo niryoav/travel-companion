@@ -1,5 +1,4 @@
-import { Link } from 'react-router'
-
+import { DocumentActionLink } from '../../documents/components/DocumentActionLink'
 import type { TodayEventViewModel } from '../todayTypes'
 
 interface TimelineEventProps {
@@ -14,7 +13,7 @@ export function TimelineEvent({ event }: TimelineEventProps) {
         {event.time ? (
           <time dateTime={event.startsAt}>{event.time}</time>
         ) : (
-          <span>Any time</span>
+          <span>{event.timingLabel ?? 'Time unavailable'}</span>
         )}
         {event.endTime ? (
           <span>
@@ -25,16 +24,23 @@ export function TimelineEvent({ event }: TimelineEventProps) {
       <div className="timeline-copy">
         <div className="timeline-meta">
           <span>{event.kindLabel}</span>
+          {event.publicCode ? <span>{event.publicCode}</span> : null}
           <span className="timeline-state">{event.stateLabel}</span>
         </div>
         <h3>{event.title}</h3>
-        {event.location ? <p>{event.location}</p> : null}
-        {event.transport ? <p>{event.transport}</p> : null}
-        {event.hasRelatedDocuments ? (
-          <Link className="today-event-document-link" to="/documents">
-            View related documents
-          </Link>
+        {event.timingConfidenceLabel ? (
+          <p>{event.timingConfidenceLabel}</p>
         ) : null}
+        {event.location ? <p>{event.location}</p> : null}
+        {event.meetingPointLabel ? <p>{event.meetingPointLabel}</p> : null}
+        {event.transport ? <p>{event.transport}</p> : null}
+        {event.documentActions?.map((action) => (
+          <DocumentActionLink
+            action={action}
+            className="today-event-document-link"
+            key={action.id}
+          />
+        ))}
       </div>
     </li>
   )

@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from 'react-router'
 
 import { BottomNavigation } from '../components/BottomNavigation'
+import { RouteErrorBoundary } from './RouteErrorBoundary'
 import { primaryNavigation } from './navigation/primaryNavigation'
 
 export function AppShell() {
@@ -20,7 +21,9 @@ export function AppShell() {
       </header>
 
       <div className="app-content">
-        <Outlet />
+        <RouteErrorBoundary key={pathname}>
+          <Outlet />
+        </RouteErrorBoundary>
       </div>
 
       <BottomNavigation items={primaryNavigation} />

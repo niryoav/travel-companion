@@ -8,13 +8,23 @@ import type {
 } from '../../domain/trip/tripTypes'
 import type { TripStateRepository } from '../../storage/TripStateRepository'
 import { TravelerChoice } from './TravelerChoice'
+import type { AppBuildInfo } from '../../app/buildInfo'
+import type { PwaUpdateManager } from '../../pwa/PwaUpdateManager'
+import { AppInformationCard } from './AppInformationCard'
+import { PwaStatusCard } from './PwaStatusCard'
 
 interface MoreScreenProps {
+  appBuildInfo: AppBuildInfo
+  pwaUpdateManager: PwaUpdateManager
+  tripDataVersion: string
   travelers: Traveler[]
   tripStateRepository: TripStateRepository
 }
 
 export function MoreScreen({
+  appBuildInfo,
+  pwaUpdateManager,
+  tripDataVersion,
   travelers,
   tripStateRepository,
 }: MoreScreenProps) {
@@ -49,6 +59,12 @@ export function MoreScreen({
           travelers={travelers}
         />
       </SurfaceCard>
+
+      <PwaStatusCard manager={pwaUpdateManager} />
+      <AppInformationCard
+        buildInfo={appBuildInfo}
+        tripDataVersion={tripDataVersion}
+      />
     </main>
   )
 }

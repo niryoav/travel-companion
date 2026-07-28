@@ -81,12 +81,13 @@ A compact information card sits near the bottom, above the iPhone safe area. It
 contains, in order:
 
 1. Travel Companion
-2. Fam. Nir-Buysse
+2. Your trip
 3. Iceland & British Isles
 4. Oceania Marina
 5. 22 August – 4 September 2026
 6. Dynamic days-to-go text
-7. Enter trip
+7. The locally selected pre-trip love message
+8. Enter trip
 
 The bottom navigation and regular app header do not appear on the cover.
 
@@ -187,3 +188,65 @@ Missing information produces calm omission or an intentional empty state.
 Never manufacture weather, delays, provider status, alerts, all-aboard values,
 or free-time blocks. Production and privacy-safe visual-review data remain
 strictly separated.
+
+Sprint 7 places the current port or sea status before the next action, followed
+by the timeline, a small capped priority list, return guidance when relevant,
+and a collapsed Prepare for tomorrow disclosure. Confirmed, calculated,
+estimated, pending, and unavailable values use explicit words rather than color
+alone. Ordinary missing data stays calm; urgent styling is reserved for a
+genuinely near or passed verified deadline.
+
+Use consistent missing-data language only where the value is operationally
+relevant: “Time to be confirmed”, “Meeting point pending”, “Return buffer
+cannot yet be calculated”, and “All Aboard time unavailable”. Flights, hotel
+stays, ship-operated excursions, and other events must not inherit generic
+travel-duration or leave-by warnings. Never show blank labels, malformed
+punctuation, or an inferred time.
+
+## Release-state behavior
+
+Technical status belongs under More and uses the same calm Ocean Day cards.
+Update availability is informative rather than intrusive; applying an update
+requires a clearly labelled button. Failure wording explains that the current
+app remains usable. Ordinary status is not announced as an alert.
+
+Application and route failures use one clear heading, a short recovery
+explanation, and a large retry or return action. Missing images disappear
+without collapsing their guide content. Empty document and itinerary states
+remain intentional and readable. Foreground content must be visible on first
+paint and must not depend on an opacity or transform entrance animation.
+
+## Trip
+
+Trip is the complete chronological overview of the journey. It uses the shared
+Ocean Day background and readable card hierarchy while remaining distinct from
+Home's briefing and Today's operational timeline.
+
+Present the verified trip title, date range, ship context, and day-count
+progress before a single vertical list of travel days. Each day summary shows
+its local date, day type, title, explicit Completed, Today, or Upcoming status,
+and no more than one lead event plus an additional-event count. Use visible
+words and structure as well as color to communicate status.
+
+Day cards use native `details` and `summary` disclosure. During an active trip,
+Today is visually distinct and open by default, but the page does not
+automatically scroll. Expanded content may show configured events, local times,
+locations, transport, port context, verified all-aboard, and concrete
+event-related document actions. Touch targets and focus indicators remain
+clearly visible.
+
+Optional editorial enrichment stays subordinate to operational information.
+Use closed nested disclosures labelled `About this experience` beneath a
+matching excursion and `About [destination]` once per day. Sources and review
+dates remain compact, missing content leaves no placeholder, and an approved
+destination image reserves 16:9 space and loads lazily inside its disclosure.
+
+Verified all-aboard may appear in the collapsed summary for Today or a relevant
+upcoming port day. Historical values belong in expanded detail. Do not repeat
+the same all-aboard value in both parts of an open card, and never infer a
+missing value.
+
+Quiet and incomplete days use calm intentional messaging rather than invented
+activities or operational facts. A dense calendar grid, generic
+cross-navigation actions, filters, editing, and update controls do not belong
+in the Sprint 6 Trip experience.
