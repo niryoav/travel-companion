@@ -101,6 +101,31 @@ describe('validateTripData', () => {
     )
   })
 
+  it('rejects invalid operational timing inputs', () => {
+    const invalid = {
+      ...tripFixture,
+      events: tripFixture.events.map((event, index) =>
+        index === 0
+          ? {
+              ...event,
+              meetingAt: 'not-an-instant',
+              travelDurationMinutes: -1,
+              travelDurationVerification: 'ESTIMATED' as const,
+              preparationNotes: [''],
+            }
+          : event,
+      ),
+    }
+
+    expect(validateTripData(invalid)).toEqual(
+      expect.arrayContaining([
+        'Invalid event meeting time: event-flight-outbound',
+        'Invalid event operational content: event-flight-outbound',
+        'Invalid event operational timing: event-flight-outbound',
+      ]),
+    )
+  })
+
   it('rejects unknown event-to-document relationships', () => {
     const invalid = {
       ...tripFixture,

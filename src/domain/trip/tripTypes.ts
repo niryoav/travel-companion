@@ -8,6 +8,12 @@ export type CruiseId = string
 export type PortCallId = string
 export type BookingReferenceId = string
 export type DocumentReferenceId = string
+export type OperationalTimingVerification =
+  | 'CONFIRMED'
+  | 'ESTIMATED'
+  | 'PENDING'
+  | 'UNAVAILABLE'
+export type TravelDurationVerification = 'CONFIRMED' | 'ESTIMATED'
 export type DocumentCategory =
   | 'FLIGHT'
   | 'HOTEL'
@@ -83,9 +89,20 @@ interface BaseEvent {
   bookingStatus?: 'CONFIRMED'
   scheduleStatus?: 'TO_BE_CONFIRMED'
   publicCode?: string
+  meetingAt?: string
   checkInAt?: string
+  leaveByAt?: string
+  travelDurationMinutes?: number
+  travelDurationVerification?: TravelDurationVerification
+  safetyBufferMinutes?: number
+  timingVerification?: Extract<
+    OperationalTimingVerification,
+    'CONFIRMED' | 'ESTIMATED'
+  >
   meetingContext?: string
   operationalNotes?: string[]
+  preparationNotes?: string[]
+  requiredItems?: string[]
 }
 
 export interface TransportEvent extends BaseEvent {

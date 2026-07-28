@@ -125,6 +125,12 @@ export function validateTripData(data: TripData): string[] {
     if (event.checkInAt && !isValidInstant(event.checkInAt)) {
       errors.push(`Invalid event check-in: ${event.id}`)
     }
+    if (event.meetingAt && !isValidInstant(event.meetingAt)) {
+      errors.push(`Invalid event meeting time: ${event.id}`)
+    }
+    if (event.leaveByAt && !isValidInstant(event.leaveByAt)) {
+      errors.push(`Invalid event leave-by time: ${event.id}`)
+    }
     if (event.timeZone && !isSupportedTimeZone(event.timeZone)) {
       errors.push(`Unsupported event time zone: ${event.id}`)
     }
@@ -142,11 +148,25 @@ export function validateTripData(data: TripData): string[] {
     }
     if (
       event.operationalNotes?.some((note) => !note.trim()) ||
+      event.preparationNotes?.some((note) => !note.trim()) ||
+      event.requiredItems?.some((item) => !item.trim()) ||
       (event.organizer !== undefined && !event.organizer.trim()) ||
       (event.publicCode !== undefined && !event.publicCode.trim()) ||
       (event.meetingContext !== undefined && !event.meetingContext.trim())
     ) {
       errors.push(`Invalid event operational content: ${event.id}`)
+    }
+    if (
+      (event.travelDurationMinutes !== undefined &&
+        (!Number.isInteger(event.travelDurationMinutes) ||
+          event.travelDurationMinutes < 0)) ||
+      (event.safetyBufferMinutes !== undefined &&
+        (!Number.isInteger(event.safetyBufferMinutes) ||
+          event.safetyBufferMinutes < 0)) ||
+      (event.travelDurationVerification !== undefined &&
+        event.travelDurationMinutes === undefined)
+    ) {
+      errors.push(`Invalid event operational timing: ${event.id}`)
     }
     for (const documentReferenceId of event.documentReferenceIds ?? []) {
       if (!documentReferenceIds.has(documentReferenceId)) {
