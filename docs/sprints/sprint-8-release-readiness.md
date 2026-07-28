@@ -47,6 +47,10 @@ product experience.
   visible on first paint.
 - Workbox continues to precache the app shell, approved images, and approved
   PDFs, with outdated cache cleanup enabled.
+- Development-only lint packages are updated to their supported current
+  releases, and the Workbox build chain uses a fixed `jake`/`filelist`
+  transitive path. This clears the dependency audit without adding a runtime
+  dependency or changing application behavior.
 
 ## Verification
 
@@ -104,4 +108,3 @@ the complete verification suite independently. Findings should use
 `docs/review-process.md` severity and merge-recommendation categories. Complete
 journey data is added only after blocking findings are resolved and the
 technical foundation is approved.
-
