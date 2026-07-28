@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { applyTripOverrides } from '../domain/trip/tripOverrides'
 import { tripFixture } from '../test/fixtures/tripFixture'
+import { oceaniaMarina2026TripData } from '../trips/oceania-marina-2026/tripData'
 import { LocalTripOverrideRepository } from './LocalTripOverrideRepository'
 
 const storageKey =
@@ -154,6 +155,42 @@ describe('LocalTripOverrideRepository', () => {
 
     expect(repository.getSnapshot().dayOverrides).toEqual({})
     expect(repository.getSnapshot().eventOverrides).toEqual({})
+  })
+
+  it('restores canonical tender access after resetting a local status', () => {
+    const repository = new LocalTripOverrideRepository(
+      window.localStorage,
+      oceaniaMarina2026TripData,
+    )
+    const dayId = 'day-2026-08-29'
+    const canonical = oceaniaMarina2026TripData.portCalls.find(
+      ({ dayId: candidateDayId }) => candidateDayId === dayId,
+    )
+
+    repository.saveDayEdits(
+      dayId,
+      { portAccessStatus: 'DOCKED' },
+      {},
+    )
+    expect(
+      applyTripOverrides(
+        oceaniaMarina2026TripData,
+        repository.getSnapshot(),
+      ).portCalls.find(
+        ({ dayId: candidateDayId }) => candidateDayId === dayId,
+      )?.portAccess?.status,
+    ).toBe('DOCKED')
+
+    repository.resetDay(dayId, [])
+    expect(
+      applyTripOverrides(
+        oceaniaMarina2026TripData,
+        repository.getSnapshot(),
+      ).portCalls.find(
+        ({ dayId: candidateDayId }) => candidateDayId === dayId,
+      )?.portAccess?.status,
+    ).toBe('TENDER_REQUIRED')
+    expect(canonical?.portAccess?.status).toBe('TENDER_REQUIRED')
   })
 
   it('keeps session updates usable when local storage is unavailable', () => {

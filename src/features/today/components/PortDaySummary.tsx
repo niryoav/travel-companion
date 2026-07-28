@@ -1,3 +1,4 @@
+import { PortAccessIndicator } from '../../../components/PortAccessIndicator'
 import type { TodayPortViewModel } from '../todayTypes'
 
 interface PortDaySummaryProps {
@@ -9,8 +10,13 @@ export function PortDaySummary({ port }: PortDaySummaryProps) {
     <section className="today-card today-port" aria-labelledby="port-summary-title">
       <p className="today-card-label">Port context</p>
       <h2 id="port-summary-title">{port.location}</h2>
-      {port.accessLabel ? (
-        <p className="today-port-access">{port.accessLabel}</p>
+      {port.accessLabel && port.accessStatus ? (
+        <p className="today-port-access">
+          <PortAccessIndicator
+            label={port.accessLabel}
+            status={port.accessStatus}
+          />
+        </p>
       ) : null}
       {port.arrivalTime || port.departureTime ? (
         <dl>

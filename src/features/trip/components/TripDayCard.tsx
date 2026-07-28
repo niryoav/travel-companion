@@ -1,3 +1,4 @@
+import { PortAccessIndicator } from '../../../components/PortAccessIndicator'
 import type { TripDayViewModel } from '../tripTypes'
 import { TripDayDetails } from './TripDayDetails'
 
@@ -51,9 +52,12 @@ export function TripDayCard({ day, onEdit }: TripDayCardProps) {
           </div>
         ) : null}
 
-        {day.summaryPortAccessLabel ? (
+        {day.summaryPortAccessLabel && day.summaryPortAccessStatus ? (
           <div className="trip-port-access-summary">
-            <strong>{day.summaryPortAccessLabel}</strong>
+            <PortAccessIndicator
+              label={day.summaryPortAccessLabel}
+              status={day.summaryPortAccessStatus}
+            />
             {day.summaryOurTenderTime ? (
               <span>
                 Our tender:{' '}

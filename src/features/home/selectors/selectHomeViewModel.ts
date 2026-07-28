@@ -175,6 +175,11 @@ export function selectHomeViewModel(
         : phase === 'SEA_DAY'
           ? CRUISE_DAY_TYPES.SEA_DAY
           : undefined,
+    portAccessStatus:
+      phase === 'PORT_DAY'
+        ? cruiseContext?.portCall?.portAccess?.status ??
+          'TO_BE_CONFIRMED'
+        : undefined,
     context: {
       eyebrow:
         phase === 'DEPARTURE_DAY'

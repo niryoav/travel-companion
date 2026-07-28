@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from 'react'
 
+import { PortAccessIndicator } from '../../../components/PortAccessIndicator'
 import type { TripOverrideBundle } from '../../../domain/trip/tripOverrides'
 import type {
   ExcursionOperationalStatus,
@@ -39,6 +40,7 @@ interface FieldProps {
   label: string
   original: string
   onUseOriginal: () => void
+  renderValue?: (value: string) => ReactNode
 }
 
 function Field({
@@ -47,6 +49,7 @@ function Field({
   label,
   original,
   onUseOriginal,
+  renderValue = (value) => value || 'Not set',
 }: FieldProps) {
   const changed = current !== original
   return (
@@ -54,8 +57,8 @@ function Field({
       {children}
       {changed ? (
         <div className="trip-edit-comparison">
-          <span>Original: {original || 'Not set'}</span>
-          <span>Updated: {current || 'Not set'}</span>
+          <span>Original: {renderValue(original)}</span>
+          <span>Updated: {renderValue(current)}</span>
           <button type="button" onClick={onUseOriginal}>
             Use original
             <span className="sr-only"> for {label}</span>
@@ -561,6 +564,10 @@ export function TripEditSheet({
 
             <fieldset className="trip-edit-section">
               <legend>Day and port operations</legend>
+              <PortAccessIndicator
+                className="trip-edit-port-access-current"
+                status={draft.portAccessStatus}
+              />
               <Field
                 current={draft.portAccessStatus}
                 label="Port access status"
@@ -571,6 +578,11 @@ export function TripEditSheet({
                     originalDraft.portAccessStatus,
                   )
                 }
+                renderValue={(value) => (
+                  <PortAccessIndicator
+                    status={value as PortAccessStatus}
+                  />
+                )}
               >
                 <SelectField
                   id="trip-edit-port-access"

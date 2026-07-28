@@ -18,6 +18,74 @@ describe('canonical active trip data', () => {
     )
   })
 
+  it('includes the confirmed cruise port schedule and access status', () => {
+    const expected = [
+      ['2026-08-23', '07:00', '19:00', 'DOCKED'],
+      ['2026-08-24', '09:00', '18:00', 'TENDER_REQUIRED'],
+      ['2026-08-25', '07:00', '16:00', 'TENDER_REQUIRED'],
+      ['2026-08-26', '07:00', '16:00', 'TENDER_REQUIRED'],
+      ['2026-08-27', '11:00', '20:30', 'DOCKED'],
+      ['2026-08-29', '07:00', '16:00', 'TENDER_REQUIRED'],
+      ['2026-08-30', '10:30', '19:30', 'DOCKED'],
+      ['2026-08-31', '08:00', '20:00', 'TENDER_REQUIRED'],
+      ['2026-09-01', '07:00', '17:00', 'DOCKED'],
+      ['2026-09-02', '07:00', '17:00', 'DOCKED'],
+      ['2026-09-03', '07:00', '16:00', 'TENDER_REQUIRED'],
+      ['2026-09-04', '06:00', undefined, 'DOCKED'],
+    ] as const
+
+    expect(
+      expected.map(([localDate]) => {
+        const day = oceaniaMarina2026TripData.days.find(
+          (candidate) => candidate.localDate === localDate,
+        )
+        const portCall = oceaniaMarina2026TripData.portCalls.find(
+          ({ id }) => id === day?.portCallId,
+        )
+        const localTime = (instant: string | undefined) =>
+          instant
+            ? new Intl.DateTimeFormat('en-GB', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+                timeZone: portCall?.timeZone,
+              }).format(new Date(instant))
+            : undefined
+
+        return [
+          localDate,
+          localTime(portCall?.arrivalAt),
+          localTime(portCall?.departureAt),
+          portCall?.portAccess?.status,
+        ]
+      }),
+    ).toEqual(expected)
+
+    expect(
+      oceaniaMarina2026TripData.portCalls.some(
+        ({ portAccess }) =>
+          portAccess?.status === 'TO_BE_CONFIRMED',
+      ),
+    ).toBe(false)
+    expect(
+      oceaniaMarina2026TripData.portCalls
+        .filter(
+          ({ portAccess }) =>
+            portAccess?.status === 'TENDER_REQUIRED',
+        )
+        .every(({ portAccess }) => portAccess?.tender === undefined),
+    ).toBe(true)
+  })
+
+  it('keeps the configured sea day free of port-access data', () => {
+    const seaDay = oceaniaMarina2026TripData.days.find(
+      ({ localDate }) => localDate === '2026-08-28',
+    )
+
+    expect(seaDay?.kind).toBe('SEA_DAY')
+    expect(seaDay).not.toHaveProperty('portCallId')
+  })
+
   it('keeps the eleven confirmed excursions on their operational trip days', () => {
     const excursions = oceaniaMarina2026TripData.events.filter(
       ({ kind }) => kind === 'EXCURSION',

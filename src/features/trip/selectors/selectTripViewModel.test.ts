@@ -12,6 +12,50 @@ import {
 import { selectTripViewModel } from './selectTripViewModel'
 
 describe('selectTripViewModel', () => {
+  it.each([
+    ['2026-08-23', 'Docked'],
+    ['2026-08-24', 'Tender required'],
+    ['2026-08-25', 'Tender required'],
+    ['2026-08-26', 'Tender required'],
+    ['2026-08-27', 'Docked'],
+    ['2026-08-29', 'Tender required'],
+    ['2026-08-30', 'Docked'],
+    ['2026-08-31', 'Tender required'],
+    ['2026-09-01', 'Docked'],
+    ['2026-09-02', 'Docked'],
+    ['2026-09-03', 'Tender required'],
+    ['2026-09-04', 'Docked'],
+  ])('maps the canonical port access for %s', (date, accessLabel) => {
+    const result = selectTripViewModel(
+      oceaniaMarina2026TripData,
+      new Date('2026-08-01T12:00:00Z'),
+    )
+    const day = result.days.find(({ dateTime }) => dateTime === date)
+
+    expect(day).toMatchObject({
+      summaryPortAccessLabel: accessLabel,
+      port: { accessLabel },
+    })
+    expect(day?.port?.tender).toBeUndefined()
+  })
+
+  it('omits port access from the sea day', () => {
+    const result = selectTripViewModel(
+      oceaniaMarina2026TripData,
+      new Date('2026-08-28T12:00:00Z'),
+    )
+    const seaDay = result.days.find(
+      ({ dateTime }) => dateTime === '2026-08-28',
+    )
+
+    expect(seaDay).toMatchObject({
+      kind: 'SEA_DAY',
+      port: undefined,
+      summaryPortAccessLabel: undefined,
+      summaryPortAccessStatus: undefined,
+    })
+  })
+
   it('renders the confirmed Stornoway and HOY-003 local schedule', () => {
     const result = selectTripViewModel(
       oceaniaMarina2026TripData,
@@ -120,7 +164,11 @@ describe('selectTripViewModel', () => {
     expect(hotel?.leaveBy).toBeUndefined()
     expect(independent).toMatchObject({
       checkInTime: '08:50',
-      leaveBy: undefined,
+      leaveBy: {
+        label: 'Tender timing pending',
+        time: undefined,
+        detail: 'Tender timing still to be confirmed.',
+      },
       operationalTimingNote: undefined,
     })
     expect(oceania).toMatchObject({

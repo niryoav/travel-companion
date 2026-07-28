@@ -1,12 +1,49 @@
 import { describe, expect, it } from 'vitest'
 
 import { tripFixture } from '../../../test/fixtures/tripFixture'
+import { oceaniaMarina2026TripData } from '../../../trips/oceania-marina-2026/tripData'
 import {
   buildTripDayOverrides,
   createTripDayEditDraft,
 } from './tripEditModel'
 
 describe('trip day edit model', () => {
+  it('starts every production port editor from its canonical access status', () => {
+    const drafts = oceaniaMarina2026TripData.portCalls.map(
+      ({ dayId }) =>
+        createTripDayEditDraft(oceaniaMarina2026TripData, dayId),
+    )
+
+    expect(drafts.map((draft) => draft?.portAccessStatus)).toEqual([
+      'DOCKED',
+      'TENDER_REQUIRED',
+      'TENDER_REQUIRED',
+      'TENDER_REQUIRED',
+      'DOCKED',
+      'TENDER_REQUIRED',
+      'DOCKED',
+      'TENDER_REQUIRED',
+      'DOCKED',
+      'DOCKED',
+      'TENDER_REQUIRED',
+      'DOCKED',
+    ])
+    expect(
+      drafts
+        .filter(
+          (draft) => draft?.portAccessStatus === 'TENDER_REQUIRED',
+        )
+        .every(
+          (draft) =>
+            draft?.firstTender.time === '' &&
+            draft.ourTender.time === '' &&
+            draft.lastTender.time === '' &&
+            draft.tenderMeetingPoint === '' &&
+            draft.tenderCrossingMinutes === '',
+        ),
+    ).toBe(true)
+  })
+
   it('creates minimal day and independent excursion overrides', () => {
     const data = structuredClone(tripFixture)
     const event = data.events.find(

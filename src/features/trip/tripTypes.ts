@@ -154,6 +154,7 @@ export interface TripDayViewModel {
   port?: TripPortViewModel
   summaryAllAboardTime?: string
   summaryAllAboardAt?: string
+  summaryPortAccessStatus?: TripPortViewModel['accessStatus']
   summaryPortAccessLabel?: string
   summaryOurTenderTime?: string
   summaryOurTenderAt?: string

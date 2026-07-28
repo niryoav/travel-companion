@@ -1,12 +1,15 @@
 export type IconName =
   | 'calendar'
   | 'compass'
+  | 'dock'
   | 'document'
   | 'home'
+  | 'information'
   | 'map'
   | 'more'
   | 'moon'
   | 'sun'
+  | 'tender'
 
 interface AppIconProps {
   name: IconName
@@ -32,6 +35,12 @@ const paths: Record<IconName, React.ReactNode> = {
       <path d="m15.5 8.5-2.1 4.9-4.9 2.1 2.1-4.9Z" />
     </>
   ),
+  dock: (
+    <>
+      <path d="M4 16h16M7 12h10l2 4H5Z" />
+      <path d="M9 12V7h6v5M3 20h18" />
+    </>
+  ),
   document: (
     <>
       <path d="M6 3h8l4 4v14H6Z" />
@@ -42,6 +51,12 @@ const paths: Record<IconName, React.ReactNode> = {
     <>
       <path d="m3 11 9-8 9 8" />
       <path d="M5 10v11h14V10M9 21v-7h6v7" />
+    </>
+  ),
+  information: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v6M12 7h.01" />
     </>
   ),
   more: (
@@ -56,6 +71,12 @@ const paths: Record<IconName, React.ReactNode> = {
     <>
       <circle cx="12" cy="12" r="4" />
       <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41" />
+    </>
+  ),
+  tender: (
+    <>
+      <path d="M4 13h16l-3 5H7Z" />
+      <path d="M8 13V9h7l2 4M3 21c1.5-1 3-1 4.5 0s3 1 4.5 0 3-1 4.5 0 3 1 4.5 0" />
     </>
   ),
 }

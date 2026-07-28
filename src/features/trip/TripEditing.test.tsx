@@ -38,6 +38,7 @@ function editableFixture(): TripData {
   excursion.meetingContext = 'Pier gate'
   excursion.travelDurationMinutes = 10
   excursion.safetyBufferMinutes = 15
+  data.portCalls[0].portAccess = { status: 'DOCKED' }
   return data
 }
 
@@ -106,6 +107,10 @@ describe('Trip operational editing', () => {
   it('shows tender fields only when tender access is selected', () => {
     renderEditor()
 
+    expect(screen.getByLabelText('Port access status')).toHaveValue(
+      'DOCKED',
+    )
+    expect(screen.getAllByText('Docked').length).toBeGreaterThan(0)
     expect(
       screen.queryByLabelText('First tender time'),
     ).not.toBeInTheDocument()

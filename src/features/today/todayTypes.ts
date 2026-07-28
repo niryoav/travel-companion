@@ -65,6 +65,7 @@ export interface TodayPortViewModel {
   arrivalAt?: string
   departureTime?: string
   departureAt?: string
+  accessStatus?: 'DOCKED' | 'TENDER_REQUIRED' | 'TO_BE_CONFIRMED'
   accessLabel?: string
   operationalNote?: string
   tender?: {

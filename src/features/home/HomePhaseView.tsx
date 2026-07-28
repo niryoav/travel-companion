@@ -24,6 +24,7 @@ export function HomePhaseView({
         context={viewModel.context}
         cruiseProgress={viewModel.cruiseProgress}
         greeting={greeting}
+        portAccessStatus={viewModel.portAccessStatus}
       />
 
       {loveMessage ? (

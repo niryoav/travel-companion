@@ -1,4 +1,5 @@
 import { DocumentActionLink } from '../../documents/components/DocumentActionLink'
+import { PortAccessIndicator } from '../../../components/PortAccessIndicator'
 import type {
   TripContentSourceViewModel,
   TripDayViewModel,
@@ -238,9 +239,12 @@ export function TripDayDetails({ day }: TripDayDetailsProps) {
         <section aria-labelledby={`${day.id}-port-title`}>
           <p className="trip-card-label">Port context</p>
           <h4 id={`${day.id}-port-title`}>{day.port.location}</h4>
-          {day.port.accessLabel ? (
+          {day.port.accessLabel && day.port.accessStatus ? (
             <p className="trip-port-access">
-              {day.port.accessLabel}
+              <PortAccessIndicator
+                label={day.port.accessLabel}
+                status={day.port.accessStatus}
+              />
             </p>
           ) : null}
           {hasPortTimes ? (

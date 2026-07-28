@@ -359,10 +359,11 @@ function portViewModel(
       ? formatLocalTime(portCall.departureAt, portCall.timeZone)
       : undefined,
     departureAt: portCall.departureAt,
+    accessStatus,
     accessLabel: portAccessLabel(accessStatus),
     operationalNote: portCall.operationalNote,
     tender:
-      accessStatus === 'TENDER_REQUIRED'
+      accessStatus === 'TENDER_REQUIRED' && tender
         ? {
             firstTender: operationalTimeViewModel(
               tender?.firstTender,

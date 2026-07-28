@@ -67,7 +67,9 @@ const portCalls: PortCall[] = [
     dayId: 'day-2026-08-23',
     portLocationId: 'location-reykjavik',
     timeZone: 'Atlantic/Reykjavik',
+    arrivalAt: '2026-08-23T07:00:00Z',
     departureAt: '2026-08-23T19:00:00Z',
+    portAccess: { status: 'DOCKED' },
     eventIds: ['event-embarkation'],
   },
   {
@@ -77,6 +79,7 @@ const portCalls: PortCall[] = [
     timeZone: 'Atlantic/Reykjavik',
     arrivalAt: '2026-08-24T09:00:00Z',
     departureAt: '2026-08-24T18:00:00Z',
+    portAccess: { status: 'TENDER_REQUIRED' },
     eventIds: ['event-isafjordur-whale-nature'],
   },
   {
@@ -86,6 +89,7 @@ const portCalls: PortCall[] = [
     timeZone: 'Atlantic/Reykjavik',
     arrivalAt: '2026-08-25T07:00:00Z',
     departureAt: '2026-08-25T16:00:00Z',
+    portAccess: { status: 'TENDER_REQUIRED' },
     eventIds: [
       'event-husavik-big-whale-safari',
       'event-husavik-geosea-baths',
@@ -98,6 +102,7 @@ const portCalls: PortCall[] = [
     timeZone: 'Atlantic/Reykjavik',
     arrivalAt: '2026-08-26T07:00:00Z',
     departureAt: '2026-08-26T16:00:00Z',
+    portAccess: { status: 'TENDER_REQUIRED' },
     eventIds: ['event-djupivogur-glacier-lagoon'],
   },
   {
@@ -106,7 +111,8 @@ const portCalls: PortCall[] = [
     portLocationId: 'location-torshavn',
     timeZone: 'Atlantic/Faroe',
     arrivalAt: '2026-08-27T11:00:00+01:00',
-    departureAt: '2026-08-27T20:00:00+01:00',
+    departureAt: '2026-08-27T20:30:00+01:00',
+    portAccess: { status: 'DOCKED' },
     eventIds: ['event-torshavn-vestmanna'],
   },
   {
@@ -116,6 +122,7 @@ const portCalls: PortCall[] = [
     timeZone: 'Europe/London',
     arrivalAt: '2026-08-29T07:00:00+01:00',
     departureAt: '2026-08-29T16:00:00+01:00',
+    portAccess: { status: 'TENDER_REQUIRED' },
     eventIds: ['event-stornoway-isle-of-lewis'],
   },
   {
@@ -123,8 +130,9 @@ const portCalls: PortCall[] = [
     dayId: 'day-2026-08-30',
     portLocationId: 'location-greenock',
     timeZone: 'Europe/London',
-    arrivalAt: '2026-08-30T10:00:00+01:00',
-    departureAt: '2026-08-30T19:00:00+01:00',
+    arrivalAt: '2026-08-30T10:30:00+01:00',
+    departureAt: '2026-08-30T19:30:00+01:00',
+    portAccess: { status: 'DOCKED' },
     eventIds: ['event-greenock-loch-lomond'],
   },
   {
@@ -134,6 +142,7 @@ const portCalls: PortCall[] = [
     timeZone: 'Europe/Dublin',
     arrivalAt: '2026-08-31T08:00:00+01:00',
     departureAt: '2026-08-31T20:00:00+01:00',
+    portAccess: { status: 'TENDER_REQUIRED' },
     eventIds: ['event-dublin-river-cruise'],
   },
   {
@@ -143,6 +152,7 @@ const portCalls: PortCall[] = [
     timeZone: 'Europe/London',
     arrivalAt: '2026-09-01T07:00:00+01:00',
     departureAt: '2026-09-01T17:00:00+01:00',
+    portAccess: { status: 'DOCKED' },
     eventIds: ['event-holyhead-penrhyn-castle'],
   },
   {
@@ -152,6 +162,7 @@ const portCalls: PortCall[] = [
     timeZone: 'Europe/Dublin',
     arrivalAt: '2026-09-02T07:00:00+01:00',
     departureAt: '2026-09-02T17:00:00+01:00',
+    portAccess: { status: 'DOCKED' },
     eventIds: ['event-cork-jameson'],
   },
   {
@@ -161,6 +172,7 @@ const portCalls: PortCall[] = [
     timeZone: 'Europe/London',
     arrivalAt: '2026-09-03T07:00:00+01:00',
     departureAt: '2026-09-03T16:00:00+01:00',
+    portAccess: { status: 'TENDER_REQUIRED' },
     eventIds: ['event-falmouth-st-ives'],
   },
   {
@@ -169,6 +181,7 @@ const portCalls: PortCall[] = [
     portLocationId: 'location-southampton',
     timeZone: 'Europe/London',
     arrivalAt: '2026-09-04T06:00:00+01:00',
+    portAccess: { status: 'DOCKED' },
     eventIds: ['event-disembarkation'],
   },
 ]
@@ -359,7 +372,7 @@ const days: TripDay[] = [
 
 export const oceaniaMarina2026TripData: TripData = {
   schemaVersion: 1,
-  dataVersion: '2026-07-28.2',
+  dataVersion: '2026-07-28.3',
   publishedAt: '2026-07-28T14:00:00Z',
   trip: {
     id: 'trip-oceania-marina-2026',

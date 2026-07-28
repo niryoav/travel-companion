@@ -117,6 +117,7 @@ describe('HomeScreen', () => {
     expect(
       screen.getByRole('heading', { level: 2, name: 'Ísafjörður' }),
     ).toBeInTheDocument()
+    expect(screen.getByText('Tender required')).toBeInTheDocument()
     expect(screen.queryByText('All aboard')).not.toBeInTheDocument()
   })
 

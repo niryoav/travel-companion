@@ -403,7 +403,7 @@ function portViewModel(
     accessLabel: portAccessLabel(accessStatus),
     operationalNote: portCall.operationalNote,
     tender:
-      accessStatus === 'TENDER_REQUIRED'
+      accessStatus === 'TENDER_REQUIRED' && tender
         ? {
             firstTender: operationalTimeViewModel(
               tender?.firstTender,
@@ -541,6 +541,7 @@ function dayViewModel(
         : undefined,
     summaryAllAboardAt:
       showAllAboardInSummary ? portCall?.allAboardAt : undefined,
+    summaryPortAccessStatus: port?.accessStatus,
     summaryPortAccessLabel: port?.accessLabel,
     summaryOurTenderTime: port?.tender?.ourTender?.time,
     summaryOurTenderAt: port?.tender?.ourTender?.dateTime,

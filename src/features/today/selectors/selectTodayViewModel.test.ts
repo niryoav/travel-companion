@@ -39,6 +39,32 @@ describe('selectTodayViewModel', () => {
     })
   })
 
+  it('uses canonical port access in Today and omits it at sea', () => {
+    const docked = selectTodayViewModel(
+      oceaniaMarina2026TripData,
+      new Date('2026-08-23T14:00:00Z'),
+    )
+    const tender = selectTodayViewModel(
+      oceaniaMarina2026TripData,
+      new Date('2026-08-24T12:00:00Z'),
+    )
+    const seaDay = selectTodayViewModel(
+      oceaniaMarina2026TripData,
+      new Date('2026-08-28T12:00:00Z'),
+    )
+
+    expect(docked.port).toMatchObject({
+      accessStatus: 'DOCKED',
+      accessLabel: 'Docked',
+    })
+    expect(tender.port).toMatchObject({
+      accessStatus: 'TENDER_REQUIRED',
+      accessLabel: 'Tender required',
+      tender: undefined,
+    })
+    expect(seaDay.port).toBeUndefined()
+  })
+
   it('shows verified flight codes and destination-local arrival times', () => {
     const outbound = selectTodayViewModel(
       oceaniaMarina2026TripData,
@@ -517,7 +543,11 @@ describe('selectTodayViewModel', () => {
     expect(result.nextEvent).toMatchObject({
       title: 'GG2 Big Whale Safari & Puffins',
       meetingTime: '08:50',
-      leaveBy: undefined,
+      leaveBy: {
+        state: 'PENDING',
+        label: 'Tender timing pending',
+        detail: 'Tender timing still to be confirmed.',
+      },
     })
     expect(result.returnGuidance).toMatchObject({
       state: 'CANNOT_CALCULATE',

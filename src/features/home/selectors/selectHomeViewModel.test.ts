@@ -41,6 +41,20 @@ describe('selectHomeViewModel', () => {
     })
   })
 
+  it('exposes canonical port access on port days but not sea days', () => {
+    const tenderDay = selectHomeViewModel(
+      oceaniaMarina2026TripData,
+      new Date('2026-08-24T12:00:00Z'),
+    )
+    const seaDay = selectHomeViewModel(
+      oceaniaMarina2026TripData,
+      new Date('2026-08-28T12:00:00Z'),
+    )
+
+    expect(tenderDay.portAccessStatus).toBe('TENDER_REQUIRED')
+    expect(seaDay.portAccessStatus).toBeUndefined()
+  })
+
   it('changes the countdown at midnight in the trip home time zone', () => {
     const beforeBrusselsMidnight = selectHomeViewModel(
       tripFixture,
