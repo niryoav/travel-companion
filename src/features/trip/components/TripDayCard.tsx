@@ -17,7 +17,7 @@ export function TripDayCard({ day }: TripDayCardProps) {
       className={`trip-day-card trip-day-card-${day.state.toLowerCase()}`}
       open={day.isOpenByDefault}
     >
-      <summary tabIndex={0}>
+      <summary>
         <div className="trip-day-primary">
           <div className="trip-day-meta">
             <span>Day {day.dayNumber}</span>

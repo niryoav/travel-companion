@@ -37,6 +37,31 @@ describe('Trip foreground rendering styles', () => {
     expect(todayScreen).not.toMatch(fragilePaintProperties)
   })
 
+  it('keeps Welcome, Home, and standard pages immediately visible', () => {
+    const fragilePaintProperties =
+      /\b(?:animation|opacity|visibility|transform|content-visibility|contain|will-change)\s*:/
+
+    expect(declarationsFor('.welcome-card')).not.toMatch(
+      fragilePaintProperties,
+    )
+    expect(declarationsFor('.home-screen')).not.toMatch(
+      fragilePaintProperties,
+    )
+    expect(declarationsFor('.page-container')).not.toMatch(
+      fragilePaintProperties,
+    )
+  })
+
+  it('defines horizontal-overflow and safe-area protection', () => {
+    expect(declarationsFor('body')).toMatch(/\boverflow-x:\s*(?:hidden|clip)\b/)
+    expect(declarationsFor('.app-shell')).toContain(
+      'env(safe-area-inset-bottom)',
+    )
+    expect(declarationsFor('.bottom-navigation')).toContain(
+      'env(safe-area-inset-bottom)',
+    )
+  })
+
   it('keeps fixed background layers behind the isolated app foreground', () => {
     expect(declarationsFor('.app-shell')).toMatch(/\bisolation:\s*isolate\b/)
     expect(declarationsFor('.app-shell::before')).toMatch(

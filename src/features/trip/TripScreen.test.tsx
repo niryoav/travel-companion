@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 
@@ -98,6 +98,15 @@ describe('TripScreen', () => {
     expect(image).toHaveAttribute('loading', 'lazy')
     expect(image).toHaveAttribute('width', '1200')
     expect(image.closest('figure')).toHaveStyle('aspect-ratio: 1200 / 675')
+    fireEvent.error(image)
+    expect(
+      screen.getAllByText(/Destination image unavailable/i).length,
+    ).toBeGreaterThan(0)
+    expect(
+      screen.queryByRole('img', {
+        name: 'Fictional harbor beneath a clear sky',
+      }),
+    ).not.toBeInTheDocument()
 
     rerender(
       <MemoryRouter initialEntries={['/trip']}>

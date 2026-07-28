@@ -13,9 +13,19 @@ import type { TripRepository } from '../data/trips/TripRepository'
 import type { TripContentRepository } from '../data/content/TripContentRepository'
 import type { TripStateRepository } from '../storage/TripStateRepository'
 import { StartupRouteGate } from './StartupRouteGate'
+import {
+  appBuildInfo as defaultAppBuildInfo,
+  type AppBuildInfo,
+} from './buildInfo'
+import {
+  unavailablePwaUpdateManager,
+  type PwaUpdateManager,
+} from '../pwa/PwaUpdateManager'
 
 interface AppProps {
+  appBuildInfo?: AppBuildInfo
   loveMessageSchedule: DailyLoveMessageSchedule
+  pwaUpdateManager?: PwaUpdateManager
   tripRepository: TripRepository
   tripContentRepository: TripContentRepository
   tripStateRepository: TripStateRepository
@@ -23,7 +33,9 @@ interface AppProps {
 }
 
 export function App({
+  appBuildInfo = defaultAppBuildInfo,
   loveMessageSchedule,
+  pwaUpdateManager = unavailablePwaUpdateManager,
   tripRepository,
   tripContentRepository,
   tripStateRepository,
@@ -87,6 +99,9 @@ export function App({
               path="more"
               element={
                 <MoreScreen
+                  appBuildInfo={appBuildInfo}
+                  pwaUpdateManager={pwaUpdateManager}
+                  tripDataVersion={tripData.dataVersion}
                   travelers={tripData.travelers}
                   tripStateRepository={tripStateRepository}
                 />

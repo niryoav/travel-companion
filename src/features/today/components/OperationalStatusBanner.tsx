@@ -11,6 +11,8 @@ export function OperationalStatusBanner({
     <section
       className={`today-operational-status today-operational-status-${status.urgency.toLowerCase()}`}
       aria-labelledby="today-operational-status-title"
+      aria-live={status.urgency === 'URGENT' ? 'assertive' : undefined}
+      aria-atomic={status.urgency === 'URGENT' ? 'true' : undefined}
     >
       <div>
         <p className="today-card-label">{status.label}</p>

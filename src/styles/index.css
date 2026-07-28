@@ -80,6 +80,8 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   margin: 0;
+  overflow-x: hidden;
+  overflow-x: clip;
   background:
     radial-gradient(circle at 82% 7%, var(--page-glow), transparent 24rem),
     radial-gradient(
@@ -178,7 +180,6 @@ a:focus-visible {
   padding: clamp(1.15rem, 5vw, 1.5rem);
   -webkit-backdrop-filter: blur(18px) saturate(120%);
   backdrop-filter: blur(18px) saturate(120%);
-  animation: welcome-in 420ms ease-out both;
 }
 
 .welcome-label {
@@ -249,13 +250,6 @@ a:focus-visible {
 
 .welcome-enter:focus-visible {
   outline-color: #fff;
-}
-
-@keyframes welcome-in {
-  from {
-    opacity: 0;
-    transform: translateY(0.6rem);
-  }
 }
 
 @media (min-width: 48rem) {
@@ -370,7 +364,6 @@ a:focus-visible {
   width: 100%;
   max-width: 48rem;
   margin: 0 auto;
-  animation: page-in 240ms ease-out both;
 }
 
 .home-screen {
@@ -380,7 +373,6 @@ a:focus-visible {
   width: 100%;
   max-width: 52rem;
   margin: 0 auto;
-  animation: page-in 240ms ease-out both;
 }
 
 .today-screen {
@@ -1513,6 +1505,28 @@ a:focus-visible {
   outline-offset: 3px;
 }
 
+.documents-empty-state {
+  border: 1px solid var(--border);
+  border-radius: 1.2rem;
+  background: var(--surface-raised);
+  padding: 1.15rem;
+}
+
+.documents-empty-state h2,
+.documents-empty-state p {
+  margin: 0;
+}
+
+.documents-empty-state h2 {
+  font-size: 1.2rem;
+}
+
+.documents-empty-state p {
+  margin-top: 0.45rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
 
 .home-hero {
   display: grid;
@@ -2209,16 +2223,141 @@ a:focus-visible {
   line-height: 1.55;
 }
 
+.app-status-card,
+.app-information-card {
+  max-width: 38rem;
+  margin-top: 1rem;
+  padding: 1.25rem;
+}
+
+.app-status-card h2,
+.app-information-card h2 {
+  margin: 0.45rem 0 0;
+  font-size: clamp(1.25rem, 5vw, 1.55rem);
+}
+
+.app-status-card p,
+.app-information-card p {
+  margin: 0.55rem 0 0;
+  overflow-wrap: anywhere;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.app-status-card .app-offline-status {
+  color: var(--positive);
+  font-weight: 750;
+}
+
+.app-status-card button,
+.application-error-card button {
+  min-height: 3rem;
+  margin-top: 1rem;
+  border: 1px solid var(--champagne);
+  border-radius: 0.9rem;
+  background: var(--champagne);
+  color: var(--ocean-950);
+  padding: 0.7rem 1rem;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.app-status-card button:focus-visible,
+.application-error-card button:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 3px;
+}
+
+.app-information-card dl {
+  display: grid;
+  gap: 0.65rem;
+  margin: 1rem 0 0;
+}
+
+.app-information-card dl div {
+  display: grid;
+  grid-template-columns: minmax(7rem, 0.7fr) minmax(0, 1.3fr);
+  gap: 0.75rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.app-information-card dt {
+  color: var(--text-muted);
+}
+
+.app-information-card dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--text);
+  font-weight: 750;
+  text-align: right;
+}
+
+.application-error {
+  display: grid;
+  min-height: 100vh;
+  min-height: 100dvh;
+  place-items: center;
+  background: var(--surface);
+  color: var(--text);
+  padding:
+    max(1.25rem, env(safe-area-inset-top))
+    max(1.25rem, env(safe-area-inset-right))
+    max(1.25rem, env(safe-area-inset-bottom))
+    max(1.25rem, env(safe-area-inset-left));
+}
+
+.application-error-card,
+.route-error {
+  width: min(100%, 34rem);
+  border: 1px solid var(--border);
+  border-radius: 1.5rem;
+  background: var(--surface-raised);
+  box-shadow: var(--shadow);
+  padding: clamp(1.25rem, 5vw, 2rem);
+}
+
+.application-error-card h1,
+.route-error h1 {
+  margin: 0.45rem 0 0;
+  font-size: clamp(1.8rem, 8vw, 2.6rem);
+  line-height: 1.08;
+}
+
+.application-error-card > p:not(.card-eyebrow),
+.route-error > p:not(.card-eyebrow) {
+  margin: 0.75rem 0 0;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.route-error a {
+  display: inline-flex;
+  min-height: 3rem;
+  align-items: center;
+  margin-top: 1rem;
+  border-radius: 0.9rem;
+  background: var(--champagne);
+  color: var(--ocean-950);
+  padding: 0.7rem 1rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.trip-image-unavailable {
+  margin: 0;
+  border-left: 3px solid var(--text-muted);
+  color: var(--text-muted);
+  padding-left: 0.75rem;
+  line-height: 1.5;
+}
+
 .app-icon {
   width: 1.35rem;
   height: 1.35rem;
-}
-
-@keyframes page-in {
-  from {
-    opacity: 0;
-    transform: translateY(0.4rem);
-  }
 }
 
 @media (min-width: 48rem) {
@@ -2260,6 +2399,25 @@ a:focus-visible {
 
   .traveler-choice-options {
     grid-template-columns: 1fr;
+  }
+
+  .app-information-card dl div {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
+  }
+
+  .app-information-card dd {
+    text-align: left;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 31rem) {
+  .app-header {
+    min-height: auto;
+  }
+
+  .app-content {
+    padding-top: 1rem;
   }
 }
 

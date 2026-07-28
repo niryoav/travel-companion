@@ -68,5 +68,10 @@ describe('startup shell', () => {
     )
     expect(pwaConfig).toContain("theme_color: '#063b61'")
     expect(pwaConfig).toContain("background_color: '#063b61'")
+    expect(pwaConfig).toContain("registerType: 'prompt'")
+    expect(pwaConfig).toContain('cleanupOutdatedCaches: true')
+    expect(html).toContain(
+      '<meta name="robots" content="noindex, nofollow, noarchive" />',
+    )
   })
 })

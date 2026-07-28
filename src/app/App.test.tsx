@@ -292,6 +292,39 @@ describe('App', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('shows privacy-safe app, trip-data, offline, and update information under More', async () => {
+    const repository = new MemoryTripStateRepository()
+    repository.travelerId = 'traveler-alex'
+    window.history.replaceState({}, '', '/home?phase=pre-trip')
+    renderApp(repository)
+
+    fireEvent.click(await screen.findByRole('link', { name: 'More' }))
+
+    expect(
+      await screen.findByRole('heading', { name: 'Travel Companion' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('fixture-1')).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Browser-managed updates',
+    )
+    expect(document.body).not.toHaveTextContent(/(?:github|Users\/|booking reference)/i)
+  })
+
+  it('resolves an unsupported review URL safely without a blank screen', async () => {
+    const repository = new MemoryTripStateRepository()
+    repository.travelerId = 'traveler-alex'
+    window.history.replaceState({}, '', '/missing?state=unsupported')
+
+    renderApp(repository)
+
+    expect(
+      await screen.findByRole('heading', {
+        name: /Good (morning|afternoon|evening), Alex/,
+      }),
+    ).toBeInTheDocument()
+    expect(window.location.pathname).toBe('/home')
+  })
+
   it('opens Welcome on a fresh launch before the trip and preserves later navigation', async () => {
     const repository = new MemoryTripStateRepository()
     repository.travelerId = 'traveler-alex'

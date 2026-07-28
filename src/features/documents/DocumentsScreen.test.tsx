@@ -68,4 +68,19 @@ describe('DocumentsScreen', () => {
       title: 'Hotel',
     })
   })
+
+  it('renders an intentional empty state when no documents are approved', () => {
+    render(
+      <MemoryRouter>
+        <DocumentsScreen
+          tripData={{ ...tripFixture, documentReferences: [] }}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(
+      screen.getByRole('heading', { name: 'No documents available' }),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('link')).not.toBeInTheDocument()
+  })
 })

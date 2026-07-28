@@ -5,6 +5,7 @@ import type {
   TripDestinationViewModel,
   TripEventViewModel,
 } from '../tripTypes'
+import { DestinationImage } from './DestinationImage'
 
 interface TripDayDetailsProps {
   day: TripDayViewModel
@@ -62,21 +63,7 @@ function DestinationContent({
       <summary>About {destination.title}</summary>
       <div className="trip-enrichment-body">
         {destination.image ? (
-          <figure
-            className="trip-destination-image"
-            style={{ aspectRatio: `${destination.image.width} / ${destination.image.height}` }}
-          >
-            <img
-              src={destination.image.src}
-              alt={destination.image.alt}
-              width={destination.image.width}
-              height={destination.image.height}
-              loading="lazy"
-            />
-            {destination.image.credit ? (
-              <figcaption>{destination.image.credit}</figcaption>
-            ) : null}
-          </figure>
+          <DestinationImage image={destination.image} />
         ) : null}
         <p>{destination.introduction}</p>
         <ContentList title="Highlights" items={destination.highlights} />
