@@ -189,6 +189,18 @@ Never manufacture weather, delays, provider status, alerts, all-aboard values,
 or free-time blocks. Production and privacy-safe visual-review data remain
 strictly separated.
 
+Sprint 7 places the current port or sea status before the next action, followed
+by the timeline, a small capped priority list, return guidance when relevant,
+and a collapsed Prepare for tomorrow disclosure. Confirmed, calculated,
+estimated, pending, and unavailable values use explicit words rather than color
+alone. Ordinary missing data stays calm; urgent styling is reserved for a
+genuinely near or passed verified deadline.
+
+Use consistent missing-data language: “Time to be confirmed”, “Meeting point
+pending”, “Return buffer cannot yet be calculated”, “Travel duration not added
+yet”, and “All Aboard time unavailable”. Never show blank labels, malformed
+punctuation, or an inferred time.
+
 ## Trip
 
 Trip is the complete chronological overview of the journey. It uses the shared

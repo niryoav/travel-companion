@@ -124,6 +124,24 @@ request, or runtime generation. Before the trip the message appears on Welcome;
 during the trip it remains available on Home; after the trip Home shows the
 fixed reflective message.
 
+## Sprint 7 operational derivation
+
+Operational timing remains an application-layer derivation over canonical
+`TripData`. Optional structured event inputs describe known meeting, check-in,
+leave-by, travel-duration, safety-buffer, preparation, and verification facts.
+Pure selectors derive port status, leave-by guidance, excursion-return buffers,
+daily priorities, and tomorrow preparation. UI view models receive the derived
+wording and never calculate operational times.
+
+Event-local calculations use the event's IANA timezone. A missing event timezone
+falls back explicitly to its trip-day timezone and remains identifiable as a
+fallback; it is never silently replaced with the device timezone. Ship
+departure and All Aboard remain separate port-call facts.
+
+The operational layer has no runtime service or storage dependency. It is
+compiled into the existing offline application bundle and uses only `Date` and
+`Intl`.
+
 ## Guidance
 
 - Keep trip-specific content separate from reusable app components.
