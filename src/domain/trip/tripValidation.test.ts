@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { tripFixture } from '../../test/fixtures/tripFixture'
+import { createDocumentFixture } from '../../test/fixtures/documentFixture'
 import { validateTripData } from './tripValidation'
 
 describe('validateTripData', () => {
@@ -82,6 +83,36 @@ describe('validateTripData', () => {
 
     expect(validateTripData(invalid)).toContain(
       `Pending event schedule contains timing: ${tripFixture.events[0].id}`,
+    )
+  })
+
+  it('rejects invalid or remote document metadata', () => {
+    const invalid = {
+      ...tripFixture,
+      documentReferences: [
+        createDocumentFixture({
+          assetPath: 'https://example.com/private-ticket.pdf',
+        }),
+      ],
+    }
+
+    expect(validateTripData(invalid)).toContain(
+      'Invalid document metadata: document-example',
+    )
+  })
+
+  it('rejects unknown event-to-document relationships', () => {
+    const invalid = {
+      ...tripFixture,
+      events: tripFixture.events.map((event, index) =>
+        index === 0
+          ? { ...event, documentReferenceIds: ['document-missing'] }
+          : event,
+      ),
+    }
+
+    expect(validateTripData(invalid)).toContain(
+      `Unknown document document-missing on event ${tripFixture.events[0].id}`,
     )
   })
 })

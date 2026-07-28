@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router'
+import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 
 import { tripFixture } from '../../test/fixtures/tripFixture'
@@ -110,29 +110,23 @@ describe('TodayScreen', () => {
     expect(screen.queryByRole('list')).not.toBeInTheDocument()
   })
 
-  it('navigates generically to Documents when references exist', () => {
+  it('opens a context-specific local document from its event', () => {
     render(
       <MemoryRouter initialEntries={['/today']}>
-        <Routes>
-          <Route
-            path="/today"
-            element={
-              <TodayView
-                viewModel={todayReviewFixtures['departure-day']}
-              />
-            }
-          />
-          <Route path="/documents" element={<h1>Documents destination</h1>} />
-        </Routes>
+        <TodayView
+          viewModel={todayReviewFixtures['departure-day']}
+        />
       </MemoryRouter>,
     )
 
-    fireEvent.click(
-      screen.getByRole('link', { name: 'View related documents' }),
-    )
-
     expect(
-      screen.getByRole('heading', { name: 'Documents destination' }),
-    ).toBeInTheDocument()
+      screen.getAllByRole('link', { name: 'Open flight document' })[0],
+    ).toHaveAttribute(
+      'href',
+      '/documents/travel/example-flight-document.pdf',
+    )
+    expect(
+      screen.queryByRole('link', { name: 'View related documents' }),
+    ).not.toBeInTheDocument()
   })
 })

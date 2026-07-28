@@ -171,6 +171,33 @@ describe('App', () => {
     expect(window.location.pathname).toBe('/trip')
   })
 
+  it('opens the practical Documents experience from primary navigation', async () => {
+    const repository = new MemoryTripStateRepository()
+    repository.travelerId = 'traveler-alex'
+    window.history.replaceState({}, '', '/home?phase=pre-trip')
+    renderApp(repository)
+
+    fireEvent.click(
+      await screen.findByRole('link', { name: 'Documents' }),
+    )
+
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'Documents',
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'The practical confirmations you may need during this trip.',
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText(/ready for its first feature/i),
+    ).not.toBeInTheDocument()
+    expect(window.location.pathname).toBe('/documents')
+  })
+
   it('does not show a prominent appearance toggle on Home', async () => {
     const repository = new MemoryTripStateRepository()
     repository.travelerId = 'traveler-alex'

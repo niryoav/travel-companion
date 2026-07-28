@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { tripFixture } from '../../../test/fixtures/tripFixture'
+import { createDocumentFixture } from '../../../test/fixtures/documentFixture'
 import type { TripData } from '../tripTypes'
 import { classifyTripDayState } from './classifyTripDayState'
 import { selectCurrentTripDay } from './selectCurrentTripDay'
@@ -9,6 +10,7 @@ import { selectDayEvents } from './selectDayEvents'
 import { selectDayPortCall } from './selectDayPortCall'
 import { selectTripDays } from './selectTripDays'
 import { selectTripProgress } from './selectTripProgress'
+import { selectTripDayDocuments } from './selectTripDayDocuments'
 
 describe('Trip overview selectors', () => {
   it('resolves every configured day in chronological order', () => {
@@ -108,11 +110,13 @@ describe('Trip overview selectors', () => {
   })
 
   it('orders day events and resolves port and document relationships', () => {
-    const document = {
+    const document = createDocumentFixture({
       id: 'document-excursion',
       title: 'Excursion details',
-      category: 'EXCURSION' as const,
-    }
+      category: 'EXCURSION',
+      associatedDate: '2030-05-11',
+      dayId: 'day-2030-05-11',
+    })
     const data: TripData = {
       ...tripFixture,
       events: tripFixture.events.map((event) =>
@@ -131,5 +135,22 @@ describe('Trip overview selectors', () => {
     )
     expect(selectDayDocuments(data, events)).toEqual([document])
     expect(selectDayPortCall(data, data.days[2])).toBeNull()
+  })
+
+  it('includes day-level documents without attaching them to an event', () => {
+    const document = createDocumentFixture({
+      id: 'document-day-only',
+      title: 'Day-only hotel confirmation',
+    })
+    const data: TripData = {
+      ...tripFixture,
+      documentReferences: [document],
+    }
+    const day = data.days[0]
+
+    expect(selectTripDayDocuments(data, day, [])).toEqual([document])
+    expect(
+      selectTripDayDocuments(data, data.days[1], []),
+    ).toEqual([])
   })
 })

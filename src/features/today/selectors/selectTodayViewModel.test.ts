@@ -4,6 +4,7 @@ import { selectCurrentEvent } from '../../../domain/trip/selectors/selectCurrent
 import { selectTodayEvents } from '../../../domain/trip/selectors/selectTodayEvents'
 import type { TripData } from '../../../domain/trip/tripTypes'
 import { tripFixture } from '../../../test/fixtures/tripFixture'
+import { createDocumentFixture } from '../../../test/fixtures/documentFixture'
 import { selectTodayViewModel } from './selectTodayViewModel'
 
 describe('selectTodayViewModel', () => {
@@ -272,11 +273,10 @@ describe('selectTodayViewModel', () => {
           : event,
       ),
       documentReferences: [
-        {
+        createDocumentFixture({
           id: 'document-flight',
           title: 'Example flight summary',
-          category: 'FLIGHT',
-        },
+        }),
       ],
     }
 
@@ -286,6 +286,15 @@ describe('selectTodayViewModel', () => {
         new Date('2030-05-10T06:00:00Z'),
       ).timeline[0]?.hasRelatedDocuments,
     ).toBe(true)
+    expect(
+      selectTodayViewModel(
+        data,
+        new Date('2030-05-10T06:00:00Z'),
+      ).timeline[0]?.documentActions?.[0],
+    ).toMatchObject({
+      href: '/documents/travel/example-travel-document.pdf',
+      label: 'Open document',
+    })
     expect(
       selectTodayViewModel(
         data,

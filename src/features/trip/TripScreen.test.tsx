@@ -229,8 +229,14 @@ describe('TripScreen', () => {
     renderTrip('/trip?state=active')
 
     expect(
-      screen.getByRole('link', { name: 'View related documents' }),
-    ).toHaveAttribute('href', '/documents')
+      screen.getByRole('link', { name: 'Open flight document' }),
+    ).toHaveAttribute(
+      'href',
+      '/documents/travel/example-flight-document.pdf',
+    )
+    expect(
+      screen.queryByRole('link', { name: 'View related documents' }),
+    ).not.toBeInTheDocument()
     expect(
       screen.queryByRole('link', { name: /view trip|view more/i }),
     ).not.toBeInTheDocument()
@@ -258,6 +264,14 @@ describe('TripScreen', () => {
       within(event).getByText('Departure and return time to be confirmed.'),
     ).toBeInTheDocument()
     expect(within(event).getByText('Time to be confirmed')).toBeInTheDocument()
+    expect(
+      within(event).getByRole('link', {
+        name: 'Open excursion confirmation',
+      }),
+    ).toHaveAttribute(
+      'href',
+      '/documents/travel/stornoway-isle-of-lewis-confirmation.pdf',
+    )
     expect(event.querySelector('time')).toBeNull()
     expect(experience.closest('details')).not.toHaveAttribute('open')
     expect(container).not.toHaveTextContent('Portree')

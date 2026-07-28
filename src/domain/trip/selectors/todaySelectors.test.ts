@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { TripData, TripEvent } from '../tripTypes'
 import { tripFixture } from '../../../test/fixtures/tripFixture'
+import { createDocumentFixture } from '../../../test/fixtures/documentFixture'
 import { selectCurrentEvent } from './selectCurrentEvent'
 import { selectNextEventForDay } from './selectNextEventForDay'
 import { selectTodayDocuments } from './selectTodayDocuments'
@@ -208,11 +209,10 @@ describe('Today context selectors', () => {
   })
 
   it('resolves unique linked document references in repository order', () => {
-    const document = {
+    const document = createDocumentFixture({
       id: 'document-example',
       title: 'Example travel summary',
-      category: 'FLIGHT' as const,
-    }
+    })
     const events: TripEvent[] = [
       {
         ...tripFixture.events[0],

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { TripData } from '../../../domain/trip/tripTypes'
 import { tripFixture } from '../../../test/fixtures/tripFixture'
+import { createDocumentFixture } from '../../../test/fixtures/documentFixture'
 import { tripContentFixture } from '../../../test/fixtures/tripContentFixture'
 import { oceaniaMarina2026TripData } from '../../../trips/oceania-marina-2026/tripData'
 import {
@@ -204,11 +205,10 @@ describe('selectTripViewModel', () => {
   })
 
   it('maps event documents without exposing document content', () => {
-    const document = {
+    const document = createDocumentFixture({
       id: 'document-flight',
       title: 'Flight details',
-      category: 'FLIGHT' as const,
-    }
+    })
     const data: TripData = {
       ...tripFixture,
       events: tripFixture.events.map((event, index) =>
@@ -225,6 +225,33 @@ describe('selectTripViewModel', () => {
 
     expect(day.relatedDocumentCount).toBe(1)
     expect(day.events[0].relatedDocumentCount).toBe(1)
+    expect(day.events[0].documentActions?.[0]).toMatchObject({
+      href: '/documents/travel/example-travel-document.pdf',
+      label: 'Open document',
+    })
+  })
+
+  it('maps day-level documents without duplicating event actions', () => {
+    const document = createDocumentFixture({
+      id: 'document-day-only',
+      title: 'Fictional hotel confirmation',
+    })
+    const data: TripData = {
+      ...tripFixture,
+      documentReferences: [document],
+    }
+    const day = selectTripViewModel(
+      data,
+      new Date('2030-05-01T12:00:00Z'),
+    ).days[0]
+
+    expect(day.relatedDocumentCount).toBe(1)
+    expect(day.documentActions).toEqual([
+      expect.objectContaining({
+        id: 'document-day-only',
+        href: '/documents/travel/example-travel-document.pdf',
+      }),
+    ])
   })
 
   it('maps pre-trip and completed progress', () => {
