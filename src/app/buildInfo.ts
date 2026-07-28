@@ -37,4 +37,3 @@ export const appBuildInfo = createAppBuildInfo({
   builtAt: __APP_BUILD_DATE__,
   development: import.meta.env.DEV,
 })
-

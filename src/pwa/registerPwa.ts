@@ -25,4 +25,3 @@ export function registerPwaUpdates(manager: PwaUpdateManager): void {
     manager.registrationFailed()
   }
 }
-

@@ -9,4 +9,3 @@ export function usePwaStatus(manager: PwaUpdateManager) {
     manager.getSnapshot,
   )
 }
-

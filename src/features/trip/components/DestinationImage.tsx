@@ -5,7 +5,6 @@ import type { TripDestinationViewModel } from '../tripTypes'
 interface DestinationImageProps {
   image: NonNullable<TripDestinationViewModel['image']>
 }
-
 export function DestinationImage({ image }: DestinationImageProps) {
   const [unavailable, setUnavailable] = useState(false)
 
@@ -34,4 +33,3 @@ export function DestinationImage({ image }: DestinationImageProps) {
     </figure>
   )
 }
-
