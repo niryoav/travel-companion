@@ -140,6 +140,7 @@ function TextInput({
   issues,
   maxLength,
   validationField,
+  pickerDefault,
 }: {
   id: string
   label: string
@@ -150,10 +151,34 @@ function TextInput({
   issues?: OperationalEditIssue[]
   maxLength?: number
   validationField?: OperationalEditField
+  pickerDefault?: string
 }) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const seededPicker = useRef(false)
   const hasError = issues?.some(
     ({ severity }) => severity === 'ERROR',
   )
+  const clearPickerSeed = () => {
+    seededPicker.current = false
+    if (inputRef.current) {
+      delete inputRef.current.dataset.pickerPreview
+      if (!value) {
+        inputRef.current.value = ''
+      }
+    }
+  }
+  const seedPicker = () => {
+    if (
+      type === 'time' &&
+      !value &&
+      pickerDefault &&
+      inputRef.current
+    ) {
+      inputRef.current.value = pickerDefault
+      inputRef.current.dataset.pickerPreview = 'true'
+      seededPicker.current = true
+    }
+  }
   return (
     <>
       <label htmlFor={id}>
@@ -163,15 +188,43 @@ function TextInput({
             issues?.length ? `${id}-validation` : undefined
           }
           aria-invalid={hasError || undefined}
+          data-picker-default={pickerDefault}
           data-validation-field={validationField}
           id={id}
           inputMode={inputMode}
           maxLength={maxLength}
+          ref={inputRef}
           type={type}
           value={value}
-          onChange={(event) => onChange(event.target.value)}
+          onBlur={clearPickerSeed}
+          onChange={(event) => {
+            seededPicker.current = false
+            delete event.currentTarget.dataset.pickerPreview
+            onChange(event.target.value)
+          }}
+          onFocus={seedPicker}
+          onPointerDown={seedPicker}
         />
       </label>
+      {type === 'time' ? (
+        <div className="trip-edit-time-actions">
+          {!value ? (
+            <span aria-live="polite">Not set</span>
+          ) : null}
+          {value ? (
+            <button
+              type="button"
+              onClick={() => {
+                clearPickerSeed()
+                onChange('')
+              }}
+            >
+              Clear time
+              <span className="sr-only"> for {label}</span>
+            </button>
+          ) : null}
+        </div>
+      ) : null}
       <FieldMessages id={id} issues={issues} />
     </>
   )
@@ -211,6 +264,7 @@ function OperationalTimeField({
   issues,
   onChange,
   onUseOriginal,
+  pickerDefault,
 }: {
   id: string
   label: string
@@ -220,6 +274,7 @@ function OperationalTimeField({
   issues?: OperationalEditIssue[]
   onChange: (value: TenderTimeDraft) => void
   onUseOriginal: () => void
+  pickerDefault?: string
 }) {
   const currentLabel = `${value.time || 'Not set'} · ${value.verification}`
   const originalLabel =
@@ -247,6 +302,7 @@ function OperationalTimeField({
           label={label}
           issues={issues}
           type="time"
+          pickerDefault={pickerDefault}
           validationField={validationField}
           value={value.time}
           onChange={(time) =>
@@ -294,6 +350,34 @@ function excursionStatusLabel(status: ExcursionOperationalStatus) {
     case 'CANCELLED':
       return 'Cancelled'
   }
+}
+
+function clockMinutes(value: string): number | undefined {
+  const match = /^(\d{2}):(\d{2})$/.exec(value)
+  if (!match) {
+    return undefined
+  }
+  return Number(match[1]) * 60 + Number(match[2])
+}
+
+function timeBefore(value: string, minutes = 30): string | undefined {
+  const total = clockMinutes(value)
+  if (total === undefined) {
+    return undefined
+  }
+  const adjusted = (total - minutes + 24 * 60) % (24 * 60)
+  return `${Math.floor(adjusted / 60).toString().padStart(2, '0')}:${(
+    adjusted % 60
+  ).toString().padStart(2, '0')}`
+}
+
+function earliestTime(...values: string[]): string | undefined {
+  return values
+    .filter((value) => clockMinutes(value) !== undefined)
+    .sort(
+      (left, right) =>
+        (clockMinutes(left) ?? 0) - (clockMinutes(right) ?? 0),
+    )[0]
 }
 
 function ExcursionFields({
@@ -375,6 +459,13 @@ function ExcursionFields({
             id={`${prefix}-${key}`}
             issues={fieldIssues(key)}
             label={label}
+            pickerDefault={
+              key === 'meetingTime'
+                ? excursion.startTime
+                : key === 'startTime'
+                  ? excursion.meetingTime
+                  : undefined
+            }
             type="time"
             validationField={`excursion:${excursion.id}:${key}`}
             value={excursion[key]}
@@ -771,6 +862,7 @@ export function TripEditSheet({
                     id="trip-edit-all-aboard"
                     issues={issuesFor('allAboardTime')}
                     label="All Aboard"
+                    pickerDefault={timeBefore(draft.departureTime)}
                     validationField="allAboardTime"
                     value={{
                       time: draft.allAboardTime,
@@ -829,6 +921,7 @@ export function TripEditSheet({
                   id="trip-edit-first-tender"
                   issues={issuesFor('firstTenderTime')}
                   label="First tender"
+                  pickerDefault={draft.arrivalTime || undefined}
                   validationField="firstTenderTime"
                   value={draft.firstTender}
                   original={originalDraft.firstTender}
@@ -846,6 +939,11 @@ export function TripEditSheet({
                   id="trip-edit-tender-report"
                   issues={issuesFor('tenderReportTime')}
                   label="Tender report"
+                  pickerDefault={
+                    draft.firstTender.time ||
+                    draft.arrivalTime ||
+                    undefined
+                  }
                   validationField="tenderReportTime"
                   value={draft.tenderReport}
                   original={originalDraft.tenderReport}
@@ -863,6 +961,11 @@ export function TripEditSheet({
                   id="trip-edit-our-tender-ashore"
                   issues={issuesFor('ourTenderAshoreTime')}
                   label="Our tender ashore"
+                  pickerDefault={
+                    draft.firstTender.time ||
+                    draft.arrivalTime ||
+                    undefined
+                  }
                   validationField="ourTenderAshoreTime"
                   value={draft.ourTenderAshore}
                   original={originalDraft.ourTenderAshore}
@@ -925,6 +1028,13 @@ export function TripEditSheet({
                   id="trip-edit-our-tender-back"
                   issues={issuesFor('ourTenderBackTime')}
                   label="Our tender back"
+                  pickerDefault={timeBefore(
+                    earliestTime(
+                      draft.allAboardTime,
+                      draft.lastTender.time,
+                      draft.departureTime,
+                    ) ?? '',
+                  )}
                   validationField="ourTenderBackTime"
                   value={draft.ourTenderBack}
                   original={originalDraft.ourTenderBack}
@@ -942,6 +1052,7 @@ export function TripEditSheet({
                   id="trip-edit-last-tender"
                   issues={issuesFor('lastTenderTime')}
                   label="Last tender"
+                  pickerDefault={timeBefore(draft.departureTime)}
                   validationField="lastTenderTime"
                   value={draft.lastTender}
                   original={originalDraft.lastTender}
@@ -956,6 +1067,7 @@ export function TripEditSheet({
                   id="trip-edit-all-aboard"
                   issues={issuesFor('allAboardTime')}
                   label="All Aboard"
+                  pickerDefault={timeBefore(draft.departureTime)}
                   validationField="allAboardTime"
                   value={{
                     time: draft.allAboardTime,

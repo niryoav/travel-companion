@@ -58,6 +58,12 @@ connectivity.
 - `Edit` remains a champagne text action with a comfortable touch target.
 - The sheet is usable with large text, portrait, landscape, keyboard, and
   assistive technology.
+- Optional time inputs provide an app-level `Clear time` action; clearing one
+  field immediately restores its empty or To be confirmed draft state without
+  relying on the native iOS picker reset or changing adjacent fields.
+- Empty tender inputs may seed the native picker from nearby verified times,
+  but that transient starting point is never displayed or persisted until the
+  traveler commits a selection.
 - Tender fields appear only when Tender required is selected.
 - All Aboard and last tender back are labelled and displayed separately.
 - Today emphasizes known personal tender actions in its existing timeline;

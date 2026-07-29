@@ -278,6 +278,125 @@ describe('Trip operational editing', () => {
     ).not.toHaveProperty('ourTenderBack')
   })
 
+  it('clears one optional tender time without changing another field', () => {
+    renderEditor()
+    fireEvent.change(screen.getByLabelText('Port access status'), {
+      target: { value: 'TENDER_REQUIRED' },
+    })
+    fireEvent.change(screen.getByLabelText('Our tender ashore'), {
+      target: { value: '08:10' },
+    })
+    fireEvent.change(screen.getByLabelText('Our tender back'), {
+      target: { value: '16:30' },
+    })
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Clear time for Our tender ashore',
+      }),
+    )
+
+    expect(screen.getByLabelText('Our tender ashore')).toHaveValue('')
+    expect(
+      screen.getByLabelText('Our tender ashore status'),
+    ).toHaveValue('TO_BE_CONFIRMED')
+    expect(screen.getAllByText('Not set').length).toBeGreaterThan(0)
+    expect(screen.getByLabelText('Our tender back')).toHaveValue('16:30')
+  })
+
+  it('revalidates immediately when an invalid optional time is cleared', () => {
+    renderEditor()
+    fireEvent.change(screen.getByLabelText('Port access status'), {
+      target: { value: 'TENDER_REQUIRED' },
+    })
+    fireEvent.change(screen.getByLabelText('First tender'), {
+      target: { value: '08:00' },
+    })
+    fireEvent.change(screen.getByLabelText('Our tender ashore'), {
+      target: { value: '07:45' },
+    })
+    expect(
+      screen.getByText(
+        'Our tender ashore cannot be before the first tender at 08:00.',
+      ),
+    ).toBeInTheDocument()
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Clear time for Our tender ashore',
+      }),
+    )
+
+    expect(
+      screen.queryByText(/Our tender ashore cannot be before/),
+    ).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled()
+  })
+
+  it('uses original for both canonical and originally empty times', () => {
+    const baseline = editableFixture()
+    baseline.portCalls[0].portAccess = {
+      status: 'TENDER_REQUIRED',
+      tender: {
+        firstTender: {
+          at: '2030-05-11T07:30:00+02:00',
+          verification: 'CONFIRMED',
+        },
+      },
+    }
+    renderEditor(baseline)
+
+    fireEvent.change(screen.getByLabelText('First tender'), {
+      target: { value: '08:00' },
+    })
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Use original for First tender',
+      }),
+    )
+    expect(screen.getByLabelText('First tender')).toHaveValue('07:30')
+    expect(screen.getByLabelText('First tender status')).toHaveValue(
+      'CONFIRMED',
+    )
+
+    fireEvent.change(screen.getByLabelText('Our tender back'), {
+      target: { value: '16:30' },
+    })
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Use original for Our tender back',
+      }),
+    )
+    expect(screen.getByLabelText('Our tender back')).toHaveValue('')
+    expect(screen.getByLabelText('Our tender back status')).toHaveValue(
+      'TO_BE_CONFIRMED',
+    )
+  })
+
+  it('offers contextual picker defaults without persisting them', () => {
+    const { repository } = renderEditor()
+    fireEvent.change(screen.getByLabelText('Port access status'), {
+      target: { value: 'TENDER_REQUIRED' },
+    })
+
+    const report = screen.getByLabelText('Tender report')
+    const ashore = screen.getByLabelText('Our tender ashore')
+    const back = screen.getByLabelText('Our tender back')
+    const last = screen.getByLabelText('Last tender')
+    expect(report).toHaveAttribute('data-picker-default', '07:00')
+    expect(ashore).toHaveAttribute('data-picker-default', '07:00')
+    expect(back).toHaveAttribute('data-picker-default', '17:00')
+    expect(last).toHaveAttribute('data-picker-default', '17:30')
+
+    fireEvent.focus(report)
+    expect(report).toHaveAttribute('data-picker-preview', 'true')
+    expect(repository.getSnapshot().dayOverrides).toEqual({})
+    fireEvent.blur(report)
+    expect(report).toHaveValue('')
+    expect(report).not.toHaveAttribute('data-picker-preview')
+    expect(repository.getSnapshot().dayOverrides).toEqual({})
+  })
+
   it('clears dependent errors live when values are corrected or restored', () => {
     renderEditor()
     fireEvent.change(screen.getByLabelText('Port access status'), {

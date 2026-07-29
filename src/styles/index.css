@@ -1578,6 +1578,33 @@ a:focus-visible {
   box-shadow: 0 0 0 1px var(--attention);
 }
 
+.trip-edit-field input[data-picker-preview="true"],
+.trip-edit-time-with-status input[data-picker-preview="true"] {
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.trip-edit-time-actions {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.trip-edit-time-actions button {
+  min-height: 2.75rem;
+  border: 0;
+  background: transparent;
+  color: var(--champagne);
+  padding: 0 0.25rem;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
 .trip-edit-field-messages {
   display: grid;
   gap: 0.25rem;
