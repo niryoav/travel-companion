@@ -15,7 +15,6 @@ import { PwaUpdateManager } from './pwa/PwaUpdateManager'
 import { registerPwaUpdates } from './pwa/registerPwa'
 import { HttpTripSnapshotApiClient } from './services/TripSnapshotApiClient'
 import { bootstrapTripSync } from './sync/bootstrapTripSync'
-import { LocalEditorCredentialRepository } from './storage/LocalEditorCredentialRepository'
 import './styles/index.css'
 
 const tripRepository = new BundledTripRepository(
@@ -46,9 +45,6 @@ const applicationRootElement = rootElement
 async function startApplication(): Promise<void> {
   const cache = new IndexedDbTripSnapshotCache(tripData)
   const apiClient = new HttpTripSnapshotApiClient(tripData)
-  const credentialRepository = new LocalEditorCredentialRepository(
-    window.localStorage,
-  )
   const {
     tripOverrideRepository,
     refreshFromRemote,
@@ -57,7 +53,6 @@ async function startApplication(): Promise<void> {
     cache,
     apiClient,
     localStorage: window.localStorage,
-    credentialRepository,
   })
 
   createRoot(applicationRootElement).render(

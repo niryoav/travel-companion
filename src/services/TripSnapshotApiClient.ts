@@ -12,7 +12,6 @@ export interface TripSnapshotApiClient {
     tripId: TripId,
     baseRevision: number,
     operationalOverrides: TripOverrideBundle,
-    editorToken: string,
   ): Promise<TripSnapshot>
 }
 
@@ -20,7 +19,6 @@ export type TripSnapshotApiFailure =
   | 'INVALID_RESPONSE'
   | 'UNEXPECTED_STATUS'
   | 'NETWORK_FAILURE'
-  | 'UNAUTHORIZED'
   | 'REVISION_CONFLICT'
 
 export class TripSnapshotApiError extends Error {
@@ -34,6 +32,7 @@ export class TripSnapshotApiError extends Error {
 }
 
 type Fetch = typeof fetch
+export const TRIP_SNAPSHOT_PUT_TIMEOUT_MS = 12_000
 
 function routeIdFor(tripId: TripId): string | null {
   return tripId === 'trip-oceania-marina-2026'
@@ -107,7 +106,6 @@ implements TripSnapshotApiClient {
     tripId: TripId,
     baseRevision: number,
     operationalOverrides: TripOverrideBundle,
-    editorToken: string,
   ): Promise<TripSnapshot> {
     const routeId = routeIdFor(tripId)
     if (!routeId || tripId !== this.tripData.trip.id) {
@@ -118,55 +116,61 @@ implements TripSnapshotApiClient {
       operationalOverrides,
     }
 
-    let response: Response
+    const controller = new AbortController()
+    const timeoutId = globalThis.setTimeout(
+      () => controller.abort(),
+      TRIP_SNAPSHOT_PUT_TIMEOUT_MS,
+    )
     try {
-      response = await this.fetchRequest(
+      const response = await this.fetchRequest(
         `/api/trips/${encodeURIComponent(routeId)}`,
         {
           method: 'PUT',
           headers: {
             Accept: 'application/json',
-            Authorization: `Bearer ${editorToken}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(body),
+          signal: controller.signal,
         },
       )
-    } catch {
-      throw new TripSnapshotApiError('NETWORK_FAILURE')
-    }
 
-    if (response.status === 401) {
-      throw new TripSnapshotApiError('UNAUTHORIZED')
-    }
-    if (response.status === 409) {
-      const conflict = await readJson(response)
-      if (
-        typeof conflict === 'object' &&
-        conflict !== null &&
-        'code' in conflict &&
-        conflict.code === 'REVISION_CONFLICT' &&
-        'currentRevision' in conflict &&
-        Number.isInteger(conflict.currentRevision)
-      ) {
-        throw new TripSnapshotApiError(
-          'REVISION_CONFLICT',
-          Number(conflict.currentRevision),
-        )
+      if (response.status === 409) {
+        const conflict = await readJson(response)
+        if (
+          typeof conflict === 'object' &&
+          conflict !== null &&
+          'code' in conflict &&
+          conflict.code === 'REVISION_CONFLICT' &&
+          'currentRevision' in conflict &&
+          Number.isInteger(conflict.currentRevision)
+        ) {
+          throw new TripSnapshotApiError(
+            'REVISION_CONFLICT',
+            Number(conflict.currentRevision),
+          )
+        }
+        throw new TripSnapshotApiError('INVALID_RESPONSE')
       }
-      throw new TripSnapshotApiError('INVALID_RESPONSE')
-    }
-    if (!response.ok) {
-      throw new TripSnapshotApiError('UNEXPECTED_STATUS')
-    }
+      if (!response.ok) {
+        throw new TripSnapshotApiError('UNEXPECTED_STATUS')
+      }
 
-    const snapshot = parseTripSnapshot(
-      await readJson(response),
-      this.tripData,
-    )
-    if (!snapshot) {
-      throw new TripSnapshotApiError('INVALID_RESPONSE')
+      const snapshot = parseTripSnapshot(
+        await readJson(response),
+        this.tripData,
+      )
+      if (!snapshot) {
+        throw new TripSnapshotApiError('INVALID_RESPONSE')
+      }
+      return snapshot
+    } catch (error) {
+      if (error instanceof TripSnapshotApiError) {
+        throw error
+      }
+      throw new TripSnapshotApiError('NETWORK_FAILURE')
+    } finally {
+      globalThis.clearTimeout(timeoutId)
     }
-    return snapshot
   }
 }

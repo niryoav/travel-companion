@@ -195,10 +195,10 @@ failure fallback.
 Each browser now keeps the last validated accepted snapshot in IndexedDB.
 Existing small device preferences remain in `localStorage`, and the IndexedDB
 pending candidate store remains reserved for a later increment. Yoav is the
-sole editor through lightweight bearer-token write protection. The optional
-local token is stored separately from trip data and is sent only on PUT;
-selected traveler identity remains local personalization and is not
-authorization.
+sole editor in the normal interface; selecting Yoav exposes operational editing
+and selecting Isabel keeps the interface read-only. This is a pragmatic
+usability rule for two trusted users, not an authentication or security
+boundary. PUT remains available without credentials.
 
 `GET /api/trips/oceania-marina-2026` now reads the fixed private Blob pathname
 `trips/oceania-marina-2026/operational-snapshot.json` in production and the
@@ -218,14 +218,15 @@ Every write names its base revision. The server rejects stale revisions and
 uses the current Blob ETag as a conditional-write precondition. The server,
 not the browser, creates the next revision, timestamp, and `updatedBy` value.
 Local override state records its base revision, last modification time, and
-sync state. A local edit makes one immediate write attempt when both a known
-base revision and editor token exist; success updates the accepted cache,
-whereas 409 marks conflict and other failures remain unsynced without losing
-the local data.
+sync state. A local edit makes one immediate write attempt when its base
+revision is known; success updates the accepted cache, whereas 409 marks
+conflict and other failures remain unsynced without losing the local data. An
+empty remote store establishes revision zero for its first write. Legacy edits
+with an unknown base require an explicit, confirmed whole-snapshot share.
 
-Pending-candidate processing, reconnect upload, recovery controls, and visible
-sync status remain future increments. There is no retry queue, realtime
-synchronization, automatic conflict resolution, or merge engine. See ADR-004.
+A failed one-shot upload exposes a manual retry. There is no retry queue,
+realtime synchronization, automatic conflict resolution, or merge engine.
+See ADR-004.
 
 ## Guidance
 

@@ -164,6 +164,33 @@ describe('writeTripSnapshotBlob', () => {
     })
   })
 
+  it('creates revision one from base revision zero without overwrite', async () => {
+    const writeBlob = vi.fn<typeof put>()
+    const result = await writeTripSnapshotBlob(
+      'oceania-marina-2026',
+      {
+        baseRevision: 0,
+        operationalOverrides: snapshot().operationalOverrides,
+      },
+      'yoav',
+      {
+        readBlob: vi.fn(async () => null),
+        writeBlob,
+        now: () => new Date('2026-07-29T14:00:00Z'),
+        environment: 'production',
+      },
+    )
+
+    expect(result).toMatchObject({
+      status: 'WRITTEN',
+      snapshot: { revision: 1 },
+    })
+    expect(writeBlob.mock.calls[0][2]).toEqual({
+      access: 'private',
+      contentType: 'application/json',
+    })
+  })
+
   it('does not write when the base revision is stale', async () => {
     const writeBlob = vi.fn<typeof put>()
     await expect(

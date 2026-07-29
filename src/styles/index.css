@@ -1435,6 +1435,37 @@ a:focus-visible {
   font-weight: 750;
 }
 
+.trip-sync-actions {
+  display: grid;
+  gap: 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  background: var(--surface);
+  padding: 0.85rem;
+}
+
+.trip-sync-actions p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.trip-sync-actions button {
+  min-height: 2.75rem;
+  border: 1px solid var(--champagne);
+  border-radius: 0.7rem;
+  background: transparent;
+  color: var(--champagne);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.trip-sync-actions button:focus-visible {
+  outline: 3px solid var(--champagne);
+  outline-offset: 2px;
+}
+
 .trip-edit-backdrop {
   position: fixed;
   z-index: 100;

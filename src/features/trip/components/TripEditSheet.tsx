@@ -21,6 +21,7 @@ import type {
   TripData,
 } from '../../../domain/trip/tripTypes'
 import type { TripOverrideRepository } from '../../../storage/TripOverrideRepository'
+import type { TripOverrideSaveResult } from '../../../storage/TripOverrideRepository'
 import {
   buildTripDayOverrides,
   createTripDayEditDraft,
@@ -692,7 +693,19 @@ export function TripEditSheet({
     field?.focus()
   }
 
-  const save = (event: FormEvent<HTMLFormElement>) => {
+  const saveResultMessage = (
+    result: TripOverrideSaveResult | void,
+  ): string => {
+    if (result === 'shared') {
+      return 'Opgeslagen en gedeeld'
+    }
+    if (result === 'conflict') {
+      return 'De gedeelde versie is gewijzigd — je lokale wijziging is bewaard'
+    }
+    return 'Opgeslagen op dit apparaat — nog niet gedeeld'
+  }
+
+  const save = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (validation.errors.length > 0) {
       setSaveErrors([])
@@ -704,12 +717,12 @@ export function TripEditSheet({
       setSaveErrors(result.errors)
       return
     }
-    repository.saveDayEdits(
+    const saveResult = await repository.saveDayEdits(
       dayId,
       result.dayOverride,
       result.eventOverrides,
     )
-    onSaved('Trip details saved on this device.')
+    onSaved(saveResultMessage(saveResult))
     onClose()
   }
 

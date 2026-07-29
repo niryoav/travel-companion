@@ -12,6 +12,7 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
@@ -22,6 +23,8 @@ import {
 import { withPlanningAllAboardEstimates } from '../../domain/trip/allAboardPlanning'
 import type { TripData } from '../../domain/trip/tripTypes'
 import { LocalTripOverrideRepository } from '../../storage/LocalTripOverrideRepository'
+import type { TripOverrideRepository } from '../../storage/TripOverrideRepository'
+import type { TripStateRepository } from '../../storage/TripStateRepository'
 import { tripContentFixture } from '../../test/fixtures/tripContentFixture'
 import { tripFixture } from '../../test/fixtures/tripFixture'
 import { TripScreen } from './TripScreen'
@@ -54,9 +57,11 @@ function estimatedAllAboardFixture(): TripData {
 function TripEditingHarness({
   baseline,
   repository,
+  travelerId = 'traveler-yoav',
 }: {
   baseline: TripData
-  repository: LocalTripOverrideRepository
+  repository: TripOverrideRepository
+  travelerId?: string
 }) {
   const overrides = useSyncExternalStore(
     repository.subscribe,
@@ -77,6 +82,9 @@ function TripEditingHarness({
         tripData={effectiveTripData}
         tripOverrideRepository={repository}
         tripOverrides={overrides}
+        tripStateRepository={{
+          getTravelerId: () => travelerId,
+        } as TripStateRepository}
       />
     </MemoryRouter>
   )
@@ -103,6 +111,185 @@ describe('Trip operational editing', () => {
   beforeEach(() => {
     window.localStorage.clear()
     vi.restoreAllMocks()
+  })
+
+  it('shows operational editing controls for Yoav', () => {
+    renderEditor()
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+  })
+
+  it('keeps Isabel read-only in the normal UI', () => {
+    const baseline = editableFixture()
+    const repository = new LocalTripOverrideRepository(
+      window.localStorage,
+      baseline,
+    )
+    render(
+      <TripEditingHarness
+        baseline={baseline}
+        repository={repository}
+        travelerId="traveler-isabel"
+      />,
+    )
+
+    expect(
+      screen.queryByRole('button', { name: 'Edit' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('requires confirmation before sharing unknown-base legacy edits', async () => {
+    const baseline = editableFixture()
+    const local = new LocalTripOverrideRepository(
+      window.localStorage,
+      baseline,
+      undefined,
+      {
+        schemaVersion: 1,
+        tripId: baseline.trip.id,
+        dayOverrides: {
+          'day-2030-05-11': {
+            dayId: 'day-2030-05-11',
+            note: 'Legacy local',
+            updatedAt: '2030-05-10T12:00:00Z',
+          },
+        },
+        eventOverrides: {},
+      },
+    )
+    const shareSavedChanges = vi.fn(async () => 'shared' as const)
+    const repository: TripOverrideRepository = {
+      getSnapshot: local.getSnapshot,
+      subscribe: local.subscribe,
+      saveDayEdits: local.saveDayEdits.bind(local),
+      resetEvent: local.resetEvent.bind(local),
+      resetDay: local.resetDay.bind(local),
+      getSyncMetadata: () => ({
+        baseRevision: null,
+        lastModified: '2030-05-10T12:00:00Z',
+        syncState: 'unsynced',
+      }),
+      prepareShareSavedChanges: vi.fn(async () => ({
+        status: 'ready' as const,
+        baseRevision: 4,
+        sharedSnapshotExists: true,
+      })),
+      shareSavedChanges,
+    }
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    render(
+      <TripEditingHarness
+        baseline={baseline}
+        repository={repository}
+      />,
+    )
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Share saved changes' }),
+    )
+    await waitFor(() =>
+      expect(shareSavedChanges).toHaveBeenCalledWith(4),
+    )
+    expect(window.confirm).toHaveBeenCalledOnce()
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Opgeslagen en gedeeld',
+    )
+  })
+
+  it('offers one manual retry for known-base unsynced edits', async () => {
+    const baseline = editableFixture()
+    const local = new LocalTripOverrideRepository(
+      window.localStorage,
+      baseline,
+      undefined,
+      {
+        schemaVersion: 1,
+        tripId: baseline.trip.id,
+        dayOverrides: {
+          'day-2030-05-11': {
+            dayId: 'day-2030-05-11',
+            note: 'Offline local',
+            updatedAt: '2030-05-10T12:00:00Z',
+          },
+        },
+        eventOverrides: {},
+      },
+    )
+    const retryShare = vi.fn(async () => 'shared' as const)
+    const repository: TripOverrideRepository = {
+      getSnapshot: local.getSnapshot,
+      subscribe: local.subscribe,
+      saveDayEdits: local.saveDayEdits.bind(local),
+      resetEvent: local.resetEvent.bind(local),
+      resetDay: local.resetDay.bind(local),
+      getSyncMetadata: () => ({
+        baseRevision: 3,
+        lastModified: '2030-05-10T12:00:00Z',
+        syncState: 'unsynced',
+      }),
+      retryShare,
+    }
+    render(
+      <TripEditingHarness
+        baseline={baseline}
+        repository={repository}
+      />,
+    )
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Try sharing again' }),
+    )
+    await waitFor(() => expect(retryShare).toHaveBeenCalledOnce())
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Opgeslagen en gedeeld',
+    )
+  })
+
+  it('reports a successful shared save from the existing Save action', async () => {
+    const baseline = editableFixture()
+    const local = new LocalTripOverrideRepository(
+      window.localStorage,
+      baseline,
+    )
+    const saveDayEdits = vi.fn(
+      async (...args: Parameters<TripOverrideRepository['saveDayEdits']>) => {
+        local.saveDayEdits(...args)
+        return 'shared' as const
+      },
+    )
+    const repository: TripOverrideRepository = {
+      getSnapshot: local.getSnapshot,
+      subscribe: local.subscribe,
+      saveDayEdits,
+      resetEvent: local.resetEvent.bind(local),
+      resetDay: local.resetDay.bind(local),
+    }
+    render(
+      <TripEditingHarness
+        baseline={baseline}
+        repository={repository}
+      />,
+    )
+    const todayCard = screen.getByText('Today').closest('details')
+    if (!todayCard) {
+      throw new Error('Today card missing')
+    }
+    fireEvent.click(
+      within(todayCard).getByRole('button', { name: 'Edit' }),
+    )
+    fireEvent.change(screen.getAllByLabelText('Short operational note')[0], {
+      target: { value: 'Shared note' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'Opgeslagen en gedeeld',
+      ),
+    )
+    expect(saveDayEdits).toHaveBeenCalledOnce()
+    expect(
+      local.getSnapshot().dayOverrides['day-2030-05-11']?.note,
+    ).toBe('Shared note')
   })
 
   it('keeps Edit beside Show details and opens an accessible sheet', () => {
@@ -142,7 +329,7 @@ describe('Trip operational editing', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('saves both personal tender times, All Aboard, and excursion changes offline', () => {
+  it('saves both personal tender times, All Aboard, and excursion changes offline', async () => {
     const { baseline, repository } = renderEditor()
     fireEvent.change(screen.getByLabelText('Port access status'), {
       target: { value: 'TENDER_REQUIRED' },
@@ -171,9 +358,11 @@ describe('Trip operational editing', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
 
-    expect(
-      screen.getByRole('status'),
-    ).toHaveTextContent('Trip details saved on this device.')
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'Opgeslagen op dit apparaat — nog niet gedeeld',
+      ),
+    )
     expect(screen.getAllByText('Tender required').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Our tender ashore:').length).toBeGreaterThan(0)
     expect(screen.getAllByText('17:10').length).toBeGreaterThan(0)

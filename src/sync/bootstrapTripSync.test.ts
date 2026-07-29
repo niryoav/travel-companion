@@ -6,7 +6,6 @@ import {
 } from '../domain/trip/tripOverrides'
 import type { TripSnapshot } from '../domain/trip/tripSnapshot'
 import type { TripSnapshotApiClient } from '../services/TripSnapshotApiClient'
-import type { EditorCredentialRepository } from '../storage/EditorCredentialRepository'
 import {
   localTripOverrideStorageKey,
 } from '../storage/LocalTripOverrideRepository'
@@ -76,14 +75,11 @@ function apiClient(
   }
 }
 
-const credentialRepository: EditorCredentialRepository = {
-  loadToken: vi.fn(() => null),
-  storeToken: vi.fn(),
-  clearToken: vi.fn(),
-}
-
 describe('bootstrapTripSync', () => {
-  beforeEach(() => window.localStorage.clear())
+  beforeEach(() => {
+    window.localStorage.clear()
+    window.sessionStorage.clear()
+  })
 
   it('uses a valid accepted cache when local overrides are empty', async () => {
     const cache = new FakeCache()
@@ -94,7 +90,6 @@ describe('bootstrapTripSync', () => {
       cache,
       apiClient: apiClient(null),
       localStorage: window.localStorage,
-      credentialRepository,
     })
 
     expect(
@@ -116,7 +111,6 @@ describe('bootstrapTripSync', () => {
       cache,
       apiClient: apiClient(null),
       localStorage: window.localStorage,
-      credentialRepository,
     })
 
     result.tripOverrideRepository.saveDayEdits(
@@ -150,7 +144,6 @@ describe('bootstrapTripSync', () => {
       cache: new FakeCache(),
       apiClient: apiClient(null),
       localStorage: window.localStorage,
-      credentialRepository,
     })
 
     expect(
@@ -166,7 +159,6 @@ describe('bootstrapTripSync', () => {
       cache: new FakeCache(),
       apiClient: apiClient(null),
       localStorage: window.localStorage,
-      credentialRepository,
     })
 
     expect(result.tripOverrideRepository.getSnapshot()).toEqual(
@@ -182,7 +174,6 @@ describe('bootstrapTripSync', () => {
       cache: new FakeCache(),
       apiClient: client,
       localStorage: window.localStorage,
-      credentialRepository,
     })
 
     expect(client.getTripSnapshot).not.toHaveBeenCalled()
@@ -199,7 +190,6 @@ describe('bootstrapTripSync', () => {
       cache,
       apiClient: apiClient(snapshot(2, 'New')),
       localStorage: window.localStorage,
-      credentialRepository,
     })
     const listener = vi.fn()
     result.tripOverrideRepository.subscribe(listener)
@@ -229,7 +219,6 @@ describe('bootstrapTripSync', () => {
       cache,
       apiClient: apiClient(snapshot(remoteRevision, 'Remote')),
       localStorage: window.localStorage,
-      credentialRepository,
     })
 
     await result.refreshFromRemote()
@@ -253,7 +242,6 @@ describe('bootstrapTripSync', () => {
       cache,
       apiClient: apiClient(remote),
       localStorage: window.localStorage,
-      credentialRepository,
     })
 
     await result.refreshFromRemote()
@@ -277,7 +265,6 @@ describe('bootstrapTripSync', () => {
       cache,
       apiClient: apiClient(snapshot(2, 'Remote')),
       localStorage: window.localStorage,
-      credentialRepository,
     })
 
     await result.refreshFromRemote()
@@ -303,7 +290,6 @@ describe('bootstrapTripSync', () => {
       cache,
       apiClient: apiClient(snapshot(1, 'Remote')),
       localStorage: window.localStorage,
-      credentialRepository,
     })
 
     await result.refreshFromRemote()
@@ -320,7 +306,6 @@ describe('bootstrapTripSync', () => {
       cache,
       apiClient: apiClient(snapshot(1, 'Remote')),
       localStorage: window.localStorage,
-      credentialRepository,
     })
 
     await result.refreshFromRemote()
@@ -329,4 +314,69 @@ describe('bootstrapTripSync', () => {
     expect(cache.savePendingSnapshot).not.toHaveBeenCalled()
     expect(cache.deletePendingSnapshot).not.toHaveBeenCalled()
   })
+
+  it('uses revision zero for the first shared snapshot after remote not found', async () => {
+    const cache = new FakeCache()
+    const client = apiClient(null)
+    const accepted = snapshot(1, 'First shared')
+    vi.mocked(client.putTripSnapshot).mockResolvedValue(accepted)
+    const result = await bootstrapTripSync({
+      tripData: tripFixture,
+      cache,
+      apiClient: client,
+      localStorage: window.localStorage,
+    })
+
+    await result.refreshFromRemote()
+    await expect(
+      result.tripOverrideRepository.saveDayEdits(
+        'day-2030-05-11',
+        { note: 'First shared' },
+        {},
+      ),
+    ).resolves.toBe('shared')
+    expect(client.putTripSnapshot).toHaveBeenCalledWith(
+      tripFixture.trip.id,
+      0,
+      expect.any(Object),
+    )
+  })
+
+  it('retrieves a shared revision in a separate read-only storage context', async () => {
+    window.localStorage.setItem(
+      localTripOverrideStorageKey(tripFixture.trip.id),
+      JSON.stringify(overrides('Editor device local state')),
+    )
+    const shared = snapshot(3, 'Shared across devices')
+    const reader = await bootstrapTripSync({
+      tripData: tripFixture,
+      cache: new FakeCache(),
+      apiClient: apiClient(shared),
+      localStorage: window.sessionStorage,
+    })
+
+    await reader.refreshFromRemote()
+
+    expect(
+      reader.tripOverrideRepository.getSnapshot().dayOverrides[
+        'day-2030-05-11'
+      ]?.note,
+    ).toBe('Shared across devices')
+    expect(
+      readLocalStorageNote(window.localStorage),
+    ).toBe('Editor device local state')
+  })
 })
+
+function readLocalStorageNote(storage: Storage): string | undefined {
+  const raw = storage.getItem(
+    localTripOverrideStorageKey(tripFixture.trip.id),
+  )
+  if (!raw) {
+    return undefined
+  }
+  const parsed = JSON.parse(raw) as {
+    dayOverrides?: Record<string, { note?: string }>
+  }
+  return parsed.dayOverrides?.['day-2030-05-11']?.note
+}

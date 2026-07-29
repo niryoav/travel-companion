@@ -154,6 +154,7 @@ export function App({
                       : tripOverrideRepository
                   }
                   tripOverrides={tripOverrides}
+                  tripStateRepository={tripStateRepository}
                 />
               }
             />
