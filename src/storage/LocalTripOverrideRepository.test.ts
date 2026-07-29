@@ -3,7 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { applyTripOverrides } from '../domain/trip/tripOverrides'
 import { tripFixture } from '../test/fixtures/tripFixture'
 import { oceaniaMarina2026TripData } from '../trips/oceania-marina-2026/tripData'
-import { LocalTripOverrideRepository } from './LocalTripOverrideRepository'
+import {
+  LocalTripOverrideRepository,
+  localTripOverrideStorageKey,
+  readLocalTripOverrideBundle,
+  readLocalTripOverrideState,
+} from './LocalTripOverrideRepository'
 
 const storageKey =
   'travel-companion:trip-overrides:trip-northern-coast-fixture'
@@ -102,6 +107,132 @@ describe('LocalTripOverrideRepository', () => {
     expect(
       restarted.getSnapshot().dayOverrides['day-2030-05-11']?.note,
     ).toBe('Use pier B')
+  })
+
+  it('reads a valid local override bundle for later migration', () => {
+    const bundle = {
+      schemaVersion: 1 as const,
+      tripId: tripFixture.trip.id,
+      dayOverrides: {
+        'day-2030-05-11': {
+          dayId: 'day-2030-05-11',
+          note: 'Use pier B',
+          updatedAt: '2030-05-10T12:00:00Z',
+        },
+      },
+      eventOverrides: {},
+    }
+    window.localStorage.setItem(
+      localTripOverrideStorageKey(tripFixture.trip.id),
+      JSON.stringify(bundle),
+    )
+
+    expect(
+      readLocalTripOverrideBundle(window.localStorage, tripFixture),
+    ).toEqual(bundle)
+    expect(
+      readLocalTripOverrideState(window.localStorage, tripFixture)
+        ?.metadata,
+    ).toEqual({
+      baseRevision: null,
+      lastModified: '2030-05-10T12:00:00Z',
+      syncState: 'unsynced',
+    })
+  })
+
+  it('roundtrips revision and sync metadata in the new envelope', () => {
+    const repository = new LocalTripOverrideRepository(
+      window.localStorage,
+      tripFixture,
+      () => new Date('2030-05-10T13:00:00Z'),
+      undefined,
+      {
+        baseRevision: 4,
+        lastModified: '2030-05-10T12:00:00Z',
+        syncState: 'synced',
+      },
+    )
+
+    repository.saveDayEdits(
+      'day-2030-05-11',
+      { note: 'Local change' },
+      {},
+    )
+    expect(repository.getMetadata()).toEqual({
+      baseRevision: 4,
+      lastModified: '2030-05-10T13:00:00.000Z',
+      syncState: 'unsynced',
+    })
+    expect(
+      readLocalTripOverrideState(window.localStorage, tripFixture),
+    ).toMatchObject({
+      storageVersion: 1,
+      metadata: {
+        baseRevision: 4,
+        syncState: 'unsynced',
+      },
+    })
+  })
+
+  it('marks accepted server metadata as synced', () => {
+    const repository = new LocalTripOverrideRepository(
+      window.localStorage,
+      tripFixture,
+    )
+    const operationalOverrides = {
+      schemaVersion: 1 as const,
+      tripId: tripFixture.trip.id,
+      dayOverrides: {},
+      eventOverrides: {},
+    }
+    repository.acceptSyncedSnapshot({
+      tripId: tripFixture.trip.id,
+      schemaVersion: 1,
+      revision: 6,
+      updatedAt: '2030-05-10T14:00:00Z',
+      updatedBy: 'yoav',
+      operationalOverrides,
+    })
+
+    expect(repository.getMetadata()).toEqual({
+      baseRevision: 6,
+      lastModified: '2030-05-10T14:00:00Z',
+      syncState: 'synced',
+    })
+  })
+
+  it.each([
+    '{bad json',
+    JSON.stringify({
+      schemaVersion: 2,
+      tripId: tripFixture.trip.id,
+      dayOverrides: {},
+      eventOverrides: {},
+    }),
+    JSON.stringify({
+      schemaVersion: 1,
+      tripId: 'trip-other',
+      dayOverrides: {},
+      eventOverrides: {},
+    }),
+  ])('returns null for local state that cannot be migrated', (value) => {
+    window.localStorage.setItem(storageKey, value)
+
+    expect(
+      readLocalTripOverrideBundle(window.localStorage, tripFixture),
+    ).toBeNull()
+  })
+
+  it('returns null when local storage is unavailable during migration read', () => {
+    const unavailable = {
+      getItem: vi.fn(() => {
+        throw new Error('unavailable')
+      }),
+    } as unknown as Storage
+
+    expect(
+      readLocalTripOverrideBundle(unavailable, tripFixture),
+    ).toBeNull()
   })
 
   it('reloads both personal tender times after an offline restart', () => {

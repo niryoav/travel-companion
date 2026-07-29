@@ -57,6 +57,11 @@
   persistence.
 
 ## Later
+- Shared operational snapshot work now includes domain contracts, IndexedDB
+  accepted-cache storage, private Vercel Blob reads, bearer-protected
+  conditional writes, and local revision/sync metadata. Pending uploads,
+  reconnect orchestration, recovery controls, read-only UI enforcement, and
+  visible sync status remain future increments.
 - Separate shared trip context from traveler-owned preferences and actions, and
   define synchronization and conflict behavior before adding cloud services.
 - Add carefully scoped live weather, provider status, and travel-timing
