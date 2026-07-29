@@ -255,6 +255,7 @@ The later Offline Trip Updates milestone adds one restrained exception: relevant
 production day cards may show a small champagne `Edit` action opposite the
 native disclosure label. Editing opens a bottom-aligned modal sheet with
 labelled fields, a scrollable body, and reachable Cancel and Save actions.
-Locally changed values use a quiet `Updated locally` indicator rather than
-warning styling. Tender status remains visible in the day summary, while
-unknown tender times stay calm and explicit.
+Operationally changed values use a quiet sync-aware indicator: `Updated and
+shared on …` when synced, or `Updated locally on … — not yet shared` when
+pending. Tender status remains visible in the day summary, while unknown
+tender times stay calm and explicit.

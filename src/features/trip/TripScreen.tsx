@@ -59,36 +59,6 @@ export function TripScreen({
         ? 'De gedeelde versie is gewijzigd — je lokale wijziging is bewaard'
         : 'Opgeslagen op dit apparaat — nog niet gedeeld'
 
-  const shareLegacyChanges = async () => {
-    if (
-      !tripOverrideRepository?.prepareShareSavedChanges ||
-      !tripOverrideRepository.shareSavedChanges
-    ) {
-      return
-    }
-    const preparation =
-      await tripOverrideRepository.prepareShareSavedChanges()
-    if (preparation.status === 'unavailable') {
-      setConfirmation('Opgeslagen op dit apparaat — nog niet gedeeld')
-      return
-    }
-    if (
-      preparation.sharedSnapshotExists &&
-      !window.confirm(
-        'This will replace the currently shared operational details with the complete set saved on this device. Continue?',
-      )
-    ) {
-      return
-    }
-    setConfirmation(
-      shareResultMessage(
-        await tripOverrideRepository.shareSavedChanges(
-          preparation.baseRevision,
-        ),
-      ),
-    )
-  }
-
   const retryShare = async () => {
     if (!tripOverrideRepository?.retryShare) {
       return
@@ -105,6 +75,7 @@ export function TripScreen({
         now,
         tripContent,
         tripOverrides,
+        syncMetadata?.syncState,
       )
 
   return (
@@ -113,6 +84,21 @@ export function TripScreen({
         <p className="trip-save-confirmation" role="status">
           {confirmation}
         </p>
+      ) : null}
+      {canEdit &&
+      hasLocalChanges &&
+      (syncMetadata?.syncState === 'unsynced' ||
+        syncMetadata?.syncState === 'conflict') ? (
+        <section className="trip-sync-actions" aria-label="Sharing status">
+          <p>
+            {syncMetadata.syncState === 'conflict'
+              ? 'Shared version changed — your local edit is preserved.'
+              : 'Saved on this device — not yet shared.'}
+          </p>
+          <button type="button" onClick={() => void retryShare()}>
+            Try sharing again
+          </button>
+        </section>
       ) : null}
       <TripView
         onEditDay={
@@ -125,30 +111,6 @@ export function TripScreen({
         }
         viewModel={viewModel}
       />
-      {canEdit &&
-      hasLocalChanges &&
-      syncMetadata?.syncState === 'unsynced' ? (
-        <section className="trip-sync-actions" aria-label="Sharing status">
-          <p>Your saved changes are still available on this device.</p>
-          {syncMetadata.baseRevision === null ? (
-            <button type="button" onClick={() => void shareLegacyChanges()}>
-              Share saved changes
-            </button>
-          ) : (
-            <button type="button" onClick={() => void retryShare()}>
-              Try sharing again
-            </button>
-          )}
-        </section>
-      ) : null}
-      {canEdit &&
-      hasLocalChanges &&
-      syncMetadata?.syncState === 'conflict' &&
-      !confirmation ? (
-        <p className="trip-save-confirmation" role="status">
-          De gedeelde versie is gewijzigd — je lokale wijziging is bewaard
-        </p>
-      ) : null}
       {editingDayId && tripOverrideRepository && tripOverrides ? (
         <TripEditSheet
           baselineTripData={baseline}

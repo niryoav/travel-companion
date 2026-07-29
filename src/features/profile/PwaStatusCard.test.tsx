@@ -28,6 +28,10 @@ describe('PwaStatusCard', () => {
     const { rerender } = render(<PwaStatusCard manager={manager} />)
 
     expect(screen.getByRole('status')).toHaveTextContent('Update available')
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'The page will reload afterward.',
+    )
+    expect(screen.getByRole('status')).not.toHaveTextContent('reopen')
     rerender(<PwaStatusCard manager={manager} />)
     expect(screen.getAllByRole('button', { name: 'Update now' })).toHaveLength(1)
     fireEvent.click(screen.getByRole('button', { name: 'Update now' }))

@@ -99,7 +99,7 @@ export interface TripEventViewModel {
   localOperationalNote?: string
   operationalStatusLabel?: string
   isCancelled?: boolean
-  updatedLocally?: boolean
+  operationalUpdateLabel?: string
   experience?: TripExcursionContentViewModel
   relatedDocumentCount: number
   documentActions?: DocumentActionViewModel[]
@@ -166,7 +166,7 @@ export interface TripDayViewModel {
   summaryOurTenderBackTime?: string
   summaryOurTenderBackAt?: string
   isEditable?: boolean
-  updatedLocallyLabel?: string
+  operationalUpdateLabel?: string
   relatedDocumentCount: number
   documentActions?: DocumentActionViewModel[]
   destination?: TripDestinationViewModel

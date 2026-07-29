@@ -61,9 +61,10 @@ newer shared revision.
 ### Increment 5: shared edit flow
 
 - Yoav-only editing controls and an Isabel read-only interface.
-- Local-first Save with one immediate PUT attempt and truthful status.
+- Local-first Save with one immediate sharing attempt and truthful status.
 - Revision-zero creation for an empty shared store.
-- Explicit, confirmed sharing for unknown-base legacy edits.
+- Automatic revision discovery for unknown-base edits, bounded to one GET and
+  one PUT per Save.
 - One manual retry for unsynced edits.
 - No credentials, queue, retry scheduler, merge, or realtime behavior.
 
@@ -97,7 +98,8 @@ newer shared revision.
 - Parse the existing local override bundle with the current domain validator.
 - Use a valid legacy bundle as a pending migration candidate when no newer
   pending candidate exists.
-- Do not upload unknown-base legacy work without Yoav's explicit action.
+- Persist unknown-base legacy work before observing the latest shared revision
+  and attempting one PUT.
 - Retain the legacy local value until the candidate has been accepted remotely
   and stored locally as the accepted snapshot.
 - Ignore malformed, unsupported, or wrong-trip legacy data safely.
@@ -148,9 +150,11 @@ newer shared revision.
 ### Increment 5
 
 - [x] Yoav sees editing controls and Isabel remains read-only in the normal UI.
-- [x] Save persists locally before one PUT and reports the actual outcome.
+- [x] Save persists locally before any network activity and reports the actual
+  outcome.
 - [x] An empty shared store supports first creation from base revision zero.
-- [x] Unknown-base legacy work requires explicit confirmed sharing.
+- [x] Unknown-base work performs one GET and at most one PUT from the observed
+  revision while preserving the complete local override bundle.
 - [x] Unsynced work offers one manual retry.
 - [x] PUT has no credential or token dependency.
 - [x] No queue, scheduler, merge, automatic conflict resolution, or realtime

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { withPlanningAllAboardEstimates } from '../../../domain/trip/allAboardPlanning'
+import { emptyTripOverrideBundle } from '../../../domain/trip/tripOverrides'
 import type { TripData } from '../../../domain/trip/tripTypes'
 import { tripFixture } from '../../../test/fixtures/tripFixture'
 import { createDocumentFixture } from '../../../test/fixtures/documentFixture'
@@ -381,6 +382,37 @@ describe('selectTripViewModel', () => {
       arrivalTime: '07:00',
       departureTime: '18:00',
     })
+  })
+
+  it('uses sync-aware wording for operational updates', () => {
+    const overrides = emptyTripOverrideBundle(tripFixture.trip.id)
+    overrides.dayOverrides['day-2030-05-11'] = {
+      dayId: 'day-2030-05-11',
+      note: 'Changed',
+      updatedAt: '2030-05-10T12:00:00Z',
+    }
+
+    const syncedDay = selectTripViewModel(
+      tripFixture,
+      new Date('2030-05-11T12:00:00Z'),
+      tripContentFixture,
+      overrides,
+      'synced',
+    ).days[1]
+    const unsyncedDay = selectTripViewModel(
+      tripFixture,
+      new Date('2030-05-11T12:00:00Z'),
+      tripContentFixture,
+      overrides,
+      'unsynced',
+    ).days[1]
+
+    expect(syncedDay.operationalUpdateLabel).toMatch(
+      /^Updated and shared on /,
+    )
+    expect(unsyncedDay.operationalUpdateLabel).toMatch(
+      /^Updated locally on .* — not yet shared$/,
+    )
   })
 
   it('renders sea and sparse days intentionally', () => {

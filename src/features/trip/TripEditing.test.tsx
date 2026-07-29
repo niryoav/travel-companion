@@ -137,7 +137,7 @@ describe('Trip operational editing', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('requires confirmation before sharing unknown-base legacy edits', async () => {
+  it('removes the legacy share action and keeps manual retry visible near the top', () => {
     const baseline = editableFixture()
     const local = new LocalTripOverrideRepository(
       window.localStorage,
@@ -156,7 +156,6 @@ describe('Trip operational editing', () => {
         eventOverrides: {},
       },
     )
-    const shareSavedChanges = vi.fn(async () => 'shared' as const)
     const repository: TripOverrideRepository = {
       getSnapshot: local.getSnapshot,
       subscribe: local.subscribe,
@@ -168,14 +167,8 @@ describe('Trip operational editing', () => {
         lastModified: '2030-05-10T12:00:00Z',
         syncState: 'unsynced',
       }),
-      prepareShareSavedChanges: vi.fn(async () => ({
-        status: 'ready' as const,
-        baseRevision: 4,
-        sharedSnapshotExists: true,
-      })),
-      shareSavedChanges,
+      retryShare: vi.fn(async () => 'shared' as const),
     }
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
     render(
       <TripEditingHarness
         baseline={baseline}
@@ -183,16 +176,15 @@ describe('Trip operational editing', () => {
       />,
     )
 
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Share saved changes' }),
-    )
-    await waitFor(() =>
-      expect(shareSavedChanges).toHaveBeenCalledWith(4),
-    )
-    expect(window.confirm).toHaveBeenCalledOnce()
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'Opgeslagen en gedeeld',
-    )
+    expect(
+      screen.queryByRole('button', { name: 'Share saved changes' }),
+    ).not.toBeInTheDocument()
+    const retry = screen.getByRole('button', {
+      name: 'Try sharing again',
+    })
+    expect(
+      retry.closest('.trip-sync-actions')?.nextElementSibling,
+    ).toBe(screen.getByRole('main'))
   })
 
   it('offers one manual retry for known-base unsynced edits', async () => {
@@ -366,7 +358,11 @@ describe('Trip operational editing', () => {
     expect(screen.getAllByText('Tender required').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Our tender ashore:').length).toBeGreaterThan(0)
     expect(screen.getAllByText('17:10').length).toBeGreaterThan(0)
-    expect(screen.getByText('Updated locally')).toBeInTheDocument()
+    expect(
+      screen.getAllByText(
+        /Updated locally on .* — not yet shared/,
+      ).length,
+    ).toBeGreaterThan(0)
     expect(
       repository.getSnapshot().eventOverrides['event-excursion'],
     ).toMatchObject({ status: 'CHANGED' })

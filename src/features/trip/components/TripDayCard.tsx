@@ -96,9 +96,9 @@ export function TripDayCard({ day, onEdit }: TripDayCardProps) {
           </div>
         ) : null}
 
-        {day.updatedLocallyLabel ? (
+        {day.operationalUpdateLabel ? (
           <span className="trip-updated-locally">
-            {day.updatedLocallyLabel}
+            {day.operationalUpdateLabel}
           </span>
         ) : null}
 

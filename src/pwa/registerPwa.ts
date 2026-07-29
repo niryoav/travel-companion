@@ -11,7 +11,7 @@ export function registerPwaUpdates(manager: PwaUpdateManager): void {
     const applyUpdate = registerSW({
       immediate: true,
       onNeedRefresh: () => manager.updateAvailable(),
-      onNeedReload: () => manager.updateAvailable(),
+      onNeedReload: () => manager.reloadAfterUpdate(),
       onOfflineReady: () => manager.offlineReady(),
       onRegisteredSW: (_scriptUrl, registration) =>
         manager.registered(

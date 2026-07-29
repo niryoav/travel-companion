@@ -154,8 +154,9 @@ compiled into the existing offline application bundle and uses only `Date` and
 Service-worker registration is owned by one app-level update manager. It
 exposes stable update and offline-readiness state to More while keeping
 registration APIs out of presentation components. A waiting worker is applied
-only after an explicit traveler action; registration or update-check failure
-does not block the app.
+only after an explicit traveler action; once it takes control, the manager
+reloads the page exactly once so the newly cached JavaScript is loaded.
+Registration or update-check failure does not block the app.
 
 Vite injects the package version and build timestamp. More also reads the
 canonical bundled trip `dataVersion`; no source-control path, repository URL,
@@ -218,11 +219,12 @@ Every write names its base revision. The server rejects stale revisions and
 uses the current Blob ETag as a conditional-write precondition. The server,
 not the browser, creates the next revision, timestamp, and `updatedBy` value.
 Local override state records its base revision, last modification time, and
-sync state. A local edit makes one immediate write attempt when its base
-revision is known; success updates the accepted cache, whereas 409 marks
-conflict and other failures remain unsynced without losing the local data. An
-empty remote store establishes revision zero for its first write. Legacy edits
-with an unknown base require an explicit, confirmed whole-snapshot share.
+sync state. A local edit is always persisted before one immediate sharing
+attempt. A known base revision goes directly to PUT. An unknown base performs
+one GET, uses the observed revision or revision zero when the shared snapshot
+is missing, and then performs one PUT with the complete local operational
+override bundle. Success updates the accepted cache, whereas 409 marks
+conflict and other failures remain unsynced without losing the local data.
 
 A failed one-shot upload exposes a manual retry. There is no retry queue,
 realtime synchronization, automatic conflict resolution, or merge engine.

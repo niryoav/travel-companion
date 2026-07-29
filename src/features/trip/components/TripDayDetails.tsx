@@ -183,8 +183,10 @@ function TripEventDetail({ event }: { event: TripEventViewModel }) {
             {event.localOperationalNote}
           </p>
         ) : null}
-        {event.updatedLocally ? (
-          <p className="trip-event-updated">Updated locally</p>
+        {event.operationalUpdateLabel ? (
+          <p className="trip-event-updated">
+            {event.operationalUpdateLabel}
+          </p>
         ) : null}
         {event.location ? <p>{event.location}</p> : null}
         {event.transport ? <p>{event.transport}</p> : null}
