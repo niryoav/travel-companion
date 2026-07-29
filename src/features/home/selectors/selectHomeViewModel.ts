@@ -73,6 +73,7 @@ function milestoneFromEvent(
 function milestoneFromPortCall(
   data: TripData,
   portCall: PortCall | null,
+  now: Date,
 ): Milestone | undefined {
   if (!portCall?.departureAt) {
     return undefined
@@ -81,10 +82,56 @@ function milestoneFromPortCall(
   const location = data.locations.find(
     ({ id }) => id === portCall.portLocationId,
   )
+  const tender = portCall.portAccess?.tender
+  const candidates = [
+    {
+      title: 'Tender report',
+      at: tender?.tenderReport?.at,
+      personal: true,
+    },
+    {
+      title: 'Our tender ashore',
+      at: tender?.ourTenderAshore?.at,
+      personal: true,
+    },
+    {
+      title: 'Our tender back',
+      at: tender?.ourTenderBack?.at,
+      personal: true,
+    },
+    { title: 'First tender', at: tender?.firstTender?.at },
+    { title: 'Last tender', at: tender?.lastTender?.at },
+    { title: 'All Aboard', at: portCall.allAboardAt },
+    {
+      title: `Depart ${location?.name ?? 'port'}`,
+      at: portCall.departureAt,
+    },
+  ]
+    .filter(
+      (candidate): candidate is {
+        title: string
+        at: string
+        personal?: boolean
+      } =>
+        Boolean(candidate.at) &&
+        Date.parse(candidate.at ?? '') > now.getTime(),
+    )
+    .sort((left, right) => {
+      const difference = Date.parse(left.at) - Date.parse(right.at)
+      return difference !== 0
+        ? difference
+        : Number(Boolean(right.personal)) - Number(Boolean(left.personal))
+    })
+  const next = candidates[0]
+  if (!next) {
+    return undefined
+  }
+
   return {
     label: 'Next milestone',
-    title: `Depart ${location?.name ?? 'port'}`,
-    time: formatLocalTime(portCall.departureAt, portCall.timeZone),
+    title: next.title,
+    dateTime: next.at,
+    time: formatLocalTime(next.at, portCall.timeZone),
     allAboardTime: portCall.allAboardAt
       ? formatLocalTime(portCall.allAboardAt, portCall.timeZone)
       : undefined,
@@ -161,16 +208,24 @@ export function selectHomeViewModel(
   const portMilestone = milestoneFromPortCall(
     data,
     cruiseContext?.portCall ?? null,
+    now,
   )
+  const earliestMilestone =
+    eventMilestone?.dateTime && portMilestone?.dateTime
+      ? Date.parse(eventMilestone.dateTime) <=
+        Date.parse(portMilestone.dateTime)
+        ? eventMilestone
+        : portMilestone
+      : eventMilestone ?? portMilestone
   const milestone =
-    (eventMilestone
+    (earliestMilestone
       ? {
-          ...eventMilestone,
+          ...earliestMilestone,
           allAboardTime: portMilestone?.allAboardTime,
           allAboardStatusLabel:
             portMilestone?.allAboardStatusLabel,
         }
-      : portMilestone) ??
+      : undefined) ??
     (today.kind === 'SEA_DAY'
       ? { label: 'Today', title: 'Enjoy a day at sea' }
       : undefined)

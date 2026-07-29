@@ -28,6 +28,10 @@ export interface DayOperationalOverride {
   allAboardVerification?: OperationalEntryStatus | null
   note?: string | null
   firstTender?: OperationalTimeOverride | null
+  tenderReport?: OperationalTimeOverride | null
+  ourTenderAshore?: OperationalTimeOverride | null
+  ourTenderBack?: OperationalTimeOverride | null
+  /** Legacy outbound tender key retained for existing local state. */
   ourTender?: OperationalTimeOverride | null
   tenderMeetingPoint?: string | null
   tenderCrossingMinutes?: number | null
@@ -151,6 +155,9 @@ const DAY_OVERRIDE_KEYS = new Set([
   'allAboardVerification',
   'note',
   'firstTender',
+  'tenderReport',
+  'ourTenderAshore',
+  'ourTenderBack',
   'ourTender',
   'tenderMeetingPoint',
   'tenderCrossingMinutes',
@@ -201,6 +208,9 @@ function isDayOverride(
     ) &&
     isOptionalNullableString(value.note) &&
     isOptionalNullableOperationalTime(value.firstTender) &&
+    isOptionalNullableOperationalTime(value.tenderReport) &&
+    isOptionalNullableOperationalTime(value.ourTenderAshore) &&
+    isOptionalNullableOperationalTime(value.ourTenderBack) &&
     isOptionalNullableOperationalTime(value.ourTender) &&
     isOptionalNullableString(value.tenderMeetingPoint, 160) &&
     (value.tenderCrossingMinutes === undefined ||
@@ -371,9 +381,13 @@ function applyDayOverride(
       override.firstTender,
       baselineAccess?.tender?.firstTender,
     ),
-    ourTender: operationalTime(
-      override.ourTender,
-      baselineAccess?.tender?.ourTender,
+    tenderReport: operationalTime(
+      override.tenderReport,
+      baselineAccess?.tender?.tenderReport,
+    ),
+    ourTenderAshore: operationalTime(
+      override.ourTenderAshore ?? override.ourTender,
+      baselineAccess?.tender?.ourTenderAshore,
     ),
     meetingPoint:
       override.tenderMeetingPoint === null
@@ -385,6 +399,10 @@ function applyDayOverride(
         ? undefined
         : override.tenderCrossingMinutes ??
           baselineAccess?.tender?.crossingMinutes,
+    ourTenderBack: operationalTime(
+      override.ourTenderBack,
+      baselineAccess?.tender?.ourTenderBack,
+    ),
     lastTender: operationalTime(
       override.lastTender,
       baselineAccess?.tender?.lastTender,

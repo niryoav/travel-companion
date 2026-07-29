@@ -2,7 +2,6 @@ import { resolveTripPhase } from '../../../domain/trip/selectors/resolveTripPhas
 import { selectCurrentEvent } from '../../../domain/trip/selectors/selectCurrentEvent'
 import { selectDayEvents } from '../../../domain/trip/selectors/selectDayEvents'
 import { selectNextEvent } from '../../../domain/trip/selectors/selectNextEvent'
-import { selectNextEventForDay } from '../../../domain/trip/selectors/selectNextEventForDay'
 import { selectToday } from '../../../domain/trip/selectors/selectToday'
 import { selectTodayDocuments } from '../../../domain/trip/selectors/selectTodayDocuments'
 import { selectTodayEvents } from '../../../domain/trip/selectors/selectTodayEvents'
@@ -19,6 +18,7 @@ import {
 import {
   formatLocalTime,
 } from '../../../domain/trip/tripTime'
+import { expectedArrivalAshore } from '../../../domain/trip/tenderPlanning'
 import type {
   PortCall,
   TripData,
@@ -126,6 +126,117 @@ function stateLabel(state: TodayEventState): string {
     case 'UNTIMED':
       return 'No set time'
   }
+}
+
+function personalTenderAgenda(
+  portCall: PortCall | null,
+): TodayEventViewModel[] {
+  if (portCall?.portAccess?.status !== 'TENDER_REQUIRED') {
+    return []
+  }
+  const tender = portCall.portAccess.tender
+  if (!tender) {
+    return []
+  }
+  const arrivalAshore = expectedArrivalAshore(tender)
+  const actions: Array<{
+    id: string
+    title: string
+    value: OperationalTime | undefined
+    location?: string
+    kindLabel?: string
+  }> = [
+    {
+      id: `${portCall.dayId}-tender-report`,
+      title: 'Tender report',
+      value: tender.tenderReport,
+      location: tender.meetingPoint,
+    },
+    {
+      id: `${portCall.dayId}-our-tender-ashore`,
+      title: 'Our tender ashore',
+      value: tender.ourTenderAshore,
+    },
+    {
+      id: `${portCall.dayId}-expected-arrival-ashore`,
+      title: 'Expected arrival ashore',
+      value: arrivalAshore,
+      kindLabel: 'Calculated',
+    },
+    {
+      id: `${portCall.dayId}-our-tender-back`,
+      title: 'Our tender back',
+      value: tender.ourTenderBack,
+    },
+  ]
+
+  return actions.flatMap(
+    ({ id, title, value, location, kindLabel }) =>
+      value?.at
+        ? [{
+            id,
+            kindLabel: kindLabel ?? 'Personal tender',
+            title,
+            state: 'UPCOMING' as const,
+            stateLabel: 'Later',
+            time: formatLocalTime(value.at, portCall.timeZone),
+            startsAt: value.at,
+            location,
+            timingConfidenceLabel:
+              value.verification === 'ESTIMATED'
+                ? 'Estimated time'
+                : undefined,
+            hasRelatedDocuments: false,
+          }]
+        : [],
+  )
+}
+
+function normalizeTimelineStates(
+  timeline: TodayEventViewModel[],
+  now: Date,
+): TodayEventViewModel[] {
+  const instant = now.getTime()
+  const ordered = [...timeline].sort((left, right) => {
+    if (!left.startsAt) {
+      return right.startsAt ? 1 : 0
+    }
+    if (!right.startsAt) {
+      return -1
+    }
+    return Date.parse(left.startsAt) - Date.parse(right.startsAt)
+  })
+  const classified = ordered.map((item) => {
+    let state: TodayEventState
+    if (!item.startsAt) {
+      state = 'UNTIMED'
+    } else if (
+      item.endsAt &&
+      Date.parse(item.startsAt) <= instant &&
+      instant < Date.parse(item.endsAt)
+    ) {
+      state = 'CURRENT'
+    } else {
+      const completedAt = item.endsAt
+        ? Date.parse(item.endsAt)
+        : Date.parse(item.startsAt)
+      state = instant >= completedAt ? 'COMPLETED' : 'UPCOMING'
+    }
+    return {
+      ...item,
+      state,
+      stateLabel:
+        item.isCancelled ? 'Cancelled' : stateLabel(state),
+    }
+  })
+  const nextIndex = classified.findIndex(
+    ({ state }) => state === 'UPCOMING',
+  )
+  return classified.map((item, index) =>
+    index === nextIndex
+      ? { ...item, state: 'NEXT', stateLabel: 'Next' }
+      : item,
+  )
 }
 
 function eventViewModel(
@@ -349,6 +460,7 @@ function portViewModel(
   const accessStatus =
     portCall.portAccess?.status ?? 'TO_BE_CONFIRMED'
   const tender = portCall.portAccess?.tender
+  const arrivalAshore = expectedArrivalAshore(tender)
   return {
     location: location?.name ?? 'Port',
     arrivalTime: portCall.arrivalAt
@@ -369,8 +481,16 @@ function portViewModel(
               tender?.firstTender,
               portCall.timeZone,
             ),
-            ourTender: operationalTimeViewModel(
-              tender?.ourTender,
+            tenderReport: operationalTimeViewModel(
+              tender?.tenderReport,
+              portCall.timeZone,
+            ),
+            ourTenderAshore: operationalTimeViewModel(
+              tender?.ourTenderAshore,
+              portCall.timeZone,
+            ),
+            expectedArrivalAshore: operationalTimeViewModel(
+              arrivalAshore,
               portCall.timeZone,
             ),
             meetingPoint: tender?.meetingPoint,
@@ -380,6 +500,10 @@ function portViewModel(
                 : undefined,
             lastTender: operationalTimeViewModel(
               tender?.lastTender,
+              portCall.timeZone,
+            ),
+            ourTenderBack: operationalTimeViewModel(
+              tender?.ourTenderBack,
               portCall.timeZone,
             ),
             note: tender?.note,
@@ -617,6 +741,65 @@ function tomorrowViewModel(
   const earlyStart = firstEvent?.startsAt
     ? hourInTimeZone(firstEvent.startsAt, firstTimeZone) < 9
     : false
+  const tomorrowTender = tomorrowPortCall?.portAccess?.tender
+  const hasPersonalTenderPlan = Boolean(
+    tomorrowTender?.tenderReport?.at ??
+      tomorrowTender?.ourTenderAshore?.at ??
+      tomorrowTender?.ourTenderBack?.at,
+  )
+  const tenderPlan =
+    tomorrowPortCall?.portAccess?.status === 'TENDER_REQUIRED'
+      ? [
+          ...(!hasPersonalTenderPlan
+            ? ['Tender times still need to be planned.']
+            : []),
+          ...(tomorrowTender?.tenderReport?.at
+            ? [
+                `Tender report ${formatLocalTime(
+                  tomorrowTender.tenderReport.at,
+                  tomorrowPortCall.timeZone,
+                )}`,
+              ]
+            : []),
+          ...(tomorrowTender?.ourTenderAshore?.at
+            ? [
+                `Our tender ashore ${formatLocalTime(
+                  tomorrowTender.ourTenderAshore.at,
+                  tomorrowPortCall.timeZone,
+                )}`,
+              ]
+            : []),
+          ...(tomorrowTender?.meetingPoint
+            ? [`Meeting point: ${tomorrowTender.meetingPoint}`]
+            : []),
+          ...(tomorrowTender?.ourTenderBack?.at
+            ? [
+                `Our tender back ${formatLocalTime(
+                  tomorrowTender.ourTenderBack.at,
+                  tomorrowPortCall.timeZone,
+                )}`,
+              ]
+            : []),
+          ...(tomorrowTender?.lastTender?.at
+            ? [
+                `Last tender ${formatLocalTime(
+                  tomorrowTender.lastTender.at,
+                  tomorrowPortCall.timeZone,
+                )}`,
+              ]
+            : []),
+          ...(tomorrowPortCall?.allAboardAt
+            ? [
+                `All Aboard ${formatLocalTime(
+                  tomorrowPortCall.allAboardAt,
+                  tomorrowPortCall.timeZone,
+                )} · ${operationalStatusLabel(
+                  tomorrowPortCall.allAboardVerification ?? 'CONFIRMED',
+                )}`,
+              ]
+            : []),
+        ]
+      : undefined
 
   return {
     dayId: tomorrow.id,
@@ -628,6 +811,7 @@ function tomorrowViewModel(
     requiredItems,
     preparationNotes,
     documentActions,
+    tenderPlan,
     timingNote:
       firstEvent && !firstEvent.startsAt
         ? firstEvent.scheduleStatus === 'TO_BE_CONFIRMED'
@@ -642,20 +826,15 @@ function tomorrowViewModel(
       const status =
         portCall.portAccess?.status ?? 'TO_BE_CONFIRMED'
       if (status === 'TENDER_REQUIRED') {
-        const ourTender = portCall.portAccess?.tender?.ourTender
-        return ourTender?.at
-          ? `Tender required · Our tender ${formatLocalTime(
-              ourTender.at,
-              portCall.timeZone,
-            )}`
-          : 'Tender required · Tender timing still to be confirmed.'
+        return 'Tender required'
       }
       return status === 'DOCKED'
         ? 'Port access: Docked'
         : 'Port access to be confirmed.'
     })(),
     allAboardNote:
-      tomorrowPortCall?.allAboardAt
+      tomorrowPortCall?.allAboardAt &&
+      tomorrowPortCall.portAccess?.status !== 'TENDER_REQUIRED'
         ? `All Aboard ${formatLocalTime(
             tomorrowPortCall.allAboardAt,
             tomorrowPortCall.timeZone,
@@ -807,15 +986,20 @@ export function selectTodayViewModel(
   const events = selectTodayEvents(data, today)
   const portCall = selectTodayPortCall(data, today)
   const currentEvent = selectCurrentEvent(events, now)
-  const nextEvent = selectNextEventForDay(events, now)
-  const timeline = events.map((event) =>
-    eventViewModel(
-      data,
-      today,
-      event,
-      temporalState(event, nextEvent, now),
-      portCall?.portAccess,
-    ),
+  const timeline = normalizeTimelineStates(
+    [
+      ...events.map((event) =>
+        eventViewModel(
+          data,
+          today,
+          event,
+          temporalState(event, null, now),
+          portCall?.portAccess,
+        ),
+      ),
+      ...personalTenderAgenda(portCall),
+    ],
+    now,
   )
   const operationalStatus = operationalStatusViewModel(
     selectPortOperationalStatus(data, today, portCall, now),
@@ -824,6 +1008,7 @@ export function selectTodayViewModel(
     (currentEvent
       ? timeline.find(({ id }) => id === currentEvent.id)
       : undefined) ??
+    timeline.find(({ state }) => state === 'CURRENT') ??
     timeline.find(({ state }) => state === 'NEXT')
   const relevantExcursion = events.find(
     (event) =>

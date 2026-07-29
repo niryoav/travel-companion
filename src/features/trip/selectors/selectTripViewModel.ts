@@ -34,6 +34,7 @@ import {
   formatDateRange,
   formatLocalTime,
 } from '../../../domain/trip/tripTime'
+import { expectedArrivalAshore } from '../../../domain/trip/tenderPlanning'
 import type {
   PortCall,
   TripData,
@@ -382,6 +383,7 @@ function portViewModel(
   const accessStatus =
     portCall.portAccess?.status ?? 'TO_BE_CONFIRMED'
   const tender = portCall.portAccess?.tender
+  const arrivalAshore = expectedArrivalAshore(tender)
 
   return {
     location: location?.name ?? 'Port',
@@ -415,8 +417,16 @@ function portViewModel(
               tender?.firstTender,
               portCall.timeZone,
             ),
-            ourTender: operationalTimeViewModel(
-              tender?.ourTender,
+            tenderReport: operationalTimeViewModel(
+              tender?.tenderReport,
+              portCall.timeZone,
+            ),
+            ourTenderAshore: operationalTimeViewModel(
+              tender?.ourTenderAshore,
+              portCall.timeZone,
+            ),
+            expectedArrivalAshore: operationalTimeViewModel(
+              arrivalAshore,
               portCall.timeZone,
             ),
             meetingPoint: tender?.meetingPoint,
@@ -426,6 +436,10 @@ function portViewModel(
                 : undefined,
             lastTender: operationalTimeViewModel(
               tender?.lastTender,
+              portCall.timeZone,
+            ),
+            ourTenderBack: operationalTimeViewModel(
+              tender?.ourTenderBack,
               portCall.timeZone,
             ),
             note: tender?.note,
@@ -555,9 +569,14 @@ function dayViewModel(
         : undefined,
     summaryPortAccessStatus: port?.accessStatus,
     summaryPortAccessLabel: port?.accessLabel,
-    summaryOurTenderTime: port?.tender?.ourTender?.time,
-    summaryOurTenderAt: port?.tender?.ourTender?.dateTime,
-    summaryTenderMeetingPoint: port?.tender?.meetingPoint,
+    summaryOurTenderAshoreTime:
+      port?.tender?.ourTenderAshore?.time,
+    summaryOurTenderAshoreAt:
+      port?.tender?.ourTenderAshore?.dateTime,
+    summaryOurTenderBackTime:
+      port?.tender?.ourTenderBack?.time,
+    summaryOurTenderBackAt:
+      port?.tender?.ourTenderBack?.dateTime,
     isEditable:
       Boolean(portCall) &&
       (day.kind === 'PORT_DAY' ||

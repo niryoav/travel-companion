@@ -177,9 +177,11 @@ source data is never overwritten.
 
 Overrides use stable day and event IDs, validate at the storage boundary, and
 fail closed when malformed or from an unsupported schema. All Aboard and last
-tender remain separate operational facts. This device-local layer performs no
-network request and introduces no account, collaboration, or synchronization
-behavior. See ADR-003.
+tender remain separate operational facts. Personal tender-report,
+tender-ashore, and tender-back plans are also distinct fields; expected arrival
+ashore is derived in memory from the planned outbound tender and crossing
+duration. This device-local layer performs no network request and introduces
+no account, collaboration, or synchronization behavior. See ADR-003.
 
 ## Guidance
 

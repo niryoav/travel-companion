@@ -264,7 +264,13 @@ export function validateTripData(data: TripData): string[] {
           (!Number.isInteger(tender.crossingMinutes) ||
             tender.crossingMinutes <= 0 ||
             tender.crossingMinutes > 240)) ||
-        [tender?.firstTender, tender?.ourTender, tender?.lastTender]
+        [
+          tender?.firstTender,
+          tender?.tenderReport,
+          tender?.ourTenderAshore,
+          tender?.ourTenderBack,
+          tender?.lastTender,
+        ]
           .some(
             (value) =>
               value !== undefined &&

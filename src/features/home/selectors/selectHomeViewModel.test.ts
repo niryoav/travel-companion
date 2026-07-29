@@ -41,15 +41,15 @@ describe('selectHomeViewModel', () => {
     },
   )
 
-  it('uses a port departure when no later event exists that day', () => {
+  it('uses the next operational port deadline when no later event exists', () => {
     const viewModel = selectHomeViewModel(
       tripFixture,
       new Date('2030-05-11T12:00:00Z'),
     )
 
     expect(viewModel.milestone).toMatchObject({
-      title: 'Depart Harbor Terminal',
-      time: '18:00',
+      title: 'All Aboard',
+      time: '17:30',
       allAboardTime: '17:30',
     })
   })
@@ -66,6 +66,48 @@ describe('selectHomeViewModel', () => {
 
     expect(tenderDay.portAccessStatus).toBe('TENDER_REQUIRED')
     expect(seaDay.portAccessStatus).toBeUndefined()
+  })
+
+  it('selects the next personal tender action without displacing an earlier event', () => {
+    const data = structuredClone(tripFixture)
+    data.portCalls[0].portAccess = {
+      status: 'TENDER_REQUIRED',
+      tender: {
+        tenderReport: {
+          at: '2030-05-11T08:00:00+02:00',
+          verification: 'CONFIRMED',
+        },
+        ourTenderAshore: {
+          at: '2030-05-11T08:10:00+02:00',
+          verification: 'CONFIRMED',
+        },
+        ourTenderBack: {
+          at: '2030-05-11T16:30:00+02:00',
+          verification: 'CONFIRMED',
+        },
+      },
+    }
+
+    expect(
+      selectHomeViewModel(
+        data,
+        new Date('2030-05-11T05:50:00Z'),
+      ).milestone,
+    ).toMatchObject({
+      title: 'Tender report',
+      time: '08:00',
+    })
+
+    data.events[1] = {
+      ...data.events[1],
+      startsAt: '2030-05-11T07:55:00+02:00',
+    }
+    expect(
+      selectHomeViewModel(
+        data,
+        new Date('2030-05-11T05:50:00Z'),
+      ).milestone?.title,
+    ).toBe('Coastal walk')
   })
 
   it('changes the countdown at midnight in the trip home time zone', () => {

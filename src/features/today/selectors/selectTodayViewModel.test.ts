@@ -34,7 +34,8 @@ describe('selectTodayViewModel', () => {
     expect(today.returnGuidance?.detail).toContain(
       'Based on estimated All Aboard.',
     )
-    expect(previousDay.tomorrow?.allAboardNote).toBe(
+    expect(previousDay.tomorrow?.allAboardNote).toBeUndefined()
+    expect(previousDay.tomorrow?.tenderPlan).toContain(
       'All Aboard 15:30 · Estimated',
     )
   })
@@ -461,6 +462,30 @@ describe('selectTodayViewModel', () => {
     )
   })
 
+  it('prompts neutrally when tomorrow’s personal tender plan is unknown', () => {
+    const data = structuredClone(tripFixture)
+    data.portCalls[0].portAccess = {
+      status: 'TENDER_REQUIRED',
+      tender: {
+        lastTender: {
+          at: '2030-05-11T17:00:00+02:00',
+          verification: 'CONFIRMED',
+        },
+      },
+    }
+
+    const result = selectTodayViewModel(
+      data,
+      new Date('2030-05-10T12:00:00Z'),
+    )
+
+    expect(result.tomorrow?.tenderPlan).toEqual([
+      'Tender times still need to be planned.',
+      'Last tender 17:00',
+      'All Aboard 17:30 · Confirmed',
+    ])
+  })
+
   it('uses a calm tomorrow empty state and stops at the final trip day', () => {
     const dataWithoutSeaDayPlans: TripData = {
       ...tripFixture,
@@ -598,8 +623,16 @@ describe('selectTodayViewModel', () => {
       dayId: 'day-2030-05-11',
       portAccessStatus: 'TENDER_REQUIRED',
       allAboardAt: '2030-05-11T17:00:00+02:00',
-      ourTender: {
+      ourTenderAshore: {
         at: '2030-05-11T08:10:00+02:00',
+        verification: 'CONFIRMED',
+      },
+      ourTenderBack: {
+        at: '2030-05-11T16:30:00+02:00',
+        verification: 'CONFIRMED',
+      },
+      tenderReport: {
+        at: '2030-05-11T08:00:00+02:00',
         verification: 'CONFIRMED',
       },
       updatedAt: '2030-05-10T18:42:00Z',
@@ -617,12 +650,38 @@ describe('selectTodayViewModel', () => {
       new Date('2030-05-11T06:00:00Z'),
     )
     expect(today.nextEvent).toMatchObject({
-      meetingTime: '09:15',
-      leaveBy: {
-        state: 'CONFIRMED',
-        time: '08:10',
-      },
+      title: 'Our tender ashore',
+      time: '08:10',
     })
+    expect(today.timeline).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'day-2030-05-11-tender-report',
+          title: 'Tender report',
+          time: '08:00',
+          state: 'COMPLETED',
+        }),
+        expect.objectContaining({
+          id: 'day-2030-05-11-our-tender-ashore',
+          title: 'Our tender ashore',
+          time: '08:10',
+        }),
+        expect.objectContaining({
+          id: 'day-2030-05-11-our-tender-back',
+          title: 'Our tender back',
+          time: '16:30',
+        }),
+        expect.objectContaining({
+          meetingTime: '09:15',
+          leaveBy: expect.objectContaining({
+            state: 'CONFIRMED',
+            time: '08:10',
+            label: 'Leave by',
+            detail: 'Explicit configured time.',
+          }),
+        }),
+      ]),
+    )
     expect(today.operationalStatus?.time).toBe('17:00')
     expect(today.returnGuidance?.bufferLabel).toBe(
       '60 min before All Aboard',
@@ -633,8 +692,12 @@ describe('selectTodayViewModel', () => {
       new Date('2030-05-10T12:00:00Z'),
     )
     expect(departureDay.tomorrow?.firstEvent?.meetingTime).toBe('09:15')
-    expect(departureDay.tomorrow?.portAccessNote).toBe(
-      'Tender required · Our tender 08:10',
-    )
+    expect(departureDay.tomorrow?.portAccessNote).toBe('Tender required')
+    expect(departureDay.tomorrow?.tenderPlan).toEqual([
+      'Tender report 08:00',
+      'Our tender ashore 08:10',
+      'Our tender back 16:30',
+      'All Aboard 17:00 · Confirmed',
+    ])
   })
 })

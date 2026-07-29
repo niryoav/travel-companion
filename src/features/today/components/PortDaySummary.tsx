@@ -56,18 +56,6 @@ export function PortDaySummary({ port }: PortDaySummaryProps) {
               </dd>
             </div>
           ) : null}
-          {port.tender.ourTender ? (
-            <div>
-              <dt>Our tender</dt>
-              <dd>
-                {port.tender.ourTender.time ? (
-                  <time dateTime={port.tender.ourTender.dateTime}>
-                    {port.tender.ourTender.time}
-                  </time>
-                ) : port.tender.ourTender.statusLabel}
-              </dd>
-            </div>
-          ) : null}
           {port.tender.lastTender ? (
             <div>
               <dt>Last tender back</dt>
@@ -81,12 +69,6 @@ export function PortDaySummary({ port }: PortDaySummaryProps) {
             </div>
           ) : null}
         </dl>
-      ) : null}
-      {port.tender?.meetingPoint ? (
-        <p>Meeting point: {port.tender.meetingPoint}</p>
-      ) : null}
-      {port.tender?.crossingLabel ? (
-        <p>{port.tender.crossingLabel}</p>
       ) : null}
       {port.tender?.note ? <p>{port.tender.note}</p> : null}
       {port.operationalNote ? <p>{port.operationalNote}</p> : null}

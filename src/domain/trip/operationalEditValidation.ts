@@ -18,7 +18,9 @@ export type OperationalEditField =
   | 'departureTime'
   | 'allAboardTime'
   | 'firstTenderTime'
-  | 'ourTenderTime'
+  | 'tenderReportTime'
+  | 'ourTenderAshoreTime'
+  | 'ourTenderBackTime'
   | 'tenderCrossingMinutes'
   | 'lastTenderTime'
   | `excursion:${string}:meetingTime`
@@ -64,7 +66,9 @@ export interface OperationalEditValidationInput {
   firstTender: TenderTimeInput
   lastTender: TenderTimeInput
   localDate: string
-  ourTender: TenderTimeInput
+  tenderReport: TenderTimeInput
+  ourTenderAshore: TenderTimeInput
+  ourTenderBack: TenderTimeInput
   portAccessStatus: PortAccessStatus
   tenderCrossingMinutes: string
   timeZone: string
@@ -234,7 +238,9 @@ export function validateOperationalEditTiming(
   }
 
   let firstTender: number | undefined
-  let ourTender: number | undefined
+  let tenderReport: number | undefined
+  let ourTenderAshore: number | undefined
+  let ourTenderBack: number | undefined
   let lastTender: number | undefined
   let crossingMinutes: number | undefined
   if (input.portAccessStatus === 'TENDER_REQUIRED') {
@@ -246,12 +252,28 @@ export function validateOperationalEditTiming(
       'First tender',
       issues,
     )
-    ourTender = resolveTenderTime(
-      input.ourTender,
+    tenderReport = resolveTenderTime(
+      input.tenderReport,
       input.localDate,
       input.timeZone,
-      'ourTenderTime',
-      'Our tender',
+      'tenderReportTime',
+      'Tender report',
+      issues,
+    )
+    ourTenderAshore = resolveTenderTime(
+      input.ourTenderAshore,
+      input.localDate,
+      input.timeZone,
+      'ourTenderAshoreTime',
+      'Our tender ashore',
+      issues,
+    )
+    ourTenderBack = resolveTenderTime(
+      input.ourTenderBack,
+      input.localDate,
+      input.timeZone,
+      'ourTenderBackTime',
+      'Our tender back',
       issues,
     )
     lastTender = resolveTenderTime(
@@ -295,15 +317,27 @@ export function validateOperationalEditTiming(
       )
     }
     if (
-      ourTender !== undefined &&
-      firstTender !== undefined &&
-      ourTender < firstTender
+      tenderReport !== undefined &&
+      ourTenderAshore !== undefined &&
+      tenderReport > ourTenderAshore
     ) {
       addIssue(
         issues,
         'ERROR',
-        'ourTenderTime',
-        `Our tender cannot be before the first tender at ${input.firstTender.time}.`,
+        'tenderReportTime',
+        `Tender report cannot be after our tender ashore at ${input.ourTenderAshore.time}.`,
+      )
+    }
+    if (
+      ourTenderAshore !== undefined &&
+      firstTender !== undefined &&
+      ourTenderAshore < firstTender
+    ) {
+      addIssue(
+        issues,
+        'ERROR',
+        'ourTenderAshoreTime',
+        `Our tender ashore cannot be before the first tender at ${input.firstTender.time}.`,
       )
     }
     if (
@@ -343,15 +377,76 @@ export function validateOperationalEditTiming(
       )
     }
     if (
-      ourTender !== undefined &&
+      ourTenderAshore !== undefined &&
       lastTender !== undefined &&
-      ourTender > lastTender
+      ourTenderAshore > lastTender
     ) {
       addIssue(
         issues,
         'ERROR',
-        'ourTenderTime',
-        'Our tender cannot be after the last tender.',
+        'ourTenderAshoreTime',
+        `Our tender ashore cannot be after the last tender at ${input.lastTender.time}.`,
+      )
+    }
+    if (
+      ourTenderAshore !== undefined &&
+      departure !== undefined &&
+      ourTenderAshore > departure
+    ) {
+      addIssue(
+        issues,
+        'ERROR',
+        'ourTenderAshoreTime',
+        `Our tender ashore cannot be after ship departure at ${input.departureTime}.`,
+      )
+    }
+    if (
+      ourTenderBack !== undefined &&
+      arrival !== undefined &&
+      ourTenderBack < arrival
+    ) {
+      addIssue(
+        issues,
+        'ERROR',
+        'ourTenderBackTime',
+        `Our tender back cannot be before ship arrival at ${input.arrivalTime}.`,
+      )
+    }
+    if (
+      ourTenderBack !== undefined &&
+      lastTender !== undefined &&
+      ourTenderBack > lastTender
+    ) {
+      addIssue(
+        issues,
+        'ERROR',
+        'ourTenderBackTime',
+        `Our tender back cannot be after the last tender at ${input.lastTender.time}.`,
+      )
+    }
+    if (
+      ourTenderBack !== undefined &&
+      allAboard !== undefined &&
+      (lastTender === undefined || allAboard < lastTender) &&
+      ourTenderBack > allAboard
+    ) {
+      addIssue(
+        issues,
+        'ERROR',
+        'ourTenderBackTime',
+        `Our tender back cannot be after All Aboard at ${input.allAboardTime}.`,
+      )
+    }
+    if (
+      ourTenderBack !== undefined &&
+      departure !== undefined &&
+      ourTenderBack > departure
+    ) {
+      addIssue(
+        issues,
+        'ERROR',
+        'ourTenderBackTime',
+        `Our tender back cannot be after ship departure at ${input.departureTime}.`,
       )
     }
     if (
@@ -365,6 +460,34 @@ export function validateOperationalEditTiming(
         'lastTenderTime',
         'Last tender is earlier than All Aboard. Plan to use the last tender time.',
       )
+    }
+
+    const returnDeadline = [
+      lastTender,
+      allAboard,
+      departure,
+    ].filter((value): value is number => value !== undefined)
+      .sort((left, right) => left - right)[0]
+    if (
+      ourTenderBack !== undefined &&
+      returnDeadline !== undefined &&
+      ourTenderBack <= returnDeadline
+    ) {
+      const bufferMinutes = Math.floor(
+        (returnDeadline - ourTenderBack) / 60_000,
+      )
+      if (
+        bufferMinutes > 0 &&
+        bufferMinutes <
+          RETURN_BUFFER_THRESHOLDS.INDEPENDENT.limitedMinutes
+      ) {
+        addIssue(
+          issues,
+          'WARNING',
+          'ourTenderBackTime',
+          `Only ${bufferMinutes} minutes remain before the tender return deadline.`,
+        )
+      }
     }
   }
 
@@ -498,12 +621,27 @@ export function validateOperationalEditTiming(
 
     if (
       excursion.bookingType === 'INDEPENDENT' &&
-      ourTender !== undefined &&
+      tenderReport !== undefined &&
+      ourTenderAshore !== undefined &&
       crossingMinutes !== undefined &&
       meeting !== undefined
     ) {
+      const arrivalAshore =
+        ourTenderAshore + crossingMinutes * 60_000
+      if (arrivalAshore > meeting) {
+        addIssue(
+          issues,
+          'ERROR',
+          meetingField,
+          'Tender arrival would be after the excursion meeting time.',
+        )
+        continue
+      }
+      if (travelMinutes === undefined) {
+        continue
+      }
       const calculatedArrival =
-        ourTender + (crossingMinutes + (travelMinutes ?? 0)) * 60_000
+        arrivalAshore + travelMinutes * 60_000
       const bufferMinutes = Math.floor(
         (meeting - calculatedArrival) / 60_000,
       )

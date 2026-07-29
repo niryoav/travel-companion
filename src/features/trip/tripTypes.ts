@@ -122,9 +122,12 @@ export interface TripPortViewModel {
   operationalNote?: string
   tender?: {
     firstTender?: TripOperationalTimeViewModel
-    ourTender?: TripOperationalTimeViewModel
+    tenderReport?: TripOperationalTimeViewModel
+    ourTenderAshore?: TripOperationalTimeViewModel
+    expectedArrivalAshore?: TripOperationalTimeViewModel
     meetingPoint?: string
     crossingLabel?: string
+    ourTenderBack?: TripOperationalTimeViewModel
     lastTender?: TripOperationalTimeViewModel
     note?: string
   }
@@ -158,9 +161,10 @@ export interface TripDayViewModel {
   summaryAllAboardStatusLabel?: string
   summaryPortAccessStatus?: TripPortViewModel['accessStatus']
   summaryPortAccessLabel?: string
-  summaryOurTenderTime?: string
-  summaryOurTenderAt?: string
-  summaryTenderMeetingPoint?: string
+  summaryOurTenderAshoreTime?: string
+  summaryOurTenderAshoreAt?: string
+  summaryOurTenderBackTime?: string
+  summaryOurTenderBackAt?: string
   isEditable?: boolean
   updatedLocallyLabel?: string
   relatedDocumentCount: number

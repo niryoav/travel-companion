@@ -247,47 +247,22 @@ export function TripDayDetails({ day }: TripDayDetailsProps) {
               />
             </p>
           ) : null}
-          {hasPortTimes ? (
+          {day.port.arrivalTime ? (
             <dl className="trip-port-times">
-              {day.port.arrivalTime ? (
-                <div>
-                  <dt>Arrival</dt>
-                  <dd>
-                    <time dateTime={day.port.arrivalAt}>
-                      {day.port.arrivalTime}
-                    </time>
-                  </dd>
-                </div>
-              ) : null}
-              {day.port.departureTime ? (
-                <div>
-                  <dt>Departure</dt>
-                  <dd>
-                    <time dateTime={day.port.departureAt}>
-                      {day.port.departureTime}
-                    </time>
-                  </dd>
-                </div>
-              ) : null}
-              {day.port.allAboardTime ? (
-                <div className="trip-port-critical">
-                  <dt>All Aboard</dt>
-                  <dd>
-                    <time dateTime={day.port.allAboardAt}>
-                      {day.port.allAboardTime}
-                    </time>
-                    {day.port.allAboardStatusLabel
-                      ? ` · ${day.port.allAboardStatusLabel}`
-                      : null}
-                  </dd>
-                </div>
-              ) : null}
+              <div>
+                <dt>Arrival</dt>
+                <dd>
+                  <time dateTime={day.port.arrivalAt}>
+                    {day.port.arrivalTime}
+                  </time>
+                </dd>
+              </div>
             </dl>
-          ) : (
+          ) : !hasPortTimes && !day.port.tender ? (
             <p className="trip-supporting-copy">
               No verified operational times are configured.
             </p>
-          )}
+          ) : null}
           {day.port.tender ? (
             <dl className="trip-tender-times">
               {day.port.tender.firstTender ? (
@@ -304,21 +279,82 @@ export function TripDayDetails({ day }: TripDayDetailsProps) {
                   </dd>
                 </div>
               ) : null}
-              {day.port.tender.ourTender ? (
+              {day.port.tender.tenderReport ? (
                 <div>
-                  <dt>Our tender</dt>
+                  <dt>Tender report</dt>
                   <dd>
-                    {day.port.tender.ourTender.time ? (
-                      <time dateTime={day.port.tender.ourTender.dateTime}>
-                        {day.port.tender.ourTender.time}
+                    {day.port.tender.tenderReport.time ? (
+                      <time
+                        dateTime={day.port.tender.tenderReport.dateTime}
+                      >
+                        {day.port.tender.tenderReport.time}
                       </time>
-                    ) : day.port.tender.ourTender.statusLabel}
+                    ) : day.port.tender.tenderReport.statusLabel}
+                  </dd>
+                </div>
+              ) : null}
+              {day.port.tender.ourTenderAshore ? (
+                <div>
+                  <dt>Our tender ashore</dt>
+                  <dd>
+                    {day.port.tender.ourTenderAshore.time ? (
+                      <time
+                        dateTime={
+                          day.port.tender.ourTenderAshore.dateTime
+                        }
+                      >
+                        {day.port.tender.ourTenderAshore.time}
+                      </time>
+                    ) : day.port.tender.ourTenderAshore.statusLabel}
+                  </dd>
+                </div>
+              ) : null}
+              {day.port.tender.meetingPoint ? (
+                <div>
+                  <dt>Tender meeting point</dt>
+                  <dd>{day.port.tender.meetingPoint}</dd>
+                </div>
+              ) : null}
+              {day.port.tender.crossingLabel ? (
+                <div>
+                  <dt>Crossing time</dt>
+                  <dd>{day.port.tender.crossingLabel}</dd>
+                </div>
+              ) : null}
+              {day.port.tender.expectedArrivalAshore ? (
+                <div>
+                  <dt>Expected arrival ashore</dt>
+                  <dd>
+                    <time
+                      dateTime={
+                        day.port.tender.expectedArrivalAshore.dateTime
+                      }
+                    >
+                      {day.port.tender.expectedArrivalAshore.time}
+                    </time>
+                    {' · Estimated'}
+                  </dd>
+                </div>
+              ) : null}
+              {day.port.tender.ourTenderBack ? (
+                <div>
+                  <dt>Our tender back</dt>
+                  <dd>
+                    {day.port.tender.ourTenderBack.time ? (
+                      <time
+                        dateTime={
+                          day.port.tender.ourTenderBack.dateTime
+                        }
+                      >
+                        {day.port.tender.ourTenderBack.time}
+                      </time>
+                    ) : day.port.tender.ourTenderBack.statusLabel}
                   </dd>
                 </div>
               ) : null}
               {day.port.tender.lastTender ? (
                 <div>
-                  <dt>Last tender back</dt>
+                  <dt>Last tender</dt>
                   <dd>
                     {day.port.tender.lastTender.time ? (
                       <time
@@ -332,15 +368,32 @@ export function TripDayDetails({ day }: TripDayDetailsProps) {
               ) : null}
             </dl>
           ) : null}
-          {day.port.tender?.meetingPoint ? (
-            <p className="trip-supporting-copy">
-              Tender meeting point: {day.port.tender.meetingPoint}
-            </p>
-          ) : null}
-          {day.port.tender?.crossingLabel ? (
-            <p className="trip-supporting-copy">
-              {day.port.tender.crossingLabel}
-            </p>
+          {day.port.allAboardTime || day.port.departureTime ? (
+            <dl className="trip-port-times">
+              {day.port.allAboardTime ? (
+                <div className="trip-port-critical">
+                  <dt>All Aboard</dt>
+                  <dd>
+                    <time dateTime={day.port.allAboardAt}>
+                      {day.port.allAboardTime}
+                    </time>
+                    {day.port.allAboardStatusLabel
+                      ? ` · ${day.port.allAboardStatusLabel}`
+                      : null}
+                  </dd>
+                </div>
+              ) : null}
+              {day.port.departureTime ? (
+                <div>
+                  <dt>Ship departure</dt>
+                  <dd>
+                    <time dateTime={day.port.departureAt}>
+                      {day.port.departureTime}
+                    </time>
+                  </dd>
+                </div>
+              ) : null}
+            </dl>
           ) : null}
           {day.port.tender?.note ? (
             <p className="trip-supporting-copy">

@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 
@@ -73,6 +73,61 @@ describe('TodayScreen', () => {
       allAboard!.compareDocumentPosition(nextEvent!) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy()
+  })
+
+  it('renders known personal tender actions in the existing agenda', () => {
+    const data = structuredClone(tripFixture)
+    data.portCalls[0].portAccess = {
+      status: 'TENDER_REQUIRED',
+      tender: {
+        tenderReport: {
+          at: '2030-05-11T08:00:00+02:00',
+          verification: 'CONFIRMED',
+        },
+        ourTenderAshore: {
+          at: '2030-05-11T08:20:00+02:00',
+          verification: 'CONFIRMED',
+        },
+        crossingMinutes: 15,
+        ourTenderBack: {
+          at: '2030-05-11T16:30:00+02:00',
+          verification: 'CONFIRMED',
+        },
+      },
+    }
+    render(
+      <MemoryRouter initialEntries={['/today']}>
+        <TodayScreen
+          now={new Date('2030-05-11T05:30:00Z')}
+          tripData={data}
+        />
+      </MemoryRouter>,
+    )
+
+    const timeline = screen.getByRole('heading', {
+      level: 2,
+      name: 'Timeline',
+    }).closest('section')
+    expect(timeline).not.toBeNull()
+    const agenda = within(timeline as HTMLElement).getByRole('list')
+    expect(within(agenda).getByText('Tender report')).toBeInTheDocument()
+    expect(
+      within(agenda).getByText('Our tender ashore'),
+    ).toBeInTheDocument()
+    expect(
+      within(agenda).getByText('Expected arrival ashore'),
+    ).toBeInTheDocument()
+    expect(within(agenda).getByText('Estimated time')).toBeInTheDocument()
+    expect(
+      within(agenda).getByText('Our tender back'),
+    ).toBeInTheDocument()
+    expect(within(agenda).queryByText('First tender')).not.toBeInTheDocument()
+    expect(within(agenda).queryByText('Last tender')).not.toBeInTheDocument()
+
+    const tomorrow = screen.queryByText('Prepare for tomorrow')
+    if (tomorrow) {
+      fireEvent.click(tomorrow)
+    }
   })
 
   it('maps port-day-late without falling back to the pre-trip state', () => {

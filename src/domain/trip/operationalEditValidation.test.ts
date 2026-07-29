@@ -26,7 +26,9 @@ function baseInput(): OperationalEditValidationInput {
     firstTender: tenderTime(),
     lastTender: tenderTime(),
     localDate: '2026-08-24',
-    ourTender: tenderTime(),
+    tenderReport: tenderTime(),
+    ourTenderAshore: tenderTime(),
+    ourTenderBack: tenderTime(),
     portAccessStatus: 'TENDER_REQUIRED',
     tenderCrossingMinutes: '',
     timeZone: 'Atlantic/Reykjavik',
@@ -91,19 +93,88 @@ describe('operational edit timing validation', () => {
   it('blocks our tender before first tender and accepts equality', () => {
     const invalid = validate((input) => {
       input.firstTender = tenderTime('09:15')
-      input.ourTender = tenderTime('09:00')
+      input.ourTenderAshore = tenderTime('09:00')
     })
     const equal = validate((input) => {
       input.firstTender = tenderTime('09:15')
-      input.ourTender = tenderTime('09:15')
+      input.ourTenderAshore = tenderTime('09:15')
     })
 
     expect(invalid.errors).toContainEqual({
-      field: 'ourTenderTime',
-      message: 'Our tender cannot be before the first tender at 09:15.',
+      field: 'ourTenderAshoreTime',
+      message: 'Our tender ashore cannot be before the first tender at 09:15.',
       severity: 'ERROR',
     })
     expect(equal.errors).toEqual([])
+  })
+
+  it('blocks tender report after our tender ashore and accepts equality', () => {
+    const invalid = validate((input) => {
+      input.tenderReport = tenderTime('09:30')
+      input.ourTenderAshore = tenderTime('09:15')
+    })
+    const equal = validate((input) => {
+      input.tenderReport = tenderTime('09:15')
+      input.ourTenderAshore = tenderTime('09:15')
+    })
+
+    expect(invalid.errors).toContainEqual({
+      field: 'tenderReportTime',
+      message:
+        'Tender report cannot be after our tender ashore at 09:15.',
+      severity: 'ERROR',
+    })
+    expect(equal.errors).toEqual([])
+  })
+
+  it('validates our tender back against arrival and the effective deadline', () => {
+    const beforeArrival = validate((input) => {
+      input.ourTenderBack = tenderTime('08:45')
+    })
+    const atArrival = validate((input) => {
+      input.ourTenderBack = tenderTime('09:00')
+    })
+    const afterLastTender = validate((input) => {
+      input.lastTender = tenderTime('15:15')
+      input.ourTenderBack = tenderTime('15:20')
+    })
+    const afterEarlierAllAboard = validate((input) => {
+      input.lastTender = tenderTime('15:45')
+      input.ourTenderBack = tenderTime('15:40')
+    })
+    const atAllAboard = validate((input) => {
+      input.lastTender = tenderTime('15:45')
+      input.ourTenderBack = tenderTime('15:30')
+    })
+
+    expect(beforeArrival.errors.map(({ message }) => message)).toContain(
+      'Our tender back cannot be before ship arrival at 09:00.',
+    )
+    expect(atArrival.errors).toEqual([])
+    expect(afterLastTender.errors.map(({ message }) => message)).toContain(
+      'Our tender back cannot be after the last tender at 15:15.',
+    )
+    expect(
+      afterEarlierAllAboard.errors.map(({ message }) => message),
+    ).toContain('Our tender back cannot be after All Aboard at 15:30.')
+    expect(atAllAboard.errors).toEqual([])
+  })
+
+  it('warns for a tight personal return margin but not a safe one', () => {
+    const tight = validate((input) => {
+      input.lastTender = tenderTime('15:45')
+      input.ourTenderBack = tenderTime('15:10')
+    })
+    const safe = validate((input) => {
+      input.lastTender = tenderTime('15:45')
+      input.ourTenderBack = tenderTime('14:30')
+    })
+
+    expect(tight.errors).toEqual([])
+    expect(tight.warnings.map(({ message }) => message)).toContain(
+      'Only 20 minutes remain before the tender return deadline.',
+    )
+    expect(safe.issues).toEqual([])
   })
 
   it('blocks last tender after departure and accepts equality', () => {
@@ -155,16 +226,16 @@ describe('operational edit timing validation', () => {
       input.firstTender = tenderTime('15:45')
       input.lastTender = tenderTime('15:30')
     })
-    const ourTender = validate((input) => {
-      input.ourTender = tenderTime('15:45')
+    const ourTenderAshore = validate((input) => {
+      input.ourTenderAshore = tenderTime('15:45')
       input.lastTender = tenderTime('15:30')
     })
 
     expect(firstTender.errors.map(({ message }) => message)).toContain(
       'First tender cannot be after the last tender.',
     )
-    expect(ourTender.errors.map(({ message }) => message)).toContain(
-      'Our tender cannot be after the last tender.',
+    expect(ourTenderAshore.errors.map(({ message }) => message)).toContain(
+      'Our tender ashore cannot be after the last tender at 15:30.',
     )
   })
 
@@ -309,11 +380,13 @@ describe('operational edit timing validation', () => {
 
   it('warns for a tight independent tender connection', () => {
     const result = validate((input) => {
-      input.ourTender = tenderTime('09:00')
+      input.tenderReport = tenderTime('08:50')
+      input.ourTenderAshore = tenderTime('09:00')
       input.tenderCrossingMinutes = '10'
       input.excursions = [{
         ...excursionInput(),
         meetingTime: '09:20',
+        travelDurationMinutes: '5',
       }]
     })
 
@@ -321,14 +394,15 @@ describe('operational edit timing validation', () => {
     expect(result.warnings).toContainEqual({
       field: 'excursion:event-coastal-tour:meetingTime',
       message:
-        'Only 10 minutes remain between tender arrival and the excursion meeting time.',
+        'Only 5 minutes remain between tender arrival and the excursion meeting time.',
       severity: 'WARNING',
     })
   })
 
   it('blocks an impossible independent tender connection', () => {
     const result = validate((input) => {
-      input.ourTender = tenderTime('09:00')
+      input.tenderReport = tenderTime('08:50')
+      input.ourTenderAshore = tenderTime('09:00')
       input.tenderCrossingMinutes = '20'
       input.excursions = [{
         ...excursionInput(),

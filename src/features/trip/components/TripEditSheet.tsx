@@ -721,63 +721,86 @@ export function TripEditSheet({
                 </SelectField>
               </Field>
 
-              {([
-                ['arrivalTime', 'Ship arrival time'],
-                ['departureTime', 'Ship departure time'],
-              ] as const).map(([key, label]) => (
-                <Field
-                  current={draft[key]}
-                  key={key}
-                  label={label}
-                  original={originalDraft[key]}
-                  onUseOriginal={() =>
-                    updateDraft(key, originalDraft[key])
+              <Field
+                current={draft.arrivalTime}
+                label="Ship arrival"
+                original={originalDraft.arrivalTime}
+                onUseOriginal={() =>
+                  updateDraft('arrivalTime', originalDraft.arrivalTime)
+                }
+              >
+                <TextInput
+                  id="trip-edit-arrivalTime"
+                  issues={issuesFor('arrivalTime')}
+                  label="Ship arrival"
+                  type="time"
+                  validationField="arrivalTime"
+                  value={draft.arrivalTime}
+                  onChange={(value) =>
+                    updateDraft('arrivalTime', value)
                   }
-                >
-                  <TextInput
-                    id={`trip-edit-${key}`}
-                    issues={issuesFor(key)}
-                    label={label}
-                    type="time"
-                    validationField={key}
-                    value={draft[key]}
-                    onChange={(value) => updateDraft(key, value)}
-                  />
-                </Field>
-              ))}
+                />
+              </Field>
 
-              <OperationalTimeField
-                id="trip-edit-all-aboard"
-                issues={issuesFor('allAboardTime')}
-                label="All Aboard time"
-                validationField="allAboardTime"
-                value={{
-                  time: draft.allAboardTime,
-                  verification: draft.allAboardVerification,
-                }}
-                original={{
-                  time: originalDraft.allAboardTime,
-                  verification:
-                    originalDraft.allAboardVerification,
-                }}
-                onChange={({ time, verification }) => {
-                  setSaveErrors([])
-                  setDraft({
-                    ...draft,
-                    allAboardTime: time,
-                    allAboardVerification: verification,
-                  })
-                }}
-                onUseOriginal={() => {
-                  setSaveErrors([])
-                  setDraft({
-                    ...draft,
-                    allAboardTime: originalDraft.allAboardTime,
-                    allAboardVerification:
-                      originalDraft.allAboardVerification,
-                  })
-                }}
-              />
+              {draft.portAccessStatus !== 'TENDER_REQUIRED' ? (
+                <>
+                  <Field
+                    current={draft.departureTime}
+                    label="Ship departure"
+                    original={originalDraft.departureTime}
+                    onUseOriginal={() =>
+                      updateDraft(
+                        'departureTime',
+                        originalDraft.departureTime,
+                      )
+                    }
+                  >
+                    <TextInput
+                      id="trip-edit-departureTime"
+                      issues={issuesFor('departureTime')}
+                      label="Ship departure"
+                      type="time"
+                      validationField="departureTime"
+                      value={draft.departureTime}
+                      onChange={(value) =>
+                        updateDraft('departureTime', value)
+                      }
+                    />
+                  </Field>
+                  <OperationalTimeField
+                    id="trip-edit-all-aboard"
+                    issues={issuesFor('allAboardTime')}
+                    label="All Aboard"
+                    validationField="allAboardTime"
+                    value={{
+                      time: draft.allAboardTime,
+                      verification: draft.allAboardVerification,
+                    }}
+                    original={{
+                      time: originalDraft.allAboardTime,
+                      verification:
+                        originalDraft.allAboardVerification,
+                    }}
+                    onChange={({ time, verification }) => {
+                      setSaveErrors([])
+                      setDraft({
+                        ...draft,
+                        allAboardTime: time,
+                        allAboardVerification: verification,
+                      })
+                    }}
+                    onUseOriginal={() => {
+                      setSaveErrors([])
+                      setDraft({
+                        ...draft,
+                        allAboardTime: originalDraft.allAboardTime,
+                        allAboardVerification:
+                          originalDraft.allAboardVerification,
+                      })
+                    }}
+                  />
+                </>
+              ) : null}
 
               <Field
                 current={draft.dayNote}
@@ -805,7 +828,7 @@ export function TripEditSheet({
                 <OperationalTimeField
                   id="trip-edit-first-tender"
                   issues={issuesFor('firstTenderTime')}
-                  label="First tender time"
+                  label="First tender"
                   validationField="firstTenderTime"
                   value={draft.firstTender}
                   original={originalDraft.firstTender}
@@ -820,17 +843,37 @@ export function TripEditSheet({
                   }
                 />
                 <OperationalTimeField
-                  id="trip-edit-our-tender"
-                  issues={issuesFor('ourTenderTime')}
-                  label="Our tender / tender-ticket time"
-                  validationField="ourTenderTime"
-                  value={draft.ourTender}
-                  original={originalDraft.ourTender}
+                  id="trip-edit-tender-report"
+                  issues={issuesFor('tenderReportTime')}
+                  label="Tender report"
+                  validationField="tenderReportTime"
+                  value={draft.tenderReport}
+                  original={originalDraft.tenderReport}
                   onChange={(value) =>
-                    updateDraft('ourTender', value)
+                    updateDraft('tenderReport', value)
                   }
                   onUseOriginal={() =>
-                    updateDraft('ourTender', originalDraft.ourTender)
+                    updateDraft(
+                      'tenderReport',
+                      originalDraft.tenderReport,
+                    )
+                  }
+                />
+                <OperationalTimeField
+                  id="trip-edit-our-tender-ashore"
+                  issues={issuesFor('ourTenderAshoreTime')}
+                  label="Our tender ashore"
+                  validationField="ourTenderAshoreTime"
+                  value={draft.ourTenderAshore}
+                  original={originalDraft.ourTenderAshore}
+                  onChange={(value) =>
+                    updateDraft('ourTenderAshore', value)
+                  }
+                  onUseOriginal={() =>
+                    updateDraft(
+                      'ourTenderAshore',
+                      originalDraft.ourTenderAshore,
+                    )
                   }
                 />
                 <Field
@@ -879,9 +922,26 @@ export function TripEditSheet({
                   />
                 </Field>
                 <OperationalTimeField
+                  id="trip-edit-our-tender-back"
+                  issues={issuesFor('ourTenderBackTime')}
+                  label="Our tender back"
+                  validationField="ourTenderBackTime"
+                  value={draft.ourTenderBack}
+                  original={originalDraft.ourTenderBack}
+                  onChange={(value) =>
+                    updateDraft('ourTenderBack', value)
+                  }
+                  onUseOriginal={() =>
+                    updateDraft(
+                      'ourTenderBack',
+                      originalDraft.ourTenderBack,
+                    )
+                  }
+                />
+                <OperationalTimeField
                   id="trip-edit-last-tender"
                   issues={issuesFor('lastTenderTime')}
-                  label="Last tender back to ship"
+                  label="Last tender"
                   validationField="lastTenderTime"
                   value={draft.lastTender}
                   original={originalDraft.lastTender}
@@ -892,6 +952,61 @@ export function TripEditSheet({
                     updateDraft('lastTender', originalDraft.lastTender)
                   }
                 />
+                <OperationalTimeField
+                  id="trip-edit-all-aboard"
+                  issues={issuesFor('allAboardTime')}
+                  label="All Aboard"
+                  validationField="allAboardTime"
+                  value={{
+                    time: draft.allAboardTime,
+                    verification: draft.allAboardVerification,
+                  }}
+                  original={{
+                    time: originalDraft.allAboardTime,
+                    verification:
+                      originalDraft.allAboardVerification,
+                  }}
+                  onChange={({ time, verification }) => {
+                    setSaveErrors([])
+                    setDraft({
+                      ...draft,
+                      allAboardTime: time,
+                      allAboardVerification: verification,
+                    })
+                  }}
+                  onUseOriginal={() => {
+                    setSaveErrors([])
+                    setDraft({
+                      ...draft,
+                      allAboardTime: originalDraft.allAboardTime,
+                      allAboardVerification:
+                        originalDraft.allAboardVerification,
+                    })
+                  }}
+                />
+                <Field
+                  current={draft.departureTime}
+                  label="Ship departure"
+                  original={originalDraft.departureTime}
+                  onUseOriginal={() =>
+                    updateDraft(
+                      'departureTime',
+                      originalDraft.departureTime,
+                    )
+                  }
+                >
+                  <TextInput
+                    id="trip-edit-departureTime"
+                    issues={issuesFor('departureTime')}
+                    label="Ship departure"
+                    type="time"
+                    validationField="departureTime"
+                    value={draft.departureTime}
+                    onChange={(value) =>
+                      updateDraft('departureTime', value)
+                    }
+                  />
+                </Field>
                 <Field
                   current={draft.tenderNote}
                   label="Tender note"

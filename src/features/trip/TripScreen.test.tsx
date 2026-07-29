@@ -66,6 +66,60 @@ describe('TripScreen', () => {
 
     expect(document.getElementById('day-2030-05-11')).toBeInTheDocument()
   })
+  it('shows concise personal tender times before the full expanded chronology', () => {
+    const data = structuredClone(tripFixture)
+    data.portCalls[0].portAccess = {
+      status: 'TENDER_REQUIRED',
+      tender: {
+        firstTender: {
+          at: '2030-05-11T07:30:00+02:00',
+          verification: 'CONFIRMED',
+        },
+        tenderReport: {
+          at: '2030-05-11T08:00:00+02:00',
+          verification: 'CONFIRMED',
+        },
+        ourTenderAshore: {
+          at: '2030-05-11T08:20:00+02:00',
+          verification: 'CONFIRMED',
+        },
+        crossingMinutes: 15,
+        ourTenderBack: {
+          at: '2030-05-11T16:30:00+02:00',
+          verification: 'CONFIRMED',
+        },
+        lastTender: {
+          at: '2030-05-11T17:00:00+02:00',
+          verification: 'CONFIRMED',
+        },
+      },
+    }
+    render(
+      <MemoryRouter initialEntries={['/trip']}>
+        <TripScreen
+          now={new Date('2030-05-11T12:00:00Z')}
+          tripContent={tripContentFixture}
+          tripData={data}
+        />
+      </MemoryRouter>,
+    )
+
+    const card = document.getElementById('day-2030-05-11')
+    expect(card).not.toBeNull()
+    const scope = within(card as HTMLElement)
+    expect(scope.getByText('Our tender ashore:')).toBeInTheDocument()
+    expect(scope.getByText('Our tender back:')).toBeInTheDocument()
+    expect(scope.getByText('Tender report')).toBeInTheDocument()
+    expect(scope.getByText('Expected arrival ashore')).toBeInTheDocument()
+    expect(
+      scope.getByText(
+        (_, element) =>
+          element?.tagName === 'DD' &&
+          element.textContent === '08:35 · Estimated',
+      ),
+    ).toBeInTheDocument()
+    expect(scope.getByText('Last tender')).toBeInTheDocument()
+  })
   it('keeps operational details before collapsed editorial disclosures', () => {
     const { container } = renderTrip('/trip?state=content')
     const portDay = container.querySelector(

@@ -255,13 +255,13 @@ export function calculateLeaveBy(
     portAccess?.status === 'TENDER_REQUIRED'
       ? portAccess.tender
       : undefined
-  if (tender?.ourTender?.at) {
+  if (tender?.ourTenderAshore?.at) {
     return {
       state:
-        tender.ourTender.verification === 'CONFIRMED'
+        tender.ourTenderAshore.verification === 'CONFIRMED'
           ? 'CONFIRMED'
           : 'ESTIMATED',
-      leaveByAt: tender.ourTender.at,
+      leaveByAt: tender.ourTenderAshore.at,
       targetAt: earliestTarget(event),
       reason: undefined,
     }

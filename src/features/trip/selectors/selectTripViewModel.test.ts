@@ -301,6 +301,59 @@ describe('selectTripViewModel', () => {
     expect(day.port?.allAboardTime).toBe('17:30')
   })
 
+  it('keeps personal tender times concise in the summary and complete in detail', () => {
+    const data = structuredClone(tripFixture)
+    data.portCalls[0].portAccess = {
+      status: 'TENDER_REQUIRED',
+      tender: {
+        firstTender: {
+          at: '2030-05-11T07:30:00+02:00',
+          verification: 'CONFIRMED',
+        },
+        tenderReport: {
+          at: '2030-05-11T08:00:00+02:00',
+          verification: 'CONFIRMED',
+        },
+        ourTenderAshore: {
+          at: '2030-05-11T08:20:00+02:00',
+          verification: 'CONFIRMED',
+        },
+        crossingMinutes: 15,
+        ourTenderBack: {
+          at: '2030-05-11T16:30:00+02:00',
+          verification: 'CONFIRMED',
+        },
+        lastTender: {
+          at: '2030-05-11T17:00:00+02:00',
+          verification: 'CONFIRMED',
+        },
+      },
+    }
+
+    const day = selectTripViewModel(
+      data,
+      new Date('2030-05-11T12:00:00Z'),
+    ).days[1]
+
+    expect(day).toMatchObject({
+      summaryOurTenderAshoreTime: '08:20',
+      summaryOurTenderBackTime: '16:30',
+      port: {
+        tender: {
+          firstTender: { time: '07:30' },
+          tenderReport: { time: '08:00' },
+          ourTenderAshore: { time: '08:20' },
+          expectedArrivalAshore: {
+            time: '08:35',
+            statusLabel: 'Estimated',
+          },
+          ourTenderBack: { time: '16:30' },
+          lastTender: { time: '17:00' },
+        },
+      },
+    })
+  })
+
   it('does not invent unverified all-aboard', () => {
     const data: TripData = {
       ...tripFixture,

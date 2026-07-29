@@ -40,7 +40,9 @@ describe('trip day edit model', () => {
         .every(
           (draft) =>
             draft?.firstTender.time === '' &&
-            draft.ourTender.time === '' &&
+            draft.tenderReport.time === '' &&
+            draft.ourTenderAshore.time === '' &&
+            draft.ourTenderBack.time === '' &&
             draft.lastTender.time === '' &&
             draft.tenderMeetingPoint === '' &&
             draft.tenderCrossingMinutes === '',
@@ -70,7 +72,7 @@ describe('trip day edit model', () => {
     }
     draft.portAccessStatus = 'TENDER_REQUIRED'
     draft.allAboardTime = '17:10'
-    draft.ourTender = {
+    draft.ourTenderAshore = {
       time: '08:10',
       verification: 'CONFIRMED',
     }
@@ -87,7 +89,7 @@ describe('trip day edit model', () => {
     expect(result.dayOverride).toMatchObject({
       portAccessStatus: 'TENDER_REQUIRED',
       allAboardAt: '2030-05-11T15:10:00.000Z',
-      ourTender: {
+      ourTenderAshore: {
         at: '2030-05-11T06:10:00.000Z',
         verification: 'CONFIRMED',
       },

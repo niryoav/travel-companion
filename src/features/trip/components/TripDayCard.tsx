@@ -58,18 +58,26 @@ export function TripDayCard({ day, onEdit }: TripDayCardProps) {
               label={day.summaryPortAccessLabel}
               status={day.summaryPortAccessStatus}
             />
-            {day.summaryOurTenderTime ? (
+            {day.summaryOurTenderAshoreTime ? (
               <span>
-                Our tender:{' '}
-                <time dateTime={day.summaryOurTenderAt}>
-                  {day.summaryOurTenderTime}
+                Our tender ashore:{' '}
+                <time dateTime={day.summaryOurTenderAshoreAt}>
+                  {day.summaryOurTenderAshoreTime}
                 </time>
               </span>
-            ) : day.summaryPortAccessLabel === 'Tender required' ? (
-              <span>Tender timing still to be confirmed.</span>
             ) : null}
-            {day.summaryTenderMeetingPoint ? (
-              <span>Meeting point: {day.summaryTenderMeetingPoint}</span>
+            {day.summaryOurTenderBackTime ? (
+              <span>
+                Our tender back:{' '}
+                <time dateTime={day.summaryOurTenderBackAt}>
+                  {day.summaryOurTenderBackTime}
+                </time>
+              </span>
+            ) : null}
+            {!day.summaryOurTenderAshoreTime &&
+            !day.summaryOurTenderBackTime &&
+            day.summaryPortAccessLabel === 'Tender required' ? (
+              <span>Tender timing still to be confirmed.</span>
             ) : null}
           </div>
         ) : null}

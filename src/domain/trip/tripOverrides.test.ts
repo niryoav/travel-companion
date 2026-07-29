@@ -40,7 +40,7 @@ describe('trip operational overrides', () => {
     )
 
     expect(port.allAboardAt).toBe('2030-05-11T17:00:00+02:00')
-    expect(port.portAccess?.tender?.ourTender?.at).toBe(
+    expect(port.portAccess?.tender?.ourTenderAshore?.at).toBe(
       '2030-05-11T08:10:00+02:00',
     )
     expect(port.portAccess?.tender?.lastTender?.at).toBe(
@@ -98,6 +98,26 @@ describe('trip operational overrides', () => {
     ).toBeNull()
     expect(
       parseTripOverrideBundle('{not json', tripFixture),
+    ).toBeNull()
+    expect(
+      parseTripOverrideBundle(
+        JSON.stringify({
+          schemaVersion: 1,
+          tripId: tripFixture.trip.id,
+          dayOverrides: {
+            'day-2030-05-11': {
+              dayId: 'day-2030-05-11',
+              ourTenderBack: {
+                at: 'not-an-instant',
+                verification: 'CONFIRMED',
+              },
+              updatedAt: '2030-05-10T18:42:00Z',
+            },
+          },
+          eventOverrides: {},
+        }),
+        tripFixture,
+      ),
     ).toBeNull()
   })
 })

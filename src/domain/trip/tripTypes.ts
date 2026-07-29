@@ -191,9 +191,11 @@ export interface OperationalTime {
 
 export interface TenderOperations {
   firstTender?: OperationalTime
-  ourTender?: OperationalTime
+  tenderReport?: OperationalTime
+  ourTenderAshore?: OperationalTime
   meetingPoint?: string
   crossingMinutes?: number
+  ourTenderBack?: OperationalTime
   lastTender?: OperationalTime
   note?: string
 }

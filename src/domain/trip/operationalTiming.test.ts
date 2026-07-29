@@ -234,7 +234,7 @@ describe('leave-by guidance', () => {
       {
         status: 'TENDER_REQUIRED',
         tender: {
-          ourTender: {
+          ourTenderAshore: {
             at: '2030-05-11T08:10:00+02:00',
             verification: 'CONFIRMED',
           },

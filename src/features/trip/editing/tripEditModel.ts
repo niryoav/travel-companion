@@ -53,9 +53,11 @@ export interface TripDayEditDraft {
   allAboardVerification: OperationalEntryStatus
   dayNote: string
   firstTender: TenderTimeDraft
-  ourTender: TenderTimeDraft
+  tenderReport: TenderTimeDraft
+  ourTenderAshore: TenderTimeDraft
   tenderMeetingPoint: string
   tenderCrossingMinutes: string
+  ourTenderBack: TenderTimeDraft
   lastTender: TenderTimeDraft
   tenderNote: string
   excursions: ExcursionEditDraft[]
@@ -161,14 +163,24 @@ export function createTripDayEditDraft(
       tender?.firstTender?.verification,
       day.timeZone,
     ),
-    ourTender: tenderTimeDraft(
-      tender?.ourTender?.at,
-      tender?.ourTender?.verification,
+    tenderReport: tenderTimeDraft(
+      tender?.tenderReport?.at,
+      tender?.tenderReport?.verification,
+      day.timeZone,
+    ),
+    ourTenderAshore: tenderTimeDraft(
+      tender?.ourTenderAshore?.at,
+      tender?.ourTenderAshore?.verification,
       day.timeZone,
     ),
     tenderMeetingPoint: tender?.meetingPoint ?? '',
     tenderCrossingMinutes:
       tender?.crossingMinutes?.toString() ?? '',
+    ourTenderBack: tenderTimeDraft(
+      tender?.ourTenderBack?.at,
+      tender?.ourTenderBack?.verification,
+      day.timeZone,
+    ),
     lastTender: tenderTimeDraft(
       tender?.lastTender?.at,
       tender?.lastTender?.verification,
@@ -392,13 +404,25 @@ export function buildTripDayOverrides(
     )
     setWhenDefined(
       dayOverride,
-      'ourTender',
+      'tenderReport',
       operationalTimeChange(
-        baselineTender?.ourTender,
-        draft.ourTender,
+        baselineTender?.tenderReport,
+        draft.tenderReport,
         day.localDate,
         day.timeZone,
-        'Our tender',
+        'Tender report',
+        errors,
+      ),
+    )
+    setWhenDefined(
+      dayOverride,
+      'ourTenderAshore',
+      operationalTimeChange(
+        baselineTender?.ourTenderAshore,
+        draft.ourTenderAshore,
+        day.localDate,
+        day.timeZone,
+        'Our tender ashore',
         errors,
       ),
     )
@@ -418,6 +442,18 @@ export function buildTripDayOverrides(
         draft.tenderCrossingMinutes,
         'Tender crossing duration',
         MAX_TENDER_CROSSING_MINUTES,
+        errors,
+      ),
+    )
+    setWhenDefined(
+      dayOverride,
+      'ourTenderBack',
+      operationalTimeChange(
+        baselineTender?.ourTenderBack,
+        draft.ourTenderBack,
+        day.localDate,
+        day.timeZone,
+        'Our tender back',
         errors,
       ),
     )

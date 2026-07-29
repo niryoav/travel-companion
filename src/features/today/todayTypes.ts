@@ -70,9 +70,12 @@ export interface TodayPortViewModel {
   operationalNote?: string
   tender?: {
     firstTender?: TodayOperationalTimeViewModel
-    ourTender?: TodayOperationalTimeViewModel
+    tenderReport?: TodayOperationalTimeViewModel
+    ourTenderAshore?: TodayOperationalTimeViewModel
+    expectedArrivalAshore?: TodayOperationalTimeViewModel
     meetingPoint?: string
     crossingLabel?: string
+    ourTenderBack?: TodayOperationalTimeViewModel
     lastTender?: TodayOperationalTimeViewModel
     note?: string
   }
@@ -148,6 +151,7 @@ export interface TomorrowPreparationViewModel {
   documentActions: DocumentActionViewModel[]
   timingNote?: string
   portAccessNote?: string
+  tenderPlan?: string[]
   allAboardNote?: string
   emptyMessage?: string
   tripHref: string

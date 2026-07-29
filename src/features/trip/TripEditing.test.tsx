@@ -125,39 +125,42 @@ describe('Trip operational editing', () => {
     )
     expect(screen.getAllByText('Docked').length).toBeGreaterThan(0)
     expect(
-      screen.queryByLabelText('First tender time'),
+      screen.queryByLabelText('First tender'),
     ).not.toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Port access status'), {
       target: { value: 'TENDER_REQUIRED' },
     })
-    expect(screen.getByLabelText('First tender time')).toBeInTheDocument()
+    expect(screen.getByLabelText('First tender')).toBeInTheDocument()
     expect(
-      screen.getByLabelText('Last tender back to ship'),
+      screen.getByLabelText('Last tender'),
     ).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Port access status'), {
       target: { value: 'DOCKED' },
     })
     expect(
-      screen.queryByLabelText('First tender time'),
+      screen.queryByLabelText('First tender'),
     ).not.toBeInTheDocument()
   })
 
-  it('saves tender, All Aboard, and excursion changes immediately', () => {
+  it('saves both personal tender times, All Aboard, and excursion changes offline', () => {
     const { baseline, repository } = renderEditor()
     fireEvent.change(screen.getByLabelText('Port access status'), {
       target: { value: 'TENDER_REQUIRED' },
     })
-    fireEvent.change(screen.getByLabelText('All Aboard time'), {
+    fireEvent.change(screen.getByLabelText('All Aboard'), {
       target: { value: '17:10' },
     })
     fireEvent.change(
-      screen.getByLabelText('Our tender / tender-ticket time'),
+      screen.getByLabelText('Our tender ashore'),
       { target: { value: '08:10' } },
     )
+    fireEvent.change(screen.getByLabelText('Our tender back'), {
+      target: { value: '16:30' },
+    })
     fireEvent.change(screen.getByLabelText('Tender meeting point'), {
       target: { value: 'Main lounge' },
     })
-    fireEvent.change(screen.getByLabelText('Last tender back to ship'), {
+    fireEvent.change(screen.getByLabelText('Last tender'), {
       target: { value: '16:40' },
     })
     fireEvent.change(screen.getByLabelText('Meeting / check-in time'), {
@@ -172,7 +175,7 @@ describe('Trip operational editing', () => {
       screen.getByRole('status'),
     ).toHaveTextContent('Trip details saved on this device.')
     expect(screen.getAllByText('Tender required').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Our tender:').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Our tender ashore:').length).toBeGreaterThan(0)
     expect(screen.getAllByText('17:10').length).toBeGreaterThan(0)
     expect(screen.getByText('Updated locally')).toBeInTheDocument()
     expect(
@@ -182,6 +185,14 @@ describe('Trip operational editing', () => {
       repository.getSnapshot().dayOverrides['day-2030-05-11'],
     ).toMatchObject({
       allAboardVerification: 'CONFIRMED',
+      ourTenderAshore: {
+        at: '2030-05-11T06:10:00.000Z',
+        verification: 'CONFIRMED',
+      },
+      ourTenderBack: {
+        at: '2030-05-11T14:30:00.000Z',
+        verification: 'CONFIRMED',
+      },
     })
     expect(
       new LocalTripOverrideRepository(
@@ -193,9 +204,15 @@ describe('Trip operational editing', () => {
       new LocalTripOverrideRepository(
         window.localStorage,
         baseline,
-      ).getSnapshot().dayOverrides['day-2030-05-11'],
+    ).getSnapshot().dayOverrides['day-2030-05-11'],
     ).toMatchObject({
       allAboardVerification: 'CONFIRMED',
+      ourTenderAshore: {
+        at: '2030-05-11T06:10:00.000Z',
+      },
+      ourTenderBack: {
+        at: '2030-05-11T14:30:00.000Z',
+      },
     })
   })
 
@@ -204,7 +221,7 @@ describe('Trip operational editing', () => {
     fireEvent.change(screen.getByLabelText('Port access status'), {
       target: { value: 'TENDER_REQUIRED' },
     })
-    const firstTender = screen.getByLabelText('First tender time')
+    const firstTender = screen.getByLabelText('First tender')
     fireEvent.change(firstTender, { target: { value: '06:45' } })
 
     const message = screen.getByText(
@@ -223,15 +240,53 @@ describe('Trip operational editing', () => {
     expect(repository.getSnapshot().dayOverrides).toEqual({})
   })
 
+  it('restores one personal tender field to its original empty value', () => {
+    const { repository } = renderEditor()
+    fireEvent.change(screen.getByLabelText('Port access status'), {
+      target: { value: 'TENDER_REQUIRED' },
+    })
+    fireEvent.change(screen.getByLabelText('Our tender ashore'), {
+      target: { value: '08:10' },
+    })
+    fireEvent.change(screen.getByLabelText('Our tender back'), {
+      target: { value: '16:30' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    const todayCard = screen.getByText('Today').closest('details')
+    fireEvent.click(
+      within(todayCard as HTMLElement).getByRole('button', {
+        name: 'Edit',
+      }),
+    )
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Use original for Our tender back',
+      }),
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(
+      repository.getSnapshot().dayOverrides['day-2030-05-11'],
+    ).toMatchObject({
+      ourTenderAshore: {
+        at: '2030-05-11T06:10:00.000Z',
+      },
+    })
+    expect(
+      repository.getSnapshot().dayOverrides['day-2030-05-11'],
+    ).not.toHaveProperty('ourTenderBack')
+  })
+
   it('clears dependent errors live when values are corrected or restored', () => {
     renderEditor()
     fireEvent.change(screen.getByLabelText('Port access status'), {
       target: { value: 'TENDER_REQUIRED' },
     })
-    fireEvent.change(screen.getByLabelText('First tender time'), {
+    fireEvent.change(screen.getByLabelText('First tender'), {
       target: { value: '08:00' },
     })
-    fireEvent.change(screen.getByLabelText('Ship arrival time'), {
+    fireEvent.change(screen.getByLabelText('Ship arrival'), {
       target: { value: '09:00' },
     })
 
@@ -242,18 +297,18 @@ describe('Trip operational editing', () => {
     ).toBeInTheDocument()
     fireEvent.click(
       screen.getByRole('button', {
-        name: 'Use original for Ship arrival time',
+        name: 'Use original for Ship arrival',
       }),
     )
     expect(
       screen.queryByText(/First tender cannot be before ship arrival/),
     ).not.toBeInTheDocument()
 
-    fireEvent.change(screen.getByLabelText('First tender time'), {
+    fireEvent.change(screen.getByLabelText('First tender'), {
       target: { value: '06:45' },
     })
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
-    fireEvent.change(screen.getByLabelText('First tender time'), {
+    fireEvent.change(screen.getByLabelText('First tender'), {
       target: { value: '07:00' },
     })
     expect(
@@ -267,7 +322,7 @@ describe('Trip operational editing', () => {
       target: { value: 'TENDER_REQUIRED' },
     })
 
-    const firstTender = screen.getByLabelText('First tender time')
+    const firstTender = screen.getByLabelText('First tender')
     fireEvent.change(firstTender, { target: { value: '18:01' } })
     expect(
       screen.getByText(
@@ -279,7 +334,7 @@ describe('Trip operational editing', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: 'Use original for First tender time',
+        name: 'Use original for First tender',
       }),
     )
     expect(
@@ -292,11 +347,11 @@ describe('Trip operational editing', () => {
     ).not.toBeInTheDocument()
     fireEvent.click(
       screen.getByRole('button', {
-        name: 'Use original for First tender time',
+        name: 'Use original for First tender',
       }),
     )
     const lastTender = screen.getByLabelText(
-      'Last tender back to ship',
+      'Last tender',
     )
     fireEvent.change(lastTender, { target: { value: '06:59' } })
     expect(
@@ -317,7 +372,7 @@ describe('Trip operational editing', () => {
       target: { value: 'TENDER_REQUIRED' },
     })
     const lastTender = screen.getByLabelText(
-      'Last tender back to ship',
+      'Last tender',
     )
     fireEvent.change(lastTender, { target: { value: '17:00' } })
 
@@ -346,11 +401,11 @@ describe('Trip operational editing', () => {
     const { repository } = renderEditor(
       estimatedAllAboardFixture(),
     )
-    fireEvent.change(screen.getByLabelText('All Aboard time'), {
+    fireEvent.change(screen.getByLabelText('All Aboard'), {
       target: { value: '17:10' },
     })
     fireEvent.change(
-      screen.getByLabelText('All Aboard time status'),
+      screen.getByLabelText('All Aboard status'),
       { target: { value: 'CONFIRMED' } },
     )
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
@@ -383,7 +438,7 @@ describe('Trip operational editing', () => {
 
   it('discards unsaved changes after confirmation', () => {
     const { repository } = renderEditor()
-    fireEvent.change(screen.getByLabelText('All Aboard time'), {
+    fireEvent.change(screen.getByLabelText('All Aboard'), {
       target: { value: '17:10' },
     })
     vi.spyOn(window, 'confirm').mockReturnValue(true)

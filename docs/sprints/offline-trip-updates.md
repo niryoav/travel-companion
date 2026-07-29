@@ -22,6 +22,8 @@ connectivity.
 - Original-versus-updated context, local update timestamp, save confirmation,
   cancellation, per-field restoration, event reset, and full-day reset.
 - Explicit Docked, Tender required, and To be confirmed states.
+- Separate personal tender-report, tender-ashore, and tender-back plans from
+  the ship’s first tender, last tender, All Aboard, and departure limits.
 
 ## Out of Scope
 
@@ -39,6 +41,8 @@ connectivity.
 - Never infer tender, gangway, All Aboard, or excursion values.
 - Recalculate leave-by and return buffers only when the effective data contains
   every required input.
+- Derive expected arrival ashore from our tender ashore plus the configured
+  crossing duration. This estimate is never persisted as an override.
 - Resolve edit-sheet comparisons on the trip day’s local date in its configured
   IANA time zone. Impossible combinations block persistence; operationally
   tight combinations remain non-blocking warnings.
@@ -56,6 +60,10 @@ connectivity.
   assistive technology.
 - Tender fields appear only when Tender required is selected.
 - All Aboard and last tender back are labelled and displayed separately.
+- Today emphasizes known personal tender actions in its existing timeline;
+  Trip retains the full chronology, while collapsed cards stay concise.
+- Prepare for tomorrow lists known personal tender actions and uses a neutral
+  planning prompt when they remain unknown.
 - Unknown tender information uses calm wording rather than a warning banner.
 
 ## Acceptance Criteria

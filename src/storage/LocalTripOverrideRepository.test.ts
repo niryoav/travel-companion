@@ -26,8 +26,12 @@ describe('LocalTripOverrideRepository', () => {
       {
         portAccessStatus: 'TENDER_REQUIRED',
         allAboardAt: '2030-05-11T17:15:00+02:00',
-        ourTender: {
+        ourTenderAshore: {
           at: '2030-05-11T08:10:00+02:00',
+          verification: 'CONFIRMED',
+        },
+        ourTenderBack: {
+          at: '2030-05-11T16:30:00+02:00',
           verification: 'CONFIRMED',
         },
       },
@@ -43,8 +47,12 @@ describe('LocalTripOverrideRepository', () => {
       portAccess: {
         status: 'TENDER_REQUIRED',
         tender: {
-          ourTender: {
+          ourTenderAshore: {
             at: '2030-05-11T08:10:00+02:00',
+            verification: 'CONFIRMED',
+          },
+          ourTenderBack: {
+            at: '2030-05-11T16:30:00+02:00',
             verification: 'CONFIRMED',
           },
         },
@@ -94,6 +102,38 @@ describe('LocalTripOverrideRepository', () => {
     expect(
       restarted.getSnapshot().dayOverrides['day-2030-05-11']?.note,
     ).toBe('Use pier B')
+  })
+
+  it('reloads both personal tender times after an offline restart', () => {
+    const first = new LocalTripOverrideRepository(
+      window.localStorage,
+      tripFixture,
+    )
+    first.saveDayEdits('day-2030-05-11', {
+      ourTenderAshore: {
+        at: '2030-05-11T08:10:00+02:00',
+        verification: 'CONFIRMED',
+      },
+      ourTenderBack: {
+        at: '2030-05-11T16:30:00+02:00',
+        verification: 'CONFIRMED',
+      },
+    }, {})
+
+    const restarted = new LocalTripOverrideRepository(
+      window.localStorage,
+      tripFixture,
+    )
+    expect(
+      restarted.getSnapshot().dayOverrides['day-2030-05-11'],
+    ).toMatchObject({
+      ourTenderAshore: {
+        at: '2030-05-11T08:10:00+02:00',
+      },
+      ourTenderBack: {
+        at: '2030-05-11T16:30:00+02:00',
+      },
+    })
   })
 
   it.each([
