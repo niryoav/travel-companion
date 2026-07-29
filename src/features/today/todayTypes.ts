@@ -42,6 +42,9 @@ export interface TodayEventViewModel {
   meetingAt?: string
   meetingPointLabel?: string
   timeZoneNote?: string
+  operationalStatusLabel?: string
+  localOperationalNote?: string
+  isCancelled?: boolean
   leaveBy?: TodayLeaveByViewModel
   hasRelatedDocuments: boolean
   documentActions?: DocumentActionViewModel[]
@@ -62,6 +65,26 @@ export interface TodayPortViewModel {
   arrivalAt?: string
   departureTime?: string
   departureAt?: string
+  accessStatus?: 'DOCKED' | 'TENDER_REQUIRED' | 'TO_BE_CONFIRMED'
+  accessLabel?: string
+  operationalNote?: string
+  tender?: {
+    firstTender?: TodayOperationalTimeViewModel
+    tenderReport?: TodayOperationalTimeViewModel
+    ourTenderAshore?: TodayOperationalTimeViewModel
+    expectedArrivalAshore?: TodayOperationalTimeViewModel
+    meetingPoint?: string
+    crossingLabel?: string
+    ourTenderBack?: TodayOperationalTimeViewModel
+    lastTender?: TodayOperationalTimeViewModel
+    note?: string
+  }
+}
+
+export interface TodayOperationalTimeViewModel {
+  time?: string
+  dateTime?: string
+  statusLabel: string
 }
 
 export interface TodayOperationalStatusViewModel {
@@ -77,6 +100,7 @@ export interface TodayOperationalStatusViewModel {
   detail: string
   time?: string
   dateTime?: string
+  timeStatusLabel?: string
   timeRemaining?: string
   urgency: 'CALM' | 'ATTENTION' | 'URGENT'
 }
@@ -126,6 +150,9 @@ export interface TomorrowPreparationViewModel {
   preparationNotes: string[]
   documentActions: DocumentActionViewModel[]
   timingNote?: string
+  portAccessNote?: string
+  tenderPlan?: string[]
+  allAboardNote?: string
   emptyMessage?: string
   tripHref: string
 }

@@ -1,0 +1,83 @@
+# Offline Trip Updates: excursion timing and tender operations
+
+## Goal
+
+Let the traveler update essential port, tender, and excursion operations
+directly in the installed PWA while offline, using one iPhone as the master
+editing device.
+
+## User Value
+
+Onboard information can be recorded immediately and then appears consistently
+in Trip, Today, and Prepare for tomorrow without Codex, GitHub, deployment, or
+connectivity.
+
+## Scope
+
+- A quiet `Edit` action on relevant Trip day cards.
+- An accessible mobile edit sheet for port access, ship times, All Aboard,
+  tender operations, excursion timing, meeting points, and short notes.
+- Typed, versioned, validated local overrides over the immutable bundled trip.
+- Immediate application to operational selectors and view models.
+- Original-versus-updated context, local update timestamp, save confirmation,
+  cancellation, per-field restoration, event reset, and full-day reset.
+- Explicit Docked, Tender required, and To be confirmed states.
+- Separate personal tender-report, tender-ashore, and tender-back plans from
+  the ship’s first tender, last tender, All Aboard, and departure limits.
+
+## Out of Scope
+
+- Full itinerary restructuring or arbitrary day creation.
+- Accounts, authentication, collaboration, cloud sync, calendar integration,
+  Tricount integration, external APIs, and runtime provider access.
+- Document editing and multi-device conflict resolution.
+
+## Technical Notes
+
+- Follow [ADR-003](../decisions/ADR-003-local-trip-operational-overrides.md).
+- Keep local override persistence separate from traveler and route state.
+- Store absolute instants and format them with the configured trip-day or event
+  IANA time zone.
+- Never infer tender, gangway, All Aboard, or excursion values.
+- Recalculate leave-by and return buffers only when the effective data contains
+  every required input.
+- Derive expected arrival ashore from our tender ashore plus the configured
+  crossing duration. This estimate is never persisted as an override.
+- Resolve edit-sheet comparisons on the trip day’s local date in its configured
+  IANA time zone. Impossible combinations block persistence; operationally
+  tight combinations remain non-blocking warnings.
+- Tender crossing duration retains the existing technical range of 1–240
+  minutes. Excursion travel duration retains the existing 1–1,440 minute
+  technical range.
+- Tight excursion-return warnings reuse the centralized return-buffer
+  thresholds. Tender-connection warnings use the configured excursion safety
+  buffer when present, otherwise the centralized 15-minute fallback.
+
+## UX Notes
+
+- `Edit` remains a champagne text action with a comfortable touch target.
+- The sheet is usable with large text, portrait, landscape, keyboard, and
+  assistive technology.
+- Optional time inputs provide an app-level `Clear time` action; clearing one
+  field immediately restores its empty or To be confirmed draft state without
+  relying on the native iOS picker reset or changing adjacent fields.
+- Empty tender inputs may seed the native picker from nearby verified times,
+  but that transient starting point is never displayed or persisted until the
+  traveler commits a selection.
+- Tender fields appear only when Tender required is selected.
+- All Aboard and last tender back are labelled and displayed separately.
+- Today emphasizes known personal tender actions in its existing timeline;
+  Trip retains the full chronology, while collapsed cards stay concise.
+- Prepare for tomorrow lists known personal tender actions and uses a neutral
+  planning prompt when they remain unknown.
+- Unknown tender information uses calm wording rather than a warning banner.
+
+## Acceptance Criteria
+
+- Valid changes persist offline and survive a PWA restart.
+- Malformed and unsupported stored state cannot crash the app.
+- Trip, Today, and tomorrow preparation use the same effective itinerary.
+- Reset restores the bundled value without mutating canonical trip data.
+- Review fixtures remain deterministic and production data remains controlled.
+- Existing startup, PDF restoration, Welcome, PWA, and offline-asset behavior
+  remains green.

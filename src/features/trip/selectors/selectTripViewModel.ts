@@ -26,14 +26,23 @@ import {
   selectEstimatedEventTiming,
 } from '../../../domain/trip/operationalTiming'
 import {
+  emptyTripOverrideBundle,
+  hasDayOperationalChanges,
+  type TripOverrideBundle,
+} from '../../../domain/trip/tripOverrides'
+import {
   formatDateRange,
   formatLocalTime,
 } from '../../../domain/trip/tripTime'
+import { expectedArrivalAshore } from '../../../domain/trip/tenderPlanning'
 import type {
   PortCall,
   TripData,
   TripDay,
   TripEvent,
+  OperationalEntryStatus,
+  OperationalTime,
+  PortAccess,
 } from '../../../domain/trip/tripTypes'
 import type {
   TripDayViewModel,
@@ -124,6 +133,8 @@ function eventViewModel(
   content: TripContentBundle,
   day: TripDay,
   event: TripEvent,
+  overrides: TripOverrideBundle,
+  portAccess?: PortAccess,
 ): TripEventViewModel {
   const location = data.locations.find(({ id }) => id === event.locationId)
   const transport =
@@ -133,8 +144,8 @@ function eventViewModel(
   const relatedDocuments = selectDayDocuments(data, [event])
   const guide = selectExcursionGuide(content, event.id)
   const timeZone = resolveEventTimeZone(event, day)
-  const leaveBy = isLeaveByRelevant(event)
-    ? calculateLeaveBy(event)
+  const leaveBy = isLeaveByRelevant(event, portAccess)
+    ? calculateLeaveBy(event, portAccess)
     : undefined
   const leaveByLabel = !leaveBy
     ? undefined
@@ -145,7 +156,9 @@ function eventViewModel(
         : leaveBy.state === 'CALCULATED'
           ? 'Calculated leave by'
           : leaveBy.state === 'PENDING'
-            ? 'Leave-by pending'
+            ? leaveBy.reason === 'TENDER_TIMING_PENDING'
+              ? 'Tender timing pending'
+              : 'Leave-by pending'
             : leaveBy.reason === 'TRAVEL_DURATION_MISSING'
               ? 'Travel duration not added yet'
               : undefined
@@ -185,7 +198,9 @@ function eventViewModel(
         dateTime: leaveBy.leaveByAt,
         detail:
           leaveBy.state === 'PENDING'
-            ? 'Meeting time to be confirmed.'
+            ? leaveBy.reason === 'TENDER_TIMING_PENDING'
+              ? 'Tender timing still to be confirmed.'
+              : 'Meeting time to be confirmed.'
             : leaveBy.state === 'UNAVAILABLE'
               ? 'Leave-by cannot yet be calculated.'
               : leaveBy.state === 'CONFIRMED'
@@ -223,11 +238,14 @@ function eventViewModel(
     bookingStatusLabel:
       event.bookingStatus === 'CONFIRMED' ? 'Confirmed' : undefined,
     scheduleStatusLabel:
+      event.operationalStatus === undefined &&
       event.scheduleStatus === 'TO_BE_CONFIRMED'
         ? 'Time to be confirmed'
         : undefined,
     timingStatusLabel: !event.startsAt
-      ? event.scheduleStatus === 'TO_BE_CONFIRMED'
+      ? event.operationalStatus === 'TO_BE_CONFIRMED' ||
+        (event.operationalStatus === undefined &&
+          event.scheduleStatus === 'TO_BE_CONFIRMED')
         ? 'Time to be confirmed'
         : 'Time unavailable'
       : undefined,
@@ -283,6 +301,16 @@ function eventViewModel(
       : undefined,
     leaveBy: leaveByViewModel,
     operationalNotes: event.operationalNotes,
+    localOperationalNote: event.localOperationalNote,
+    operationalStatusLabel:
+      event.operationalStatus === 'TO_BE_CONFIRMED'
+        ? 'To be confirmed'
+        : event.operationalStatus
+          ? event.operationalStatus.charAt(0) +
+            event.operationalStatus.slice(1).toLowerCase()
+          : undefined,
+    isCancelled: event.operationalStatus === 'CANCELLED',
+    updatedLocally: Boolean(overrides.eventOverrides[event.id]),
     experience: guide
       ? {
           summary: guide.summary,
@@ -301,6 +329,45 @@ function eventViewModel(
   }
 }
 
+function entryStatusLabel(status: OperationalEntryStatus): string {
+  switch (status) {
+    case 'CONFIRMED':
+      return 'Confirmed'
+    case 'ESTIMATED':
+      return 'Estimated'
+    case 'TO_BE_CONFIRMED':
+      return 'To be confirmed'
+  }
+}
+
+function operationalTimeViewModel(
+  value: OperationalTime | undefined,
+  timeZone: string,
+) {
+  return value
+    ? {
+        time: value.at
+          ? formatLocalTime(value.at, timeZone)
+          : undefined,
+        dateTime: value.at,
+        statusLabel: entryStatusLabel(value.verification),
+      }
+    : undefined
+}
+
+function portAccessLabel(
+  status: 'DOCKED' | 'TENDER_REQUIRED' | 'TO_BE_CONFIRMED',
+): string {
+  switch (status) {
+    case 'DOCKED':
+      return 'Docked'
+    case 'TENDER_REQUIRED':
+      return 'Tender required'
+    case 'TO_BE_CONFIRMED':
+      return 'Port access to be confirmed'
+  }
+}
+
 function portViewModel(
   data: TripData,
   portCall: PortCall | null,
@@ -313,6 +380,10 @@ function portViewModel(
   const location = data.locations.find(
     ({ id }) => id === portCall.portLocationId,
   )
+  const accessStatus =
+    portCall.portAccess?.status ?? 'TO_BE_CONFIRMED'
+  const tender = portCall.portAccess?.tender
+  const arrivalAshore = expectedArrivalAshore(tender)
 
   return {
     location: location?.name ?? 'Port',
@@ -330,7 +401,60 @@ function portViewModel(
         : undefined,
     allAboardAt:
       includeAllAboard ? portCall.allAboardAt : undefined,
+    allAboardStatusLabel:
+      includeAllAboard && portCall.allAboardAt
+        ? entryStatusLabel(
+            portCall.allAboardVerification ?? 'CONFIRMED',
+          )
+        : undefined,
+    accessStatus,
+    accessLabel: portAccessLabel(accessStatus),
+    operationalNote: portCall.operationalNote,
+    tender:
+      accessStatus === 'TENDER_REQUIRED' && tender
+        ? {
+            firstTender: operationalTimeViewModel(
+              tender?.firstTender,
+              portCall.timeZone,
+            ),
+            tenderReport: operationalTimeViewModel(
+              tender?.tenderReport,
+              portCall.timeZone,
+            ),
+            ourTenderAshore: operationalTimeViewModel(
+              tender?.ourTenderAshore,
+              portCall.timeZone,
+            ),
+            expectedArrivalAshore: operationalTimeViewModel(
+              arrivalAshore,
+              portCall.timeZone,
+            ),
+            meetingPoint: tender?.meetingPoint,
+            crossingLabel:
+              tender?.crossingMinutes !== undefined
+                ? `${tender.crossingMinutes} min estimated crossing`
+                : undefined,
+            lastTender: operationalTimeViewModel(
+              tender?.lastTender,
+              portCall.timeZone,
+            ),
+            ourTenderBack: operationalTimeViewModel(
+              tender?.ourTenderBack,
+              portCall.timeZone,
+            ),
+            note: tender?.note,
+          }
+        : undefined,
   }
+}
+
+function formatLocalUpdate(instant: string): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(instant))
 }
 
 function progressViewModel(
@@ -368,13 +492,21 @@ function dayViewModel(
   day: TripDay,
   dayNumber: number,
   now: Date,
+  overrides: TripOverrideBundle,
 ): TripDayViewModel {
   const state = classifyTripDayState(day, now)
   const domainEvents = selectDayEvents(data, day)
-  const events = domainEvents.map((event) =>
-    eventViewModel(data, content, day, event),
-  )
   const portCall = selectDayPortCall(data, day)
+  const events = domainEvents.map((event) =>
+    eventViewModel(
+      data,
+      content,
+      day,
+      event,
+      overrides,
+      portCall?.portAccess,
+    ),
+  )
   const destinationGuide = selectDestinationGuide(
     content,
     portCall?.portLocationId,
@@ -393,6 +525,18 @@ function dayViewModel(
     domainEvents,
   ).filter(({ id }) => !eventDocumentIds.has(id))
   const documentCount = eventDocumentIds.size + dayDocuments.length
+  const dayOverride = overrides.dayOverrides[day.id]
+  const eventOverrideInstants = day.eventIds
+    .map((eventId) => overrides.eventOverrides[eventId]?.updatedAt)
+    .filter((value): value is string => Boolean(value))
+  const latestUpdate = [dayOverride?.updatedAt, ...eventOverrideInstants]
+    .filter((value): value is string => Boolean(value))
+    .sort(
+      (left, right) => Date.parse(right) - Date.parse(left),
+    )[0]
+  const port = portViewModel(data, portCall, state === 'PAST')
+  const leadEvent =
+    events.find(({ isCancelled }) => !isCancelled) ?? events.at(0)
 
   return {
     id: day.id,
@@ -407,16 +551,41 @@ function dayViewModel(
     state,
     stateLabel: stateLabel(state),
     isOpenByDefault: state === 'TODAY',
-    leadEvent: events.at(0),
+    leadEvent,
     additionalEventCount: Math.max(events.length - 1, 0),
     events,
-    port: portViewModel(data, portCall, state === 'PAST'),
+    port,
     summaryAllAboardTime:
       showAllAboardInSummary && portCall?.allAboardAt
         ? formatLocalTime(portCall.allAboardAt, portCall.timeZone)
         : undefined,
     summaryAllAboardAt:
       showAllAboardInSummary ? portCall?.allAboardAt : undefined,
+    summaryAllAboardStatusLabel:
+      showAllAboardInSummary && portCall?.allAboardAt
+        ? entryStatusLabel(
+            portCall.allAboardVerification ?? 'CONFIRMED',
+          )
+        : undefined,
+    summaryPortAccessStatus: port?.accessStatus,
+    summaryPortAccessLabel: port?.accessLabel,
+    summaryOurTenderAshoreTime:
+      port?.tender?.ourTenderAshore?.time,
+    summaryOurTenderAshoreAt:
+      port?.tender?.ourTenderAshore?.dateTime,
+    summaryOurTenderBackTime:
+      port?.tender?.ourTenderBack?.time,
+    summaryOurTenderBackAt:
+      port?.tender?.ourTenderBack?.dateTime,
+    isEditable:
+      Boolean(portCall) &&
+      (day.kind === 'PORT_DAY' ||
+        domainEvents.some(({ kind }) => kind === 'EXCURSION')),
+    updatedLocallyLabel:
+      hasDayOperationalChanges(overrides, day.id, day.eventIds) &&
+      latestUpdate
+        ? `Updated locally on ${formatLocalUpdate(latestUpdate)}`
+        : undefined,
     relatedDocumentCount: documentCount,
     documentActions: dayDocuments.map(selectDocumentAction),
     destination: destinationGuide
@@ -458,10 +627,11 @@ export function selectTripViewModel(
     destinationGuides: [],
     excursionGuides: [],
   },
+  overrides: TripOverrideBundle = emptyTripOverrideBundle(data.trip.id),
 ): TripViewModel {
   const cruise = data.cruises.find(({ id }) => id === data.trip.cruiseId)
   const days = selectTripDays(data).map((day, index) =>
-    dayViewModel(data, content, day, index + 1, now),
+    dayViewModel(data, content, day, index + 1, now, overrides),
   )
 
   return {

@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 
+import { withPlanningAllAboardEstimates } from '../../domain/trip/allAboardPlanning'
 import { tripFixture } from '../../test/fixtures/tripFixture'
 import { oceaniaMarina2026TripData } from '../../trips/oceania-marina-2026/tripData'
 import { oceaniaMarina2026DailyLoveMessages } from '../../content/oceania-marina-2026/dailyLoveMessages'
@@ -24,6 +25,24 @@ function renderHome(route: string) {
 }
 
 describe('HomeScreen', () => {
+  it('visibly marks estimated All Aboard on a production port day', () => {
+    render(
+      <MemoryRouter initialEntries={['/home']}>
+        <HomeScreen
+          loveMessageSchedule={oceaniaMarina2026DailyLoveMessages}
+          now={new Date('2026-08-25T08:00:00Z')}
+          travelerName="Alex"
+          tripData={withPlanningAllAboardEstimates(
+            oceaniaMarina2026TripData,
+          )}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('All aboard')).toBeInTheDocument()
+    expect(screen.getByText('15:30 · Estimated')).toBeInTheDocument()
+  })
+
   it('shows the dated love message in the fixed readable format', () => {
     renderHome('/home?phase=departure-day')
 
@@ -117,6 +136,7 @@ describe('HomeScreen', () => {
     expect(
       screen.getByRole('heading', { level: 2, name: 'Ísafjörður' }),
     ).toBeInTheDocument()
+    expect(screen.getByText('Tender required')).toBeInTheDocument()
     expect(screen.queryByText('All aboard')).not.toBeInTheDocument()
   })
 

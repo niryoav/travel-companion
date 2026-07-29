@@ -28,12 +28,18 @@ export function TimelineEvent({ event }: TimelineEventProps) {
           <span className="timeline-state">{event.stateLabel}</span>
         </div>
         <h3>{event.title}</h3>
+        {event.operationalStatusLabel ? (
+          <p>{event.operationalStatusLabel}</p>
+        ) : null}
         {event.timingConfidenceLabel ? (
           <p>{event.timingConfidenceLabel}</p>
         ) : null}
         {event.location ? <p>{event.location}</p> : null}
         {event.meetingPointLabel ? <p>{event.meetingPointLabel}</p> : null}
         {event.transport ? <p>{event.transport}</p> : null}
+        {event.localOperationalNote ? (
+          <p>{event.localOperationalNote}</p>
+        ) : null}
         {event.documentActions?.map((action) => (
           <DocumentActionLink
             action={action}

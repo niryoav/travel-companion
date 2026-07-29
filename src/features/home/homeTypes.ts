@@ -36,6 +36,7 @@ export interface Milestone {
   detail?: string
   countdown?: string
   allAboardTime?: string
+  allAboardStatusLabel?: string
   tone?: MilestoneTone
 }
 
@@ -67,6 +68,7 @@ export interface CruiseProgress {
 export interface HomeViewModel {
   phase: HomePhase
   cruiseDayType?: CruiseDayType
+  portAccessStatus?: PortAccessStatus
   context: HomeContext
   cruiseProgress?: CruiseProgress
   milestone?: Milestone
@@ -75,3 +77,4 @@ export interface HomeViewModel {
   checklist?: QuickChecklistItem[]
   alert?: HomeAlert
 }
+import type { PortAccessStatus } from '../../domain/trip/tripTypes'

@@ -1,7 +1,9 @@
 import { resolveTripPhase } from './selectors/resolveTripPhase'
 import { formatLocalTime, calendarDateInTimeZone } from './tripTime'
 import type {
+  OperationalEntryStatus,
   PortCall,
+  PortAccess,
   TripData,
   TripDay,
   TripEvent,
@@ -22,6 +24,10 @@ export const RETURN_BUFFER_THRESHOLDS = {
   },
 } as const
 
+// A positive connection shorter than fifteen minutes is possible but deserves
+// a calm warning. It is not used as invented travel time.
+export const TIGHT_CONNECTION_WARNING_MINUTES = 15
+
 export interface EventTimeZoneResolution {
   timeZone: string
   source: 'EVENT' | 'TRIP_DAY'
@@ -40,7 +46,11 @@ export interface LeaveByResult {
   targetAt?: string
   travelDurationMinutes?: number
   safetyBufferMinutes?: number
-  reason?: 'MEETING_TIME_PENDING' | 'TRAVEL_DURATION_MISSING' | 'SAFETY_BUFFER_MISSING'
+  reason?:
+    | 'MEETING_TIME_PENDING'
+    | 'TRAVEL_DURATION_MISSING'
+    | 'SAFETY_BUFFER_MISSING'
+    | 'TENDER_TIMING_PENDING'
 }
 
 export interface EstimatedEventTiming {
@@ -66,6 +76,7 @@ export interface ReturnBufferResult {
   bufferMinutes?: number
   excursionReturnAt?: string
   allAboardAt?: string
+  allAboardVerification?: OperationalEntryStatus
   bookingType?: TripEvent['bookingType']
   reason?: 'RETURN_TIME_MISSING' | 'ALL_ABOARD_MISSING'
 }
@@ -84,6 +95,7 @@ export interface PortOperationalStatus {
   shipName?: string
   allAboardAt?: string
   allAboardTime?: string
+  allAboardVerification?: OperationalEntryStatus
   minutesUntilAllAboard?: number
   timeRemaining?: string
 }
@@ -122,7 +134,10 @@ function earliestTarget(event: TripEvent): string | undefined {
     .sort((left, right) => Date.parse(left) - Date.parse(right))[0]
 }
 
-export function isLeaveByRelevant(event: TripEvent): boolean {
+export function isLeaveByRelevant(
+  event: TripEvent,
+  portAccess?: PortAccess,
+): boolean {
   if (event.leaveByAt) {
     return true
   }
@@ -131,6 +146,14 @@ export function isLeaveByRelevant(event: TripEvent): boolean {
     event.kind === 'TRANSFER' &&
     (event.meetingAt || event.checkInAt) &&
     event.travelDurationMinutes !== undefined
+  ) {
+    return true
+  }
+
+  if (
+    event.kind === 'EXCURSION' &&
+    event.bookingType === 'INDEPENDENT' &&
+    portAccess?.status === 'TENDER_REQUIRED'
   ) {
     return true
   }
@@ -214,12 +237,45 @@ export function selectEstimatedEventTiming(
   return { departureWindow, arrivalWindow }
 }
 
-export function calculateLeaveBy(event: TripEvent): LeaveByResult {
+export function calculateLeaveBy(
+  event: TripEvent,
+  portAccess?: PortAccess,
+): LeaveByResult {
   if (event.leaveByAt) {
     return {
       state: 'CONFIRMED',
       leaveByAt: event.leaveByAt,
       targetAt: earliestTarget(event),
+    }
+  }
+
+  const tender =
+    event.kind === 'EXCURSION' &&
+    event.bookingType === 'INDEPENDENT' &&
+    portAccess?.status === 'TENDER_REQUIRED'
+      ? portAccess.tender
+      : undefined
+  if (tender?.ourTenderAshore?.at) {
+    return {
+      state:
+        tender.ourTenderAshore.verification === 'CONFIRMED'
+          ? 'CONFIRMED'
+          : 'ESTIMATED',
+      leaveByAt: tender.ourTenderAshore.at,
+      targetAt: earliestTarget(event),
+      reason: undefined,
+    }
+  }
+  if (
+    portAccess?.status === 'TENDER_REQUIRED' &&
+    event.kind === 'EXCURSION' &&
+    event.bookingType === 'INDEPENDENT' &&
+    tender?.crossingMinutes === undefined
+  ) {
+    return {
+      state: 'PENDING',
+      targetAt: earliestTarget(event),
+      reason: 'TENDER_TIMING_PENDING',
     }
   }
 
@@ -250,7 +306,9 @@ export function calculateLeaveBy(event: TripEvent): LeaveByResult {
   }
 
   const offsetMinutes =
-    event.travelDurationMinutes + event.safetyBufferMinutes
+    event.travelDurationMinutes +
+    event.safetyBufferMinutes +
+    (tender?.crossingMinutes ?? 0)
   const leaveByAt = new Date(
     Date.parse(targetAt) - offsetMinutes * 60_000,
   ).toISOString()
@@ -278,6 +336,7 @@ export function calculateReturnBuffer(
           ? 'TIMING_PENDING'
           : 'CANNOT_CALCULATE',
       allAboardAt: portCall?.allAboardAt,
+      allAboardVerification: portCall?.allAboardVerification,
       bookingType: event.bookingType,
       reason: 'RETURN_TIME_MISSING',
     }
@@ -311,6 +370,8 @@ export function calculateReturnBuffer(
     bufferMinutes,
     excursionReturnAt: event.endsAt,
     allAboardAt: portCall.allAboardAt,
+    allAboardVerification:
+      portCall.allAboardVerification ?? 'CONFIRMED',
     bookingType: event.bookingType,
   }
 }
@@ -353,6 +414,8 @@ export function selectPortOperationalStatus(
   const allAboardTiming = portCall.allAboardAt
     ? {
         allAboardAt: portCall.allAboardAt,
+        allAboardVerification:
+          portCall.allAboardVerification ?? 'CONFIRMED',
         allAboardTime: formatLocalTime(
           portCall.allAboardAt,
           portCall.timeZone,
@@ -383,6 +446,7 @@ export function selectPortOperationalStatus(
   const timing = {
     allAboardAt: allAboardTiming.allAboardAt,
     allAboardTime: allAboardTiming.allAboardTime,
+    allAboardVerification: allAboardTiming.allAboardVerification,
     minutesUntilAllAboard,
     timeRemaining: formatDuration(minutesUntilAllAboard),
   }

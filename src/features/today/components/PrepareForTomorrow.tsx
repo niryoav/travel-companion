@@ -39,6 +39,22 @@ export function PrepareForTomorrow({
         ) : null}
 
         {tomorrow.timingNote ? <p>{tomorrow.timingNote}</p> : null}
+        {tomorrow.portAccessNote ? (
+          <p>{tomorrow.portAccessNote}</p>
+        ) : null}
+        {tomorrow.allAboardNote ? (
+          <p>{tomorrow.allAboardNote}</p>
+        ) : null}
+        {tomorrow.tenderPlan && tomorrow.tenderPlan.length > 0 ? (
+          <section aria-labelledby="tomorrow-tender-title">
+            <h3 id="tomorrow-tender-title">Tender plan</h3>
+            <ul>
+              {tomorrow.tenderPlan.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
         {tomorrow.emptyMessage ? <p>{tomorrow.emptyMessage}</p> : null}
 
         {tomorrow.requiredItems.length > 0 ? (

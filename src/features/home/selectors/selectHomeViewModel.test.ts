@@ -1,10 +1,23 @@
 import { describe, expect, it } from 'vitest'
 
+import { withPlanningAllAboardEstimates } from '../../../domain/trip/allAboardPlanning'
 import { tripFixture } from '../../../test/fixtures/tripFixture'
 import { oceaniaMarina2026TripData } from '../../../trips/oceania-marina-2026/tripData'
 import { selectHomeViewModel } from './selectHomeViewModel'
 
 describe('selectHomeViewModel', () => {
+  it('keeps estimated All Aboard visible with an event milestone', () => {
+    const viewModel = selectHomeViewModel(
+      withPlanningAllAboardEstimates(oceaniaMarina2026TripData),
+      new Date('2026-08-25T08:00:00Z'),
+    )
+
+    expect(viewModel.milestone).toMatchObject({
+      allAboardTime: '15:30',
+      allAboardStatusLabel: 'Estimated',
+    })
+  })
+
   it.each([
     ['2030-05-01T12:00:00Z', 'PRE_TRIP', 'Our journey begins soon'],
     ['2030-05-10T12:00:00Z', 'DEPARTURE_DAY', 'Travel to Harbor City'],
@@ -28,17 +41,73 @@ describe('selectHomeViewModel', () => {
     },
   )
 
-  it('uses a port departure when no later event exists that day', () => {
+  it('uses the next operational port deadline when no later event exists', () => {
     const viewModel = selectHomeViewModel(
       tripFixture,
       new Date('2030-05-11T12:00:00Z'),
     )
 
     expect(viewModel.milestone).toMatchObject({
-      title: 'Depart Harbor Terminal',
-      time: '18:00',
+      title: 'All Aboard',
+      time: '17:30',
       allAboardTime: '17:30',
     })
+  })
+
+  it('exposes canonical port access on port days but not sea days', () => {
+    const tenderDay = selectHomeViewModel(
+      oceaniaMarina2026TripData,
+      new Date('2026-08-24T12:00:00Z'),
+    )
+    const seaDay = selectHomeViewModel(
+      oceaniaMarina2026TripData,
+      new Date('2026-08-28T12:00:00Z'),
+    )
+
+    expect(tenderDay.portAccessStatus).toBe('TENDER_REQUIRED')
+    expect(seaDay.portAccessStatus).toBeUndefined()
+  })
+
+  it('selects the next personal tender action without displacing an earlier event', () => {
+    const data = structuredClone(tripFixture)
+    data.portCalls[0].portAccess = {
+      status: 'TENDER_REQUIRED',
+      tender: {
+        tenderReport: {
+          at: '2030-05-11T08:00:00+02:00',
+          verification: 'CONFIRMED',
+        },
+        ourTenderAshore: {
+          at: '2030-05-11T08:10:00+02:00',
+          verification: 'CONFIRMED',
+        },
+        ourTenderBack: {
+          at: '2030-05-11T16:30:00+02:00',
+          verification: 'CONFIRMED',
+        },
+      },
+    }
+
+    expect(
+      selectHomeViewModel(
+        data,
+        new Date('2030-05-11T05:50:00Z'),
+      ).milestone,
+    ).toMatchObject({
+      title: 'Tender report',
+      time: '08:00',
+    })
+
+    data.events[1] = {
+      ...data.events[1],
+      startsAt: '2030-05-11T07:55:00+02:00',
+    }
+    expect(
+      selectHomeViewModel(
+        data,
+        new Date('2030-05-11T05:50:00Z'),
+      ).milestone?.title,
+    ).toBe('Coastal walk')
   })
 
   it('changes the countdown at midnight in the trip home time zone', () => {

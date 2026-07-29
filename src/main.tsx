@@ -7,6 +7,7 @@ import { appBuildInfo } from './app/buildInfo'
 import { BundledTripRepository } from './data/trips/BundledTripRepository'
 import { BundledTripContentRepository } from './data/content/BundledTripContentRepository'
 import { LocalTripStateRepository } from './storage/LocalTripStateRepository'
+import { LocalTripOverrideRepository } from './storage/LocalTripOverrideRepository'
 import { oceaniaMarina2026TripData } from './trips/oceania-marina-2026/tripData'
 import { oceaniaMarina2026TripContent } from './content/oceania-marina-2026/tripContent'
 import { oceaniaMarina2026DailyLoveMessages } from './content/oceania-marina-2026/dailyLoveMessages'
@@ -26,6 +27,10 @@ const tripStateRepository = new LocalTripStateRepository(
   window.localStorage,
   tripData.trip.id,
   new Set(tripData.travelers.map(({ id }) => id)),
+)
+const tripOverrideRepository = new LocalTripOverrideRepository(
+  window.localStorage,
+  tripData,
 )
 const pwaUpdateManager = new PwaUpdateManager(
   'serviceWorker' in navigator,
@@ -47,6 +52,7 @@ createRoot(rootElement).render(
         pwaUpdateManager={pwaUpdateManager}
         tripRepository={tripRepository}
         tripContentRepository={tripContentRepository}
+        tripOverrideRepository={tripOverrideRepository}
         tripStateRepository={tripStateRepository}
       />
     </ApplicationErrorBoundary>

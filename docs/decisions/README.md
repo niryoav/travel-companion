@@ -41,3 +41,4 @@ Implementation details belong in code or other documentation.
 | --- | --- | --- |
 | [ADR-001](ADR-001-pwa-technology-foundation.md) | Accepted | PWA technology foundation |
 | [ADR-002](ADR-002-trip-data-ownership-and-time.md) | Accepted | Trip data ownership and time representation |
+| [ADR-003](ADR-003-local-trip-operational-overrides.md) | Accepted | Local trip operational overrides |

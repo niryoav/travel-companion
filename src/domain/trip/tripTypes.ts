@@ -14,6 +14,20 @@ export type OperationalTimingVerification =
   | 'PENDING'
   | 'UNAVAILABLE'
 export type TravelDurationVerification = 'CONFIRMED' | 'ESTIMATED'
+export type OperationalEntryStatus =
+  | 'CONFIRMED'
+  | 'ESTIMATED'
+  | 'TO_BE_CONFIRMED'
+export type PortAccessStatus =
+  | 'DOCKED'
+  | 'TENDER_REQUIRED'
+  | 'TO_BE_CONFIRMED'
+export type ExcursionOperationalStatus =
+  | 'CONFIRMED'
+  | 'ESTIMATED'
+  | 'TO_BE_CONFIRMED'
+  | 'CHANGED'
+  | 'CANCELLED'
 
 export interface MinuteRange {
   minimum: number
@@ -118,6 +132,8 @@ interface BaseEvent {
   operationalNotes?: string[]
   preparationNotes?: string[]
   requiredItems?: string[]
+  operationalStatus?: ExcursionOperationalStatus
+  localOperationalNote?: string
 }
 
 export interface TransportEvent extends BaseEvent {
@@ -162,7 +178,31 @@ export interface PortCall {
   arrivalAt?: string
   departureAt?: string
   allAboardAt?: string
+  allAboardVerification?: OperationalEntryStatus
+  portAccess?: PortAccess
+  operationalNote?: string
   eventIds: EventId[]
+}
+
+export interface OperationalTime {
+  at?: string
+  verification: OperationalEntryStatus
+}
+
+export interface TenderOperations {
+  firstTender?: OperationalTime
+  tenderReport?: OperationalTime
+  ourTenderAshore?: OperationalTime
+  meetingPoint?: string
+  crossingMinutes?: number
+  ourTenderBack?: OperationalTime
+  lastTender?: OperationalTime
+  note?: string
+}
+
+export interface PortAccess {
+  status: PortAccessStatus
+  tender?: TenderOperations
 }
 
 export interface BookingReference {

@@ -9,7 +9,10 @@ export function selectNextEvent(
   return (
     data.events
       .filter((event) => {
-        if (!event.startsAt) {
+        if (
+          !event.startsAt ||
+          event.operationalStatus === 'CANCELLED'
+        ) {
           return false
         }
         const eventEnd = event.endsAt

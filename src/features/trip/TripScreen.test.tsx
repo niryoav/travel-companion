@@ -1,7 +1,14 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
+import { withPlanningAllAboardEstimates } from '../../domain/trip/allAboardPlanning'
 import { tripFixture } from '../../test/fixtures/tripFixture'
 import { tripContentFixture } from '../../test/fixtures/tripContentFixture'
 import type { TripContentBundle } from '../../domain/content/contentTypes'
@@ -27,10 +34,91 @@ function renderTrip(
 }
 
 describe('TripScreen', () => {
+  it('visibly marks the production planning fallback as estimated', () => {
+    render(
+      <MemoryRouter initialEntries={['/trip']}>
+        <TripScreen
+          now={new Date('2026-08-25T08:00:00Z')}
+          tripContent={oceaniaMarina2026TripContent}
+          tripData={withPlanningAllAboardEstimates(
+            oceaniaMarina2026TripData,
+          )}
+        />
+      </MemoryRouter>,
+    )
+
+    const currentDay = document.getElementById('day-2026-08-25')
+    expect(currentDay).not.toBeNull()
+    expect(
+      within(currentDay as HTMLElement).getByText('All Aboard'),
+    ).toBeInTheDocument()
+    expect(
+      within(currentDay as HTMLElement).getByText(
+        (_, element) =>
+          element?.tagName === 'STRONG' &&
+          element.textContent === '15:30 · Estimated',
+      ),
+    ).toBeInTheDocument()
+  })
+
   it('exposes stable day anchors for contextual tomorrow links', () => {
     renderTrip('/trip')
 
     expect(document.getElementById('day-2030-05-11')).toBeInTheDocument()
+  })
+  it('shows concise personal tender times before the full expanded chronology', () => {
+    const data = structuredClone(tripFixture)
+    data.portCalls[0].portAccess = {
+      status: 'TENDER_REQUIRED',
+      tender: {
+        firstTender: {
+          at: '2030-05-11T07:30:00+02:00',
+          verification: 'CONFIRMED',
+        },
+        tenderReport: {
+          at: '2030-05-11T08:00:00+02:00',
+          verification: 'CONFIRMED',
+        },
+        ourTenderAshore: {
+          at: '2030-05-11T08:20:00+02:00',
+          verification: 'CONFIRMED',
+        },
+        crossingMinutes: 15,
+        ourTenderBack: {
+          at: '2030-05-11T16:30:00+02:00',
+          verification: 'CONFIRMED',
+        },
+        lastTender: {
+          at: '2030-05-11T17:00:00+02:00',
+          verification: 'CONFIRMED',
+        },
+      },
+    }
+    render(
+      <MemoryRouter initialEntries={['/trip']}>
+        <TripScreen
+          now={new Date('2030-05-11T12:00:00Z')}
+          tripContent={tripContentFixture}
+          tripData={data}
+        />
+      </MemoryRouter>,
+    )
+
+    const card = document.getElementById('day-2030-05-11')
+    expect(card).not.toBeNull()
+    const scope = within(card as HTMLElement)
+    expect(scope.getByText('Our tender ashore:')).toBeInTheDocument()
+    expect(scope.getByText('Our tender back:')).toBeInTheDocument()
+    expect(scope.getByText('Tender report')).toBeInTheDocument()
+    expect(scope.getByText('Expected arrival ashore')).toBeInTheDocument()
+    expect(
+      scope.getByText(
+        (_, element) =>
+          element?.tagName === 'DD' &&
+          element.textContent === '08:35 · Estimated',
+      ),
+    ).toBeInTheDocument()
+    expect(scope.getByText('Last tender')).toBeInTheDocument()
   })
   it('keeps operational details before collapsed editorial disclosures', () => {
     const { container } = renderTrip('/trip?state=content')
@@ -178,6 +266,64 @@ describe('TripScreen', () => {
     ).toHaveLength(oceaniaMarina2026TripData.trip.dayIds.length)
   })
 
+  it('resets a stale document offset before paint and verifies it after layout', () => {
+    const scrollingElement = document.documentElement
+    let postLayoutCheck: FrameRequestCallback | undefined
+    const requestFrame = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((callback) => {
+        postLayoutCheck = callback
+        return 17
+      })
+    const cancelFrame = vi
+      .spyOn(window, 'cancelAnimationFrame')
+      .mockImplementation(() => undefined)
+    const originalScrollingElement = Object.getOwnPropertyDescriptor(
+      document,
+      'scrollingElement',
+    )
+    Object.defineProperty(document, 'scrollingElement', {
+      configurable: true,
+      value: scrollingElement,
+    })
+    scrollingElement.scrollTop = 900
+
+    try {
+      const trip = renderTrip('/trip?state=active')
+
+      expect(scrollingElement.scrollTop).toBe(0)
+      expect(trip.container.querySelector('.trip-progress')).toBeVisible()
+      expect(
+        trip.container.querySelectorAll('.trip-day-card'),
+      ).toHaveLength(3)
+      expect(requestFrame).toHaveBeenCalledTimes(1)
+
+      // Model WebKit applying a stale restoration after React's layout pass.
+      scrollingElement.scrollTop = 700
+      act(() => postLayoutCheck?.(performance.now()))
+
+      expect(scrollingElement.scrollTop).toBe(0)
+      expect(
+        trip.container.querySelector('.trip-day-card summary'),
+      ).toBeVisible()
+      trip.unmount()
+      expect(cancelFrame).toHaveBeenCalledWith(17)
+    } finally {
+      if (originalScrollingElement) {
+        Object.defineProperty(
+          document,
+          'scrollingElement',
+          originalScrollingElement,
+        )
+      } else {
+        Reflect.deleteProperty(document, 'scrollingElement')
+      }
+      scrollingElement.scrollTop = 0
+      requestFrame.mockRestore()
+      cancelFrame.mockRestore()
+    }
+  })
+
   it('renders specific operational timing without generic travel warnings', () => {
     render(
       <MemoryRouter initialEntries={['/trip']}>
@@ -253,27 +399,33 @@ describe('TripScreen', () => {
     expect(screen.getByText('1 more event')).toBeInTheDocument()
   })
 
-  it('shows verified all aboard once in an active port card', () => {
+  it('shows confirmed all aboard once in an active port card', () => {
     renderTrip('/trip?state=port-day')
 
-    expect(screen.getAllByText('Verified all aboard')).toHaveLength(1)
-    expect(screen.getAllByText('17:30')).toHaveLength(1)
+    expect(screen.getAllByText('All Aboard')).toHaveLength(1)
+    expect(
+      screen.getByText(
+        (_, element) =>
+          element?.tagName === 'STRONG' &&
+          element.textContent === '17:30 · Confirmed',
+      ),
+    ).toBeInTheDocument()
   })
 
   it('keeps historical all aboard in completed-day detail only', () => {
     renderTrip('/trip?state=completed')
-    const allAboard = screen.getByText('Verified all aboard')
+    const allAboard = screen.getByText('All Aboard')
     const portCard = allAboard.closest('details')
 
     expect(portCard).not.toHaveAttribute('open')
-    expect(screen.getAllByText('Verified all aboard')).toHaveLength(1)
+    expect(screen.getAllByText('All Aboard')).toHaveLength(1)
   })
 
   it('omits missing all-aboard and renders sparse data intentionally', () => {
     renderTrip('/trip?state=missing-data')
 
     expect(
-      screen.queryByText('Verified all aboard'),
+      screen.queryByText('All Aboard'),
     ).not.toBeInTheDocument()
     expect(
       screen.getByText('No timed plans are configured for this day.'),

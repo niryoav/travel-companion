@@ -224,6 +224,76 @@ describe('leave-by guidance', () => {
       ),
     ).toBe(false)
   })
+
+  it('uses a configured personal tender time for an independent excursion', () => {
+    const result = calculateLeaveBy(
+      event({
+        bookingType: 'INDEPENDENT',
+        meetingAt: '2030-05-11T09:30:00+02:00',
+      }),
+      {
+        status: 'TENDER_REQUIRED',
+        tender: {
+          ourTenderAshore: {
+            at: '2030-05-11T08:10:00+02:00',
+            verification: 'CONFIRMED',
+          },
+        },
+      },
+    )
+
+    expect(result).toMatchObject({
+      state: 'CONFIRMED',
+      leaveByAt: '2030-05-11T08:10:00+02:00',
+    })
+  })
+
+  it('includes a known tender crossing in an independent leave-by calculation', () => {
+    const result = calculateLeaveBy(
+      event({
+        bookingType: 'INDEPENDENT',
+        meetingAt: '2030-05-11T09:30:00+02:00',
+        travelDurationMinutes: 15,
+        safetyBufferMinutes: 10,
+      }),
+      {
+        status: 'TENDER_REQUIRED',
+        tender: { crossingMinutes: 20 },
+      },
+    )
+
+    expect(result).toMatchObject({
+      state: 'CALCULATED',
+      leaveByAt: '2030-05-11T06:45:00.000Z',
+    })
+  })
+
+  it('uses neutral guidance when independent tender timing is unknown', () => {
+    expect(
+      calculateLeaveBy(
+        event({
+          bookingType: 'INDEPENDENT',
+          meetingAt: '2030-05-11T09:30:00+02:00',
+        }),
+        { status: 'TENDER_REQUIRED' },
+      ),
+    ).toMatchObject({
+      state: 'PENDING',
+      reason: 'TENDER_TIMING_PENDING',
+    })
+  })
+
+  it('does not apply generic tender leave-by logic to Oceania excursions', () => {
+    expect(
+      isLeaveByRelevant(
+        event({
+          bookingType: 'OCEANIA',
+          meetingAt: '2030-05-11T09:30:00+02:00',
+        }),
+        { status: 'TENDER_REQUIRED' },
+      ),
+    ).toBe(false)
+  })
 })
 
 describe('event duration and estimated schedule', () => {

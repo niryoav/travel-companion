@@ -11,7 +11,8 @@ export function selectCurrentEvent(
   // ranges as current.
   return (
     events.find(
-      ({ startsAt, endsAt }) =>
+      ({ startsAt, endsAt, operationalStatus }) =>
+        operationalStatus !== 'CANCELLED' &&
         startsAt &&
         endsAt &&
         Date.parse(startsAt) <= instant &&

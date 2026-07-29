@@ -8,7 +8,10 @@ export function selectNextEventForDay(
 
   return (
     events.find(
-      ({ startsAt }) => startsAt && Date.parse(startsAt) > instant,
+      ({ startsAt, operationalStatus }) =>
+        operationalStatus !== 'CANCELLED' &&
+        startsAt &&
+        Date.parse(startsAt) > instant,
     ) ?? null
   )
 }

@@ -1,3 +1,5 @@
+import { PortAccessIndicator } from '../../../components/PortAccessIndicator'
+import type { PortAccessStatus } from '../../../domain/trip/tripTypes'
 import type {
   HomeContext,
   CruiseProgress as CruiseProgressModel,
@@ -8,12 +10,14 @@ interface HomeHeroProps {
   context: HomeContext
   cruiseProgress?: CruiseProgressModel
   greeting: string
+  portAccessStatus?: PortAccessStatus
 }
 
 export function HomeHero({
   context,
   cruiseProgress,
   greeting,
+  portAccessStatus,
 }: HomeHeroProps) {
   return (
     <header className="home-hero">
@@ -26,6 +30,9 @@ export function HomeHero({
         <p className="home-card-label">{context.eyebrow}</p>
         <h2>{context.title}</h2>
         <p className="home-context-summary">{context.summary}</p>
+        {portAccessStatus ? (
+          <PortAccessIndicator status={portAccessStatus} />
+        ) : null}
         {context.tripDates ? (
           <p className="home-context-dates">{context.tripDates}</p>
         ) : null}

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { withPlanningAllAboardEstimates } from '../../../domain/trip/allAboardPlanning'
 import type { TripData } from '../../../domain/trip/tripTypes'
 import { tripFixture } from '../../../test/fixtures/tripFixture'
 import { createDocumentFixture } from '../../../test/fixtures/documentFixture'
@@ -12,6 +13,66 @@ import {
 import { selectTripViewModel } from './selectTripViewModel'
 
 describe('selectTripViewModel', () => {
+  it('shows the derived estimate in the active day summary and details', () => {
+    const result = selectTripViewModel(
+      withPlanningAllAboardEstimates(oceaniaMarina2026TripData),
+      new Date('2026-08-25T08:00:00Z'),
+    )
+    const day = result.days.find(
+      ({ dateTime }) => dateTime === '2026-08-25',
+    )
+
+    expect(day).toMatchObject({
+      summaryAllAboardTime: '15:30',
+      summaryAllAboardStatusLabel: 'Estimated',
+    })
+    expect(day?.port?.allAboardTime).toBeUndefined()
+  })
+
+  it.each([
+    ['2026-08-23', 'Docked'],
+    ['2026-08-24', 'Tender required'],
+    ['2026-08-25', 'Tender required'],
+    ['2026-08-26', 'Tender required'],
+    ['2026-08-27', 'Docked'],
+    ['2026-08-29', 'Tender required'],
+    ['2026-08-30', 'Docked'],
+    ['2026-08-31', 'Tender required'],
+    ['2026-09-01', 'Docked'],
+    ['2026-09-02', 'Docked'],
+    ['2026-09-03', 'Tender required'],
+    ['2026-09-04', 'Docked'],
+  ])('maps the canonical port access for %s', (date, accessLabel) => {
+    const result = selectTripViewModel(
+      oceaniaMarina2026TripData,
+      new Date('2026-08-01T12:00:00Z'),
+    )
+    const day = result.days.find(({ dateTime }) => dateTime === date)
+
+    expect(day).toMatchObject({
+      summaryPortAccessLabel: accessLabel,
+      port: { accessLabel },
+    })
+    expect(day?.port?.tender).toBeUndefined()
+  })
+
+  it('omits port access from the sea day', () => {
+    const result = selectTripViewModel(
+      oceaniaMarina2026TripData,
+      new Date('2026-08-28T12:00:00Z'),
+    )
+    const seaDay = result.days.find(
+      ({ dateTime }) => dateTime === '2026-08-28',
+    )
+
+    expect(seaDay).toMatchObject({
+      kind: 'SEA_DAY',
+      port: undefined,
+      summaryPortAccessLabel: undefined,
+      summaryPortAccessStatus: undefined,
+    })
+  })
+
   it('renders the confirmed Stornoway and HOY-003 local schedule', () => {
     const result = selectTripViewModel(
       oceaniaMarina2026TripData,
@@ -120,7 +181,11 @@ describe('selectTripViewModel', () => {
     expect(hotel?.leaveBy).toBeUndefined()
     expect(independent).toMatchObject({
       checkInTime: '08:50',
-      leaveBy: undefined,
+      leaveBy: {
+        label: 'Tender timing pending',
+        time: undefined,
+        detail: 'Tender timing still to be confirmed.',
+      },
       operationalTimingNote: undefined,
     })
     expect(oceania).toMatchObject({
@@ -234,6 +299,59 @@ describe('selectTripViewModel', () => {
 
     expect(day.summaryAllAboardTime).toBeUndefined()
     expect(day.port?.allAboardTime).toBe('17:30')
+  })
+
+  it('keeps personal tender times concise in the summary and complete in detail', () => {
+    const data = structuredClone(tripFixture)
+    data.portCalls[0].portAccess = {
+      status: 'TENDER_REQUIRED',
+      tender: {
+        firstTender: {
+          at: '2030-05-11T07:30:00+02:00',
+          verification: 'CONFIRMED',
+        },
+        tenderReport: {
+          at: '2030-05-11T08:00:00+02:00',
+          verification: 'CONFIRMED',
+        },
+        ourTenderAshore: {
+          at: '2030-05-11T08:20:00+02:00',
+          verification: 'CONFIRMED',
+        },
+        crossingMinutes: 15,
+        ourTenderBack: {
+          at: '2030-05-11T16:30:00+02:00',
+          verification: 'CONFIRMED',
+        },
+        lastTender: {
+          at: '2030-05-11T17:00:00+02:00',
+          verification: 'CONFIRMED',
+        },
+      },
+    }
+
+    const day = selectTripViewModel(
+      data,
+      new Date('2030-05-11T12:00:00Z'),
+    ).days[1]
+
+    expect(day).toMatchObject({
+      summaryOurTenderAshoreTime: '08:20',
+      summaryOurTenderBackTime: '16:30',
+      port: {
+        tender: {
+          firstTender: { time: '07:30' },
+          tenderReport: { time: '08:00' },
+          ourTenderAshore: { time: '08:20' },
+          expectedArrivalAshore: {
+            time: '08:35',
+            statusLabel: 'Estimated',
+          },
+          ourTenderBack: { time: '16:30' },
+          lastTender: { time: '17:00' },
+        },
+      },
+    })
   })
 
   it('does not invent unverified all-aboard', () => {

@@ -53,7 +53,12 @@ export function NextMilestoneCard({
       {milestone.allAboardTime ? (
         <div className="all-aboard">
           <span>All aboard</span>
-          <strong>{milestone.allAboardTime}</strong>
+          <strong>
+            {milestone.allAboardTime}
+            {milestone.allAboardStatusLabel
+              ? ` · ${milestone.allAboardStatusLabel}`
+              : null}
+          </strong>
         </div>
       ) : null}
     </section>

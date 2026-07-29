@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 
 import { AppShell } from './AppShell'
@@ -12,6 +13,12 @@ import type { DailyLoveMessageSchedule } from '../domain/content/dailyLoveMessag
 import type { TripRepository } from '../data/trips/TripRepository'
 import type { TripContentRepository } from '../data/content/TripContentRepository'
 import type { TripStateRepository } from '../storage/TripStateRepository'
+import {
+  unavailableTripOverrideRepository,
+  type TripOverrideRepository,
+} from '../storage/TripOverrideRepository'
+import { applyTripOverrides } from '../domain/trip/tripOverrides'
+import { withPlanningAllAboardEstimates } from '../domain/trip/allAboardPlanning'
 import { StartupRouteGate } from './StartupRouteGate'
 import { TripLifecycleProvider } from './TripLifecycleProvider'
 import {
@@ -29,6 +36,7 @@ interface AppProps {
   pwaUpdateManager?: PwaUpdateManager
   tripRepository: TripRepository
   tripContentRepository: TripContentRepository
+  tripOverrideRepository?: TripOverrideRepository
   tripStateRepository: TripStateRepository
   now?: Date
 }
@@ -39,10 +47,21 @@ export function App({
   pwaUpdateManager = unavailablePwaUpdateManager,
   tripRepository,
   tripContentRepository,
+  tripOverrideRepository = unavailableTripOverrideRepository,
   tripStateRepository,
   now = new Date(),
 }: AppProps) {
-  const tripData = tripRepository.getActiveTrip()
+  const canonicalTripData = tripRepository.getActiveTrip()
+  const baselineTripData =
+    withPlanningAllAboardEstimates(canonicalTripData)
+  const tripOverrides = useSyncExternalStore(
+    tripOverrideRepository.subscribe,
+    tripOverrideRepository.getSnapshot,
+    tripOverrideRepository.getSnapshot,
+  )
+  const tripData = withPlanningAllAboardEstimates(
+    applyTripOverrides(canonicalTripData, tripOverrides),
+  )
   const tripContent = tripContentRepository.getContentForTrip(
     tripData.trip.id,
   )
@@ -124,9 +143,17 @@ export function App({
               path="trip"
               element={
                 <TripScreen
+                  baselineTripData={baselineTripData}
                   now={now}
                   tripData={tripData}
                   tripContent={tripContent}
+                  tripOverrideRepository={
+                    tripOverrideRepository ===
+                    unavailableTripOverrideRepository
+                      ? undefined
+                      : tripOverrideRepository
+                  }
+                  tripOverrides={tripOverrides}
                 />
               }
             />

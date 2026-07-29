@@ -15,6 +15,7 @@ import type {
   MeaningfulInternalRoute,
   TripStateRepository,
 } from '../storage/TripStateRepository'
+import { LocalTripOverrideRepository } from '../storage/LocalTripOverrideRepository'
 import { tripFixture } from '../test/fixtures/tripFixture'
 import { tripContentFixture } from '../test/fixtures/tripContentFixture'
 import { App } from './App'
@@ -94,6 +95,7 @@ function renderApp(
   tripStateRepository = new MemoryTripStateRepository(),
   now = new Date('2030-05-01T12:00:00Z'),
   loveMessageSchedule = dailyLoveMessageFixture,
+  tripOverrideRepository?: LocalTripOverrideRepository,
 ) {
   render(
     <App
@@ -101,6 +103,7 @@ function renderApp(
       now={now}
       tripRepository={tripRepository}
       tripContentRepository={tripContentRepository}
+      tripOverrideRepository={tripOverrideRepository}
       tripStateRepository={tripStateRepository}
     />,
   )
@@ -110,6 +113,7 @@ function renderApp(
 describe('App', () => {
   beforeEach(() => {
     window.history.replaceState({}, '', '/')
+    window.localStorage.clear()
     Object.defineProperty(navigator, 'onLine', {
       configurable: true,
       value: true,
@@ -508,6 +512,45 @@ describe('App', () => {
     expect(window.location.pathname).toBe('/trip')
   })
 
+  it('applies locally saved operational times to Home immediately', async () => {
+    const repository = new MemoryTripStateRepository()
+    repository.activeTripId = tripFixture.trip.id
+    repository.travelerId = 'traveler-alex'
+    repository.lastMeaningfulRoute = '/home'
+    const overrides = new LocalTripOverrideRepository(
+      window.localStorage,
+      tripFixture,
+    )
+    overrides.saveDayEdits('day-2030-05-11', null, {
+      'event-excursion': {
+        startsAt: '2030-05-11T10:15:00+02:00',
+      },
+    })
+    window.history.replaceState({}, '', '/home')
+
+    renderApp(
+      repository,
+      new Date('2030-05-11T06:00:00Z'),
+      dailyLoveMessageFixture,
+      overrides,
+    )
+
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'Harbor City',
+      }),
+    ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('link', { name: 'Home' }))
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: /Good (morning|afternoon|evening), Alex/,
+      }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('10:15')).toBeInTheDocument()
+  })
+
   it('opens Home on a fresh launch after the trip', async () => {
     const repository = new MemoryTripStateRepository()
     repository.travelerId = 'traveler-alex'
@@ -748,5 +791,54 @@ describe('App', () => {
     await screen.findByText('Aboard MV Example')
 
     expect(repository.lastMeaningfulRoute).toBe('/trip')
+  })
+
+  it('shows Trip immediately at the top after repeated primary navigation', async () => {
+    const repository = new MemoryTripStateRepository()
+    repository.activateTrip()
+    repository.travelerId = 'traveler-alex'
+    window.history.replaceState({}, '', '/home')
+    renderApp(repository, new Date('2030-05-11T12:00:00Z'))
+
+    const openTripFrom = async (source: 'Home' | 'Today' | 'Documents') => {
+      if (window.location.pathname !== `/${source.toLowerCase()}`) {
+        fireEvent.click(screen.getByRole('link', { name: source }))
+      }
+      if (source === 'Today') {
+        await waitFor(() =>
+          expect(document.querySelector('.today-screen')).toBeVisible(),
+        )
+      } else {
+        await screen.findByRole('heading', {
+          level: 1,
+          name:
+            source === 'Home'
+              ? /Good (morning|afternoon|evening), Alex/
+              : source,
+        })
+      }
+      document.documentElement.scrollTop = 700
+
+      fireEvent.click(screen.getByRole('link', { name: 'Trip' }))
+
+      expect(
+        await screen.findByRole('heading', {
+          level: 1,
+          name: 'Northern Coast Journey',
+        }),
+      ).toBeVisible()
+      expect(document.documentElement.scrollTop).toBe(0)
+      expect(
+        document.querySelector('.trip-day-card summary'),
+      ).toBeVisible()
+      expect(
+        screen.getByRole('navigation', { name: 'Primary navigation' }),
+      ).toBeVisible()
+    }
+
+    await openTripFrom('Home')
+    await openTripFrom('Today')
+    await openTripFrom('Documents')
+    await openTripFrom('Home')
   })
 })

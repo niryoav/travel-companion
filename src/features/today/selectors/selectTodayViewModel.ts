@@ -2,7 +2,6 @@ import { resolveTripPhase } from '../../../domain/trip/selectors/resolveTripPhas
 import { selectCurrentEvent } from '../../../domain/trip/selectors/selectCurrentEvent'
 import { selectDayEvents } from '../../../domain/trip/selectors/selectDayEvents'
 import { selectNextEvent } from '../../../domain/trip/selectors/selectNextEvent'
-import { selectNextEventForDay } from '../../../domain/trip/selectors/selectNextEventForDay'
 import { selectToday } from '../../../domain/trip/selectors/selectToday'
 import { selectTodayDocuments } from '../../../domain/trip/selectors/selectTodayDocuments'
 import { selectTodayEvents } from '../../../domain/trip/selectors/selectTodayEvents'
@@ -19,11 +18,15 @@ import {
 import {
   formatLocalTime,
 } from '../../../domain/trip/tripTime'
+import { expectedArrivalAshore } from '../../../domain/trip/tenderPlanning'
 import type {
   PortCall,
   TripData,
   TripDay,
   TripEvent,
+  OperationalEntryStatus,
+  OperationalTime,
+  PortAccess,
 } from '../../../domain/trip/tripTypes'
 import type {
   TodayCriticalInfoViewModel,
@@ -125,11 +128,123 @@ function stateLabel(state: TodayEventState): string {
   }
 }
 
+function personalTenderAgenda(
+  portCall: PortCall | null,
+): TodayEventViewModel[] {
+  if (portCall?.portAccess?.status !== 'TENDER_REQUIRED') {
+    return []
+  }
+  const tender = portCall.portAccess.tender
+  if (!tender) {
+    return []
+  }
+  const arrivalAshore = expectedArrivalAshore(tender)
+  const actions: Array<{
+    id: string
+    title: string
+    value: OperationalTime | undefined
+    location?: string
+    kindLabel?: string
+  }> = [
+    {
+      id: `${portCall.dayId}-tender-report`,
+      title: 'Tender report',
+      value: tender.tenderReport,
+      location: tender.meetingPoint,
+    },
+    {
+      id: `${portCall.dayId}-our-tender-ashore`,
+      title: 'Our tender ashore',
+      value: tender.ourTenderAshore,
+    },
+    {
+      id: `${portCall.dayId}-expected-arrival-ashore`,
+      title: 'Expected arrival ashore',
+      value: arrivalAshore,
+      kindLabel: 'Calculated',
+    },
+    {
+      id: `${portCall.dayId}-our-tender-back`,
+      title: 'Our tender back',
+      value: tender.ourTenderBack,
+    },
+  ]
+
+  return actions.flatMap(
+    ({ id, title, value, location, kindLabel }) =>
+      value?.at
+        ? [{
+            id,
+            kindLabel: kindLabel ?? 'Personal tender',
+            title,
+            state: 'UPCOMING' as const,
+            stateLabel: 'Later',
+            time: formatLocalTime(value.at, portCall.timeZone),
+            startsAt: value.at,
+            location,
+            timingConfidenceLabel:
+              value.verification === 'ESTIMATED'
+                ? 'Estimated time'
+                : undefined,
+            hasRelatedDocuments: false,
+          }]
+        : [],
+  )
+}
+
+function normalizeTimelineStates(
+  timeline: TodayEventViewModel[],
+  now: Date,
+): TodayEventViewModel[] {
+  const instant = now.getTime()
+  const ordered = [...timeline].sort((left, right) => {
+    if (!left.startsAt) {
+      return right.startsAt ? 1 : 0
+    }
+    if (!right.startsAt) {
+      return -1
+    }
+    return Date.parse(left.startsAt) - Date.parse(right.startsAt)
+  })
+  const classified = ordered.map((item) => {
+    let state: TodayEventState
+    if (!item.startsAt) {
+      state = 'UNTIMED'
+    } else if (
+      item.endsAt &&
+      Date.parse(item.startsAt) <= instant &&
+      instant < Date.parse(item.endsAt)
+    ) {
+      state = 'CURRENT'
+    } else {
+      const completedAt = item.endsAt
+        ? Date.parse(item.endsAt)
+        : Date.parse(item.startsAt)
+      state = instant >= completedAt ? 'COMPLETED' : 'UPCOMING'
+    }
+    return {
+      ...item,
+      state,
+      stateLabel:
+        item.isCancelled ? 'Cancelled' : stateLabel(state),
+    }
+  })
+  const nextIndex = classified.findIndex(
+    ({ state }) => state === 'UPCOMING',
+  )
+  return classified.map((item, index) =>
+    index === nextIndex
+      ? { ...item, state: 'NEXT', stateLabel: 'Next' }
+      : item,
+  )
+}
+
 function eventViewModel(
   data: TripData,
   day: TripDay,
   event: TripEvent,
   state: TodayEventState,
+  portAccess?: PortAccess,
 ): TodayEventViewModel {
   const location = data.locations.find(({ id }) => id === event.locationId)
   const transport =
@@ -138,7 +253,11 @@ function eventViewModel(
       : undefined
   const relatedDocuments = selectTodayDocuments(data, [event])
   const timeZone = resolveEventTimeZone(event, day)
-  const leaveBy = leaveByViewModel(event, timeZone.timeZone)
+  const leaveBy = leaveByViewModel(
+    event,
+    timeZone.timeZone,
+    portAccess,
+  )
 
   return {
     id: event.id,
@@ -146,7 +265,10 @@ function eventViewModel(
     publicCode: event.publicCode,
     title: event.title,
     state,
-    stateLabel: stateLabel(state),
+    stateLabel:
+      event.operationalStatus === 'CANCELLED'
+        ? 'Cancelled'
+        : stateLabel(state),
     time:
       event.startsAt
         ? formatLocalTime(event.startsAt, timeZone.timeZone)
@@ -163,12 +285,16 @@ function eventViewModel(
     location: location?.name,
     transport: transport?.label,
     timingLabel: !event.startsAt
-      ? event.scheduleStatus === 'TO_BE_CONFIRMED'
+      ? event.operationalStatus === 'TO_BE_CONFIRMED' ||
+        (event.operationalStatus === undefined &&
+          event.scheduleStatus === 'TO_BE_CONFIRMED')
         ? 'Time to be confirmed'
         : 'Time unavailable'
       : undefined,
     timingConfidenceLabel:
-      event.startsAt && event.timingVerification === 'ESTIMATED'
+      event.startsAt &&
+      (event.timingVerification === 'ESTIMATED' ||
+        event.operationalStatus === 'ESTIMATED')
         ? 'Estimated time'
         : undefined,
     meetingTime: event.meetingAt
@@ -191,21 +317,72 @@ function eventViewModel(
       )
         ? `Event timezone not added; using ${day.timeZone}`
         : undefined,
+    operationalStatusLabel:
+      event.operationalStatus === 'TO_BE_CONFIRMED'
+        ? 'To be confirmed'
+        : event.operationalStatus
+          ? event.operationalStatus.charAt(0) +
+            event.operationalStatus.slice(1).toLowerCase()
+          : undefined,
+    localOperationalNote: event.localOperationalNote,
+    isCancelled: event.operationalStatus === 'CANCELLED',
     leaveBy,
     hasRelatedDocuments: relatedDocuments.length > 0,
     documentActions: relatedDocuments.map(selectDocumentAction),
   }
 }
 
+function operationalStatusLabel(
+  status: OperationalEntryStatus,
+): string {
+  switch (status) {
+    case 'CONFIRMED':
+      return 'Confirmed'
+    case 'ESTIMATED':
+      return 'Estimated'
+    case 'TO_BE_CONFIRMED':
+      return 'To be confirmed'
+  }
+}
+
+function operationalTimeViewModel(
+  value: OperationalTime | undefined,
+  timeZone: string,
+) {
+  return value
+    ? {
+        time: value.at
+          ? formatLocalTime(value.at, timeZone)
+          : undefined,
+        dateTime: value.at,
+        statusLabel: operationalStatusLabel(value.verification),
+      }
+    : undefined
+}
+
+function portAccessLabel(
+  status: 'DOCKED' | 'TENDER_REQUIRED' | 'TO_BE_CONFIRMED',
+): string {
+  switch (status) {
+    case 'DOCKED':
+      return 'Docked'
+    case 'TENDER_REQUIRED':
+      return 'Tender required'
+    case 'TO_BE_CONFIRMED':
+      return 'Port access to be confirmed'
+  }
+}
+
 function leaveByViewModel(
   event: TripEvent,
   timeZone: string,
+  portAccess?: PortAccess,
 ): TodayLeaveByViewModel | undefined {
-  if (!isLeaveByRelevant(event)) {
+  if (!isLeaveByRelevant(event, portAccess)) {
     return undefined
   }
 
-  const result = calculateLeaveBy(event)
+  const result = calculateLeaveBy(event, portAccess)
   if (
     result.state === 'UNAVAILABLE' &&
     result.reason === 'SAFETY_BUFFER_MISSING'
@@ -229,8 +406,14 @@ function leaveByViewModel(
   if (result.state === 'PENDING') {
     return {
       state: result.state,
-      label: 'Leave-by pending',
-      detail: 'Meeting time to be confirmed.',
+      label:
+        result.reason === 'TENDER_TIMING_PENDING'
+          ? 'Tender timing pending'
+          : 'Leave-by pending',
+      detail:
+        result.reason === 'TENDER_TIMING_PENDING'
+          ? 'Tender timing still to be confirmed.'
+          : 'Meeting time to be confirmed.',
     }
   }
   if (
@@ -274,6 +457,10 @@ function portViewModel(
   const location = data.locations.find(
     ({ id }) => id === portCall.portLocationId,
   )
+  const accessStatus =
+    portCall.portAccess?.status ?? 'TO_BE_CONFIRMED'
+  const tender = portCall.portAccess?.tender
+  const arrivalAshore = expectedArrivalAshore(tender)
   return {
     location: location?.name ?? 'Port',
     arrivalTime: portCall.arrivalAt
@@ -284,6 +471,44 @@ function portViewModel(
       ? formatLocalTime(portCall.departureAt, portCall.timeZone)
       : undefined,
     departureAt: portCall.departureAt,
+    accessStatus,
+    accessLabel: portAccessLabel(accessStatus),
+    operationalNote: portCall.operationalNote,
+    tender:
+      accessStatus === 'TENDER_REQUIRED' && tender
+        ? {
+            firstTender: operationalTimeViewModel(
+              tender?.firstTender,
+              portCall.timeZone,
+            ),
+            tenderReport: operationalTimeViewModel(
+              tender?.tenderReport,
+              portCall.timeZone,
+            ),
+            ourTenderAshore: operationalTimeViewModel(
+              tender?.ourTenderAshore,
+              portCall.timeZone,
+            ),
+            expectedArrivalAshore: operationalTimeViewModel(
+              arrivalAshore,
+              portCall.timeZone,
+            ),
+            meetingPoint: tender?.meetingPoint,
+            crossingLabel:
+              tender?.crossingMinutes !== undefined
+                ? `${tender.crossingMinutes} min estimated crossing`
+                : undefined,
+            lastTender: operationalTimeViewModel(
+              tender?.lastTender,
+              portCall.timeZone,
+            ),
+            ourTenderBack: operationalTimeViewModel(
+              tender?.ourTenderBack,
+              portCall.timeZone,
+            ),
+            note: tender?.note,
+          }
+        : undefined,
   }
 }
 
@@ -319,6 +544,9 @@ function operationalStatusViewModel(
   if (!status) {
     return undefined
   }
+  const timeStatusLabel = status.allAboardVerification
+    ? operationalStatusLabel(status.allAboardVerification)
+    : undefined
 
   switch (status.state) {
     case 'SEA_DAY':
@@ -339,6 +567,7 @@ function operationalStatusViewModel(
         detail: 'The ship is not yet in port.',
         time: status.allAboardTime,
         dateTime: status.allAboardAt,
+        timeStatusLabel,
         timeRemaining: status.timeRemaining
           ? `${status.timeRemaining} remaining`
           : undefined,
@@ -358,9 +587,13 @@ function operationalStatusViewModel(
         state: status.state,
         label: 'Alongside',
         title: status.location ?? 'Port day',
-        detail: 'Verified All Aboard time',
+        detail:
+          status.allAboardVerification === 'ESTIMATED'
+            ? 'Estimated All Aboard planning time'
+            : 'Confirmed All Aboard time',
         time: status.allAboardTime,
         dateTime: status.allAboardAt,
+        timeStatusLabel,
         timeRemaining: `${status.timeRemaining} remaining`,
         urgency: 'CALM',
       }
@@ -372,6 +605,7 @@ function operationalStatusViewModel(
         detail: status.location ?? 'Port day',
         time: status.allAboardTime,
         dateTime: status.allAboardAt,
+        timeStatusLabel,
         timeRemaining: `${status.timeRemaining} remaining`,
         urgency: 'ATTENTION',
       }
@@ -383,6 +617,7 @@ function operationalStatusViewModel(
         detail: status.location ?? 'Port day',
         time: status.allAboardTime,
         dateTime: status.allAboardAt,
+        timeStatusLabel,
         urgency: 'URGENT',
       }
   }
@@ -395,6 +630,10 @@ function returnGuidanceViewModel(
   const context = independent
     ? 'Independent excursion planning guidance.'
     : 'Ship-operated excursion; follow operator instructions.'
+  const estimateContext =
+    result.allAboardVerification === 'ESTIMATED'
+      ? ' Based on estimated All Aboard.'
+      : ''
 
   switch (result.state) {
     case 'COMFORTABLE':
@@ -402,7 +641,7 @@ function returnGuidanceViewModel(
         state: result.state,
         label: 'Return to ship',
         title: 'Comfortable scheduled buffer',
-        detail: context,
+        detail: `${context}${estimateContext}`,
         bufferLabel: `${result.bufferMinutes} min before All Aboard`,
       }
     case 'LIMITED':
@@ -410,7 +649,8 @@ function returnGuidanceViewModel(
         state: result.state,
         label: 'Return to ship',
         title: 'Limited scheduled buffer',
-        detail: `${context} Keep the return plan visible.`,
+        detail:
+          `${context} Keep the return plan visible.${estimateContext}`,
         bufferLabel: `${result.bufferMinutes} min before All Aboard`,
       }
     case 'TIGHT':
@@ -418,7 +658,7 @@ function returnGuidanceViewModel(
         state: result.state,
         label: 'Return to ship',
         title: 'Tight scheduled buffer',
-        detail: `${context} Review the confirmed schedule carefully.`,
+        detail: `${context} Review the schedule carefully.${estimateContext}`,
         bufferLabel: `${result.bufferMinutes} min before All Aboard`,
       }
     case 'TIMING_PENDING':
@@ -464,9 +704,19 @@ function tomorrowViewModel(
   }
 
   const events = selectDayEvents(data, tomorrow)
-  const firstEvent = events[0]
+  const firstEvent =
+    events.find(
+      ({ operationalStatus }) => operationalStatus !== 'CANCELLED',
+    ) ?? events[0]
+  const tomorrowPortCall = selectTodayPortCall(data, tomorrow)
   const firstEventView = firstEvent
-    ? eventViewModel(data, tomorrow, firstEvent, 'UPCOMING')
+    ? eventViewModel(
+        data,
+        tomorrow,
+        firstEvent,
+        'UPCOMING',
+        tomorrowPortCall?.portAccess,
+      )
     : undefined
   const requiredItems = [
     ...new Set(events.flatMap(({ requiredItems }) => requiredItems ?? [])),
@@ -491,6 +741,65 @@ function tomorrowViewModel(
   const earlyStart = firstEvent?.startsAt
     ? hourInTimeZone(firstEvent.startsAt, firstTimeZone) < 9
     : false
+  const tomorrowTender = tomorrowPortCall?.portAccess?.tender
+  const hasPersonalTenderPlan = Boolean(
+    tomorrowTender?.tenderReport?.at ??
+      tomorrowTender?.ourTenderAshore?.at ??
+      tomorrowTender?.ourTenderBack?.at,
+  )
+  const tenderPlan =
+    tomorrowPortCall?.portAccess?.status === 'TENDER_REQUIRED'
+      ? [
+          ...(!hasPersonalTenderPlan
+            ? ['Tender times still need to be planned.']
+            : []),
+          ...(tomorrowTender?.tenderReport?.at
+            ? [
+                `Tender report ${formatLocalTime(
+                  tomorrowTender.tenderReport.at,
+                  tomorrowPortCall.timeZone,
+                )}`,
+              ]
+            : []),
+          ...(tomorrowTender?.ourTenderAshore?.at
+            ? [
+                `Our tender ashore ${formatLocalTime(
+                  tomorrowTender.ourTenderAshore.at,
+                  tomorrowPortCall.timeZone,
+                )}`,
+              ]
+            : []),
+          ...(tomorrowTender?.meetingPoint
+            ? [`Meeting point: ${tomorrowTender.meetingPoint}`]
+            : []),
+          ...(tomorrowTender?.ourTenderBack?.at
+            ? [
+                `Our tender back ${formatLocalTime(
+                  tomorrowTender.ourTenderBack.at,
+                  tomorrowPortCall.timeZone,
+                )}`,
+              ]
+            : []),
+          ...(tomorrowTender?.lastTender?.at
+            ? [
+                `Last tender ${formatLocalTime(
+                  tomorrowTender.lastTender.at,
+                  tomorrowPortCall.timeZone,
+                )}`,
+              ]
+            : []),
+          ...(tomorrowPortCall?.allAboardAt
+            ? [
+                `All Aboard ${formatLocalTime(
+                  tomorrowPortCall.allAboardAt,
+                  tomorrowPortCall.timeZone,
+                )} · ${operationalStatusLabel(
+                  tomorrowPortCall.allAboardVerification ?? 'CONFIRMED',
+                )}`,
+              ]
+            : []),
+        ]
+      : undefined
 
   return {
     dayId: tomorrow.id,
@@ -502,11 +811,36 @@ function tomorrowViewModel(
     requiredItems,
     preparationNotes,
     documentActions,
+    tenderPlan,
     timingNote:
       firstEvent && !firstEvent.startsAt
         ? firstEvent.scheduleStatus === 'TO_BE_CONFIRMED'
           ? 'First event time to be confirmed.'
           : 'First event time unavailable.'
+        : undefined,
+    portAccessNote: (() => {
+      const portCall = tomorrowPortCall
+      if (!portCall) {
+        return undefined
+      }
+      const status =
+        portCall.portAccess?.status ?? 'TO_BE_CONFIRMED'
+      if (status === 'TENDER_REQUIRED') {
+        return 'Tender required'
+      }
+      return status === 'DOCKED'
+        ? 'Port access: Docked'
+        : 'Port access to be confirmed.'
+    })(),
+    allAboardNote:
+      tomorrowPortCall?.allAboardAt &&
+      tomorrowPortCall.portAccess?.status !== 'TENDER_REQUIRED'
+        ? `All Aboard ${formatLocalTime(
+            tomorrowPortCall.allAboardAt,
+            tomorrowPortCall.timeZone,
+          )} · ${operationalStatusLabel(
+            tomorrowPortCall.allAboardVerification ?? 'CONFIRMED',
+          )}`
         : undefined,
     emptyMessage:
       events.length === 0
@@ -650,17 +984,23 @@ export function selectTodayViewModel(
   }
 
   const events = selectTodayEvents(data, today)
-  const currentEvent = selectCurrentEvent(events, now)
-  const nextEvent = selectNextEventForDay(events, now)
-  const timeline = events.map((event) =>
-    eventViewModel(
-      data,
-      today,
-      event,
-      temporalState(event, nextEvent, now),
-    ),
-  )
   const portCall = selectTodayPortCall(data, today)
+  const currentEvent = selectCurrentEvent(events, now)
+  const timeline = normalizeTimelineStates(
+    [
+      ...events.map((event) =>
+        eventViewModel(
+          data,
+          today,
+          event,
+          temporalState(event, null, now),
+          portCall?.portAccess,
+        ),
+      ),
+      ...personalTenderAgenda(portCall),
+    ],
+    now,
+  )
   const operationalStatus = operationalStatusViewModel(
     selectPortOperationalStatus(data, today, portCall, now),
   )
@@ -668,10 +1008,12 @@ export function selectTodayViewModel(
     (currentEvent
       ? timeline.find(({ id }) => id === currentEvent.id)
       : undefined) ??
+    timeline.find(({ state }) => state === 'CURRENT') ??
     timeline.find(({ state }) => state === 'NEXT')
   const relevantExcursion = events.find(
     (event) =>
       event.kind === 'EXCURSION' &&
+      event.operationalStatus !== 'CANCELLED' &&
       (!event.endsAt || Date.parse(event.endsAt) > now.getTime()),
   )
   const returnGuidance = relevantExcursion
