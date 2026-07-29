@@ -6,10 +6,7 @@ import type {
 import type { EventId, TripDayId } from '../domain/trip/tripTypes'
 import type { LocalTripOverrideRepository } from '../storage/LocalTripOverrideRepository'
 import type { TripOverrideRepository } from '../storage/TripOverrideRepository'
-import type {
-  ShareSavedChangesPreparation,
-  TripOverrideSaveResult,
-} from '../storage/TripOverrideRepository'
+import type { TripOverrideSaveResult } from '../storage/TripOverrideRepository'
 import type { TripSnapshot } from '../domain/trip/tripSnapshot'
 import type { TripId } from '../domain/trip/tripTypes'
 import type { TripSnapshotCache } from '../storage/TripSnapshotCache'
@@ -17,9 +14,10 @@ import type { TripSnapshotApiClient } from '../services/TripSnapshotApiClient'
 import { TripSnapshotApiError } from '../services/TripSnapshotApiClient'
 
 /**
- * Local editing remains immediately available. When a known base revision
- * exists, one immediate PUT is attempted. Failures remain local and are
- * retried only through an explicit user action.
+ * Local editing remains immediately available. Every save makes one bounded
+ * sharing attempt: a known base goes directly to PUT, while an unknown base
+ * is observed with one GET before PUT. Failures remain local and are retried
+ * only through an explicit user action.
  */
 export class SyncedTripOverrideRepository
 implements TripOverrideRepository {
@@ -125,58 +123,34 @@ implements TripOverrideRepository {
     return this.attemptImmediateWrite()
   }
 
-  async prepareShareSavedChanges(): Promise<ShareSavedChangesPreparation> {
-    if (!this.writeDependencies) {
-      return { status: 'unavailable' }
-    }
-    try {
-      const remote =
-        await this.writeDependencies.apiClient.getTripSnapshot(
-          this.writeDependencies.tripId,
-        )
-      if (remote) {
-        try {
-          await this.writeDependencies.cache.saveAcceptedSnapshot(remote)
-        } catch {
-          // A current server revision is still usable for this explicit write.
-        }
-      }
-      return {
-        status: 'ready',
-        baseRevision: remote?.revision ?? 0,
-        sharedSnapshotExists: remote !== null,
-      }
-    } catch {
-      return { status: 'unavailable' }
-    }
-  }
-
-  shareSavedChanges(
-    baseRevision: number,
-  ): Promise<TripOverrideSaveResult> {
-    return this.attemptImmediateWrite(baseRevision)
-  }
-
   retryShare(): Promise<TripOverrideSaveResult> {
     return this.attemptImmediateWrite()
   }
 
-  private async attemptImmediateWrite(
-    explicitBaseRevision?: number,
-  ): Promise<TripOverrideSaveResult> {
+  private async attemptImmediateWrite(): Promise<TripOverrideSaveResult> {
     if (!this.writeDependencies || this.writeInFlight) {
       return 'local-only'
     }
     const metadata = this.localRepository.getMetadata()
-    const baseRevision =
-      explicitBaseRevision ?? metadata.baseRevision
-    if (baseRevision === null) {
-      return 'local-only'
-    }
 
     this.writeInFlight = true
     const submittedSnapshot = this.snapshot
     try {
+      let baseRevision = metadata.baseRevision
+      if (baseRevision === null) {
+        const remote =
+          await this.writeDependencies.apiClient.getTripSnapshot(
+            this.writeDependencies.tripId,
+          )
+        baseRevision = remote?.revision ?? 0
+        if (remote) {
+          try {
+            await this.writeDependencies.cache.saveAcceptedSnapshot(remote)
+          } catch {
+            // The observed revision is still valid for this one write attempt.
+          }
+        }
+      }
       const accepted =
         await this.writeDependencies.apiClient.putTripSnapshot(
           this.writeDependencies.tripId,

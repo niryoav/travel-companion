@@ -17,11 +17,11 @@ const updateCopy = {
   },
   UPDATE_AVAILABLE: {
     title: 'Update available',
-    detail: 'Apply it when you are ready. The app will reopen afterward.',
+    detail: 'Apply it when you are ready. The page will reload afterward.',
   },
   APPLYING: {
     title: 'Applying update',
-    detail: 'Travel Companion will reopen when the update is ready.',
+    detail: 'Travel Companion will reload when the update is ready.',
   },
   FAILED: {
     title: 'Update check unavailable',

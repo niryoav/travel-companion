@@ -11,14 +11,6 @@ export type TripOverrideSaveResult =
   | 'local-only'
   | 'conflict'
 
-export type ShareSavedChangesPreparation =
-  | {
-      status: 'ready'
-      baseRevision: number
-      sharedSnapshotExists: boolean
-    }
-  | { status: 'unavailable' }
-
 export interface TripOverrideRepository {
   getSnapshot(): TripOverrideBundle
   subscribe(listener: () => void): () => void
@@ -33,8 +25,6 @@ export interface TripOverrideRepository {
     eventIds: EventId[],
   ): void | Promise<TripOverrideSaveResult>
   getSyncMetadata?(): LocalTripOverrideMetadata
-  prepareShareSavedChanges?(): Promise<ShareSavedChangesPreparation>
-  shareSavedChanges?(baseRevision: number): Promise<TripOverrideSaveResult>
   retryShare?(): Promise<TripOverrideSaveResult>
 }
 

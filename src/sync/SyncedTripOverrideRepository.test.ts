@@ -232,17 +232,30 @@ describe('SyncedTripOverrideRepository', () => {
     },
   )
 
-  it('shares legacy unknown-base edits only after explicit preparation', async () => {
-    const accepted = snapshot('Legacy local', 5)
+  it('creates revision one after one unknown-base GET finds no shared snapshot', async () => {
+    const accepted = snapshot('Legacy local', 1)
     const putTripSnapshot = vi.fn(async () => accepted)
+    const getTripSnapshot = vi.fn(async () => {
+      const persisted = JSON.parse(
+        window.localStorage.getItem(
+          `travel-companion:trip-overrides:${tripFixture.trip.id}`,
+        ) ?? 'null',
+      )
+      expect(
+        persisted.operationalOverrides.dayOverrides[
+          'day-2030-05-11'
+        ].note,
+      ).toBe('Legacy local')
+      return null
+    })
     const { dependencies } = writeDependencies(
       putTripSnapshot,
-      vi.fn(async () => snapshot('Current shared', 4)),
+      getTripSnapshot,
     )
     const local = new LocalTripOverrideRepository(
       window.localStorage,
       tripFixture,
-      undefined,
+      () => new Date('2030-05-10T12:00:00Z'),
       bundle('Legacy local'),
       {
         baseRevision: null,
@@ -257,17 +270,139 @@ describe('SyncedTripOverrideRepository', () => {
       dependencies,
     )
 
-    await expect(repository.prepareShareSavedChanges()).resolves.toEqual({
-      status: 'ready',
-      baseRevision: 4,
-      sharedSnapshotExists: true,
+    await expect(
+      repository.saveDayEdits(
+        'day-2030-05-11',
+        { note: 'Legacy local' },
+        {},
+      ),
+    ).resolves.toBe('shared')
+    expect(getTripSnapshot).toHaveBeenCalledOnce()
+    expect(putTripSnapshot).toHaveBeenCalledWith(
+      tripFixture.trip.id,
+      0,
+      expect.objectContaining({
+        dayOverrides: expect.objectContaining({
+          'day-2030-05-11': expect.objectContaining({
+            note: 'Legacy local',
+          }),
+        }),
+      }),
+    )
+    expect(local.getMetadata()).toMatchObject({
+      baseRevision: 1,
+      syncState: 'synced',
     })
-    expect(repository.getSnapshot()).toEqual(bundle('Legacy local'))
-    await expect(repository.shareSavedChanges(4)).resolves.toBe('shared')
+  })
+
+  it('preserves an unknown-base save when revision discovery fails', async () => {
+    const getTripSnapshot = vi.fn(async () => {
+      throw new TripSnapshotApiError('NETWORK_FAILURE')
+    })
+    const putTripSnapshot = vi.fn()
+    const { dependencies } = writeDependencies(
+      putTripSnapshot,
+      getTripSnapshot,
+    )
+    const local = new LocalTripOverrideRepository(
+      window.localStorage,
+      tripFixture,
+      undefined,
+      bundle('Before'),
+      {
+        baseRevision: null,
+        lastModified: '2030-05-10T12:00:00Z',
+        syncState: 'unsynced',
+      },
+    )
+    const repository = new SyncedTripOverrideRepository(
+      local,
+      local.getSnapshot(),
+      true,
+      dependencies,
+    )
+
+    await expect(
+      repository.saveDayEdits(
+        'day-2030-05-11',
+        { note: 'Keep after failed GET' },
+        {},
+      ),
+    ).resolves.toBe('local-only')
+
+    expect(getTripSnapshot).toHaveBeenCalledOnce()
+    expect(putTripSnapshot).not.toHaveBeenCalled()
+    expect(local.getMetadata()).toMatchObject({
+      baseRevision: null,
+      syncState: 'unsynced',
+    })
+    expect(
+      repository.getSnapshot().dayOverrides['day-2030-05-11']?.note,
+    ).toBe('Keep after failed GET')
+  })
+
+  it('uses one observed revision while preserving the complete unknown-base bundle', async () => {
+    const completeLocal = {
+      ...bundle('Complete local'),
+      eventOverrides: {
+        'event-excursion': {
+          eventId: 'event-excursion',
+          note: 'Keep this event too',
+          updatedAt: '2030-05-10T12:00:00Z',
+        },
+      },
+    }
+    const accepted = {
+      ...snapshot('Complete local', 5),
+      operationalOverrides: completeLocal,
+    }
+    const putTripSnapshot = vi.fn(async () => accepted)
+    const getTripSnapshot = vi.fn(async () =>
+      snapshot('Current shared', 4),
+    )
+    const { dependencies } = writeDependencies(
+      putTripSnapshot,
+      getTripSnapshot,
+    )
+    const local = new LocalTripOverrideRepository(
+      window.localStorage,
+      tripFixture,
+      () => new Date('2030-05-10T12:00:00Z'),
+      completeLocal,
+      {
+        baseRevision: null,
+        lastModified: '2030-05-10T12:00:00Z',
+        syncState: 'unsynced',
+      },
+    )
+    const repository = new SyncedTripOverrideRepository(
+      local,
+      completeLocal,
+      true,
+      dependencies,
+    )
+
+    await expect(
+      repository.saveDayEdits(
+        'day-2030-05-11',
+        { note: 'Complete local' },
+        {},
+      ),
+    ).resolves.toBe('shared')
+
+    expect(getTripSnapshot).toHaveBeenCalledOnce()
+    expect(putTripSnapshot).toHaveBeenCalledOnce()
     expect(putTripSnapshot).toHaveBeenCalledWith(
       tripFixture.trip.id,
       4,
-      bundle('Legacy local'),
+      expect.objectContaining({
+        dayOverrides: expect.objectContaining({
+          'day-2030-05-11': expect.objectContaining({
+            note: 'Complete local',
+          }),
+        }),
+        eventOverrides: completeLocal.eventOverrides,
+      }),
     )
   })
 

@@ -61,6 +61,31 @@ describe('PwaUpdateManager', () => {
     expect(manager.getSnapshot().updateStatus).toBe('APPLYING')
   })
 
+  it('reloads exactly once after the new worker takes control', async () => {
+    const reloadPage = vi.fn()
+    const manager = new PwaUpdateManager(true, reloadPage)
+    manager.attachApplyUpdate(vi.fn().mockResolvedValue(undefined))
+    manager.updateAvailable()
+    await manager.applyUpdate()
+
+    manager.reloadAfterUpdate()
+    manager.reloadAfterUpdate()
+
+    expect(reloadPage).toHaveBeenCalledOnce()
+    expect(manager.getSnapshot().updateStatus).toBe('CURRENT')
+  })
+
+  it('does not start a reload loop when controller-change signals repeat', () => {
+    const reloadPage = vi.fn()
+    const manager = new PwaUpdateManager(true, reloadPage)
+
+    manager.reloadAfterUpdate()
+    manager.updateAvailable()
+    manager.reloadAfterUpdate()
+
+    expect(reloadPage).toHaveBeenCalledOnce()
+  })
+
   it('handles registration and update-application failure without throwing', async () => {
     const manager = new PwaUpdateManager(true)
     manager.registered(undefined, false)

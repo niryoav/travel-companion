@@ -52,6 +52,7 @@ import type {
   TripViewModel,
 } from '../tripTypes'
 import { selectDocumentAction } from '../../documents/selectors/selectDocumentsViewModel'
+import type { LocalTripOverrideSyncState } from '../../../storage/LocalTripOverrideMetadata'
 
 function sourceViewModel(source: SourceReference) {
   return {
@@ -134,6 +135,7 @@ function eventViewModel(
   day: TripDay,
   event: TripEvent,
   overrides: TripOverrideBundle,
+  syncState: LocalTripOverrideSyncState,
   portAccess?: PortAccess,
 ): TripEventViewModel {
   const location = data.locations.find(({ id }) => id === event.locationId)
@@ -310,7 +312,12 @@ function eventViewModel(
             event.operationalStatus.slice(1).toLowerCase()
           : undefined,
     isCancelled: event.operationalStatus === 'CANCELLED',
-    updatedLocally: Boolean(overrides.eventOverrides[event.id]),
+    operationalUpdateLabel: overrides.eventOverrides[event.id]
+      ? formatOperationalUpdate(
+          overrides.eventOverrides[event.id].updatedAt,
+          syncState,
+        )
+      : undefined,
     experience: guide
       ? {
           summary: guide.summary,
@@ -457,6 +464,15 @@ function formatLocalUpdate(instant: string): string {
   }).format(new Date(instant))
 }
 
+function formatOperationalUpdate(
+  instant: string,
+  syncState: LocalTripOverrideSyncState,
+): string {
+  return syncState === 'synced'
+    ? `Updated and shared on ${formatLocalUpdate(instant)}`
+    : `Updated locally on ${formatLocalUpdate(instant)} — not yet shared`
+}
+
 function progressViewModel(
   data: TripData,
   now: Date,
@@ -493,6 +509,7 @@ function dayViewModel(
   dayNumber: number,
   now: Date,
   overrides: TripOverrideBundle,
+  syncState: LocalTripOverrideSyncState,
 ): TripDayViewModel {
   const state = classifyTripDayState(day, now)
   const domainEvents = selectDayEvents(data, day)
@@ -504,6 +521,7 @@ function dayViewModel(
       day,
       event,
       overrides,
+      syncState,
       portCall?.portAccess,
     ),
   )
@@ -581,10 +599,10 @@ function dayViewModel(
       Boolean(portCall) &&
       (day.kind === 'PORT_DAY' ||
         domainEvents.some(({ kind }) => kind === 'EXCURSION')),
-    updatedLocallyLabel:
+    operationalUpdateLabel:
       hasDayOperationalChanges(overrides, day.id, day.eventIds) &&
       latestUpdate
-        ? `Updated locally on ${formatLocalUpdate(latestUpdate)}`
+        ? formatOperationalUpdate(latestUpdate, syncState)
         : undefined,
     relatedDocumentCount: documentCount,
     documentActions: dayDocuments.map(selectDocumentAction),
@@ -628,10 +646,19 @@ export function selectTripViewModel(
     excursionGuides: [],
   },
   overrides: TripOverrideBundle = emptyTripOverrideBundle(data.trip.id),
+  syncState: LocalTripOverrideSyncState = 'unsynced',
 ): TripViewModel {
   const cruise = data.cruises.find(({ id }) => id === data.trip.cruiseId)
   const days = selectTripDays(data).map((day, index) =>
-    dayViewModel(data, content, day, index + 1, now, overrides),
+    dayViewModel(
+      data,
+      content,
+      day,
+      index + 1,
+      now,
+      overrides,
+      syncState,
+    ),
   )
 
   return {

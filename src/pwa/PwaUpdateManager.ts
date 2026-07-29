@@ -22,8 +22,13 @@ export class PwaUpdateManager {
   private registration?: ServiceWorkerRegistration
   private readonly listeners = new Set<Listener>()
   private snapshot: PwaStatus
+  private reloadStarted = false
 
-  constructor(supported: boolean) {
+  constructor(
+    supported: boolean,
+    private readonly reloadPage: () => void = () =>
+      window.location.reload(),
+  ) {
     this.snapshot = supported
       ? {
           updateStatus: 'CHECKING',
@@ -85,6 +90,18 @@ export class PwaUpdateManager {
       ...current,
       updateStatus: 'UPDATE_AVAILABLE',
     }))
+  }
+
+  reloadAfterUpdate(): void {
+    if (this.reloadStarted) {
+      return
+    }
+    this.reloadStarted = true
+    this.update((current) => ({
+      ...current,
+      updateStatus: 'CURRENT',
+    }))
+    this.reloadPage()
   }
 
   registrationFailed(): void {

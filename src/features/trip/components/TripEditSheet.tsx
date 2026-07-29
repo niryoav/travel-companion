@@ -764,7 +764,7 @@ export function TripEditSheet({
           <div className="trip-edit-body">
             {hasPersistedChanges ? (
               <p className="trip-edit-updated">
-                Changed locally
+                Changed
                 {latestUpdate
                   ? ` on ${new Intl.DateTimeFormat('en-GB', {
                       day: 'numeric',

@@ -69,8 +69,10 @@ Local override storage carries `baseRevision`, `lastModified`, and a `synced`,
 with unknown base revision and unsynced state. A successful immediate write
 updates the accepted cache and metadata; failures retain local edits and expose
 one manual retry. A missing shared snapshot establishes base revision zero.
-Unknown-base legacy edits require an explicit action and confirmation before
-their complete operational override set replaces shared data.
+Every operational Save first persists locally, then makes one bounded sharing
+attempt. A known base goes directly to PUT. An unknown base performs at most
+one GET and one PUT, using the observed shared revision or revision zero while
+preserving the complete local operational override set.
 
 ## Alternatives considered
 
