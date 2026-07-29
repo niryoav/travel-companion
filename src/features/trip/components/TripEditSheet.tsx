@@ -202,9 +202,10 @@ function TextArea({
   )
 }
 
-function TenderTimeField({
+function OperationalTimeField({
   id,
   label,
+  validationField,
   value,
   original,
   issues,
@@ -213,6 +214,7 @@ function TenderTimeField({
 }: {
   id: string
   label: string
+  validationField: OperationalEditField
   value: TenderTimeDraft
   original: TenderTimeDraft
   issues?: OperationalEditIssue[]
@@ -222,12 +224,22 @@ function TenderTimeField({
   const currentLabel = `${value.time || 'Not set'} · ${value.verification}`
   const originalLabel =
     `${original.time || 'Not set'} · ${original.verification}`
+  const renderOperationalValue = (fieldValue: string) => {
+    const [time, verification] = fieldValue.split(' · ')
+    const status =
+      verification === 'TO_BE_CONFIRMED'
+        ? 'To be confirmed'
+        : verification.charAt(0) +
+          verification.slice(1).toLowerCase()
+    return `${time} · ${status}`
+  }
   return (
     <Field
       current={currentLabel}
       label={label}
       original={originalLabel}
       onUseOriginal={onUseOriginal}
+      renderValue={renderOperationalValue}
     >
       <div className="trip-edit-time-with-status">
         <TextInput
@@ -235,13 +247,7 @@ function TenderTimeField({
           label={label}
           issues={issues}
           type="time"
-          validationField={
-            id === 'trip-edit-first-tender'
-              ? 'firstTenderTime'
-              : id === 'trip-edit-our-tender'
-                ? 'ourTenderTime'
-                : 'lastTenderTime'
-          }
+          validationField={validationField}
           value={value.time}
           onChange={(time) =>
             onChange({
@@ -718,7 +724,6 @@ export function TripEditSheet({
               {([
                 ['arrivalTime', 'Ship arrival time'],
                 ['departureTime', 'Ship departure time'],
-                ['allAboardTime', 'All Aboard time'],
               ] as const).map(([key, label]) => (
                 <Field
                   current={draft[key]}
@@ -740,6 +745,39 @@ export function TripEditSheet({
                   />
                 </Field>
               ))}
+
+              <OperationalTimeField
+                id="trip-edit-all-aboard"
+                issues={issuesFor('allAboardTime')}
+                label="All Aboard time"
+                validationField="allAboardTime"
+                value={{
+                  time: draft.allAboardTime,
+                  verification: draft.allAboardVerification,
+                }}
+                original={{
+                  time: originalDraft.allAboardTime,
+                  verification:
+                    originalDraft.allAboardVerification,
+                }}
+                onChange={({ time, verification }) => {
+                  setSaveErrors([])
+                  setDraft({
+                    ...draft,
+                    allAboardTime: time,
+                    allAboardVerification: verification,
+                  })
+                }}
+                onUseOriginal={() => {
+                  setSaveErrors([])
+                  setDraft({
+                    ...draft,
+                    allAboardTime: originalDraft.allAboardTime,
+                    allAboardVerification:
+                      originalDraft.allAboardVerification,
+                  })
+                }}
+              />
 
               <Field
                 current={draft.dayNote}
@@ -764,10 +802,11 @@ export function TripEditSheet({
                 <p className="trip-edit-context">
                   Leave unknown values empty or mark them To be confirmed.
                 </p>
-                <TenderTimeField
+                <OperationalTimeField
                   id="trip-edit-first-tender"
                   issues={issuesFor('firstTenderTime')}
                   label="First tender time"
+                  validationField="firstTenderTime"
                   value={draft.firstTender}
                   original={originalDraft.firstTender}
                   onChange={(value) =>
@@ -780,10 +819,11 @@ export function TripEditSheet({
                     )
                   }
                 />
-                <TenderTimeField
+                <OperationalTimeField
                   id="trip-edit-our-tender"
                   issues={issuesFor('ourTenderTime')}
                   label="Our tender / tender-ticket time"
+                  validationField="ourTenderTime"
                   value={draft.ourTender}
                   original={originalDraft.ourTender}
                   onChange={(value) =>
@@ -838,10 +878,11 @@ export function TripEditSheet({
                     }
                   />
                 </Field>
-                <TenderTimeField
+                <OperationalTimeField
                   id="trip-edit-last-tender"
                   issues={issuesFor('lastTenderTime')}
                   label="Last tender back to ship"
+                  validationField="lastTenderTime"
                   value={draft.lastTender}
                   original={originalDraft.lastTender}
                   onChange={(value) =>

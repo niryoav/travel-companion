@@ -97,6 +97,7 @@ export interface TodayOperationalStatusViewModel {
   detail: string
   time?: string
   dateTime?: string
+  timeStatusLabel?: string
   timeRemaining?: string
   urgency: 'CALM' | 'ATTENTION' | 'URGENT'
 }
@@ -147,6 +148,7 @@ export interface TomorrowPreparationViewModel {
   documentActions: DocumentActionViewModel[]
   timingNote?: string
   portAccessNote?: string
+  allAboardNote?: string
   emptyMessage?: string
   tripHref: string
 }

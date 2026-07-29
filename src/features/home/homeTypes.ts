@@ -36,6 +36,7 @@ export interface Milestone {
   detail?: string
   countdown?: string
   allAboardTime?: string
+  allAboardStatusLabel?: string
   tone?: MilestoneTone
 }
 

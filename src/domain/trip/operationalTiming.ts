@@ -1,6 +1,7 @@
 import { resolveTripPhase } from './selectors/resolveTripPhase'
 import { formatLocalTime, calendarDateInTimeZone } from './tripTime'
 import type {
+  OperationalEntryStatus,
   PortCall,
   PortAccess,
   TripData,
@@ -75,6 +76,7 @@ export interface ReturnBufferResult {
   bufferMinutes?: number
   excursionReturnAt?: string
   allAboardAt?: string
+  allAboardVerification?: OperationalEntryStatus
   bookingType?: TripEvent['bookingType']
   reason?: 'RETURN_TIME_MISSING' | 'ALL_ABOARD_MISSING'
 }
@@ -93,6 +95,7 @@ export interface PortOperationalStatus {
   shipName?: string
   allAboardAt?: string
   allAboardTime?: string
+  allAboardVerification?: OperationalEntryStatus
   minutesUntilAllAboard?: number
   timeRemaining?: string
 }
@@ -333,6 +336,7 @@ export function calculateReturnBuffer(
           ? 'TIMING_PENDING'
           : 'CANNOT_CALCULATE',
       allAboardAt: portCall?.allAboardAt,
+      allAboardVerification: portCall?.allAboardVerification,
       bookingType: event.bookingType,
       reason: 'RETURN_TIME_MISSING',
     }
@@ -366,6 +370,8 @@ export function calculateReturnBuffer(
     bufferMinutes,
     excursionReturnAt: event.endsAt,
     allAboardAt: portCall.allAboardAt,
+    allAboardVerification:
+      portCall.allAboardVerification ?? 'CONFIRMED',
     bookingType: event.bookingType,
   }
 }
@@ -408,6 +414,8 @@ export function selectPortOperationalStatus(
   const allAboardTiming = portCall.allAboardAt
     ? {
         allAboardAt: portCall.allAboardAt,
+        allAboardVerification:
+          portCall.allAboardVerification ?? 'CONFIRMED',
         allAboardTime: formatLocalTime(
           portCall.allAboardAt,
           portCall.timeZone,
@@ -438,6 +446,7 @@ export function selectPortOperationalStatus(
   const timing = {
     allAboardAt: allAboardTiming.allAboardAt,
     allAboardTime: allAboardTiming.allAboardTime,
+    allAboardVerification: allAboardTiming.allAboardVerification,
     minutesUntilAllAboard,
     timeRemaining: formatDuration(minutesUntilAllAboard),
   }

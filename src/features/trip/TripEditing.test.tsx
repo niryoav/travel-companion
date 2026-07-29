@@ -19,6 +19,7 @@ import { MemoryRouter } from 'react-router'
 import {
   applyTripOverrides,
 } from '../../domain/trip/tripOverrides'
+import { withPlanningAllAboardEstimates } from '../../domain/trip/allAboardPlanning'
 import type { TripData } from '../../domain/trip/tripTypes'
 import { LocalTripOverrideRepository } from '../../storage/LocalTripOverrideRepository'
 import { tripContentFixture } from '../../test/fixtures/tripContentFixture'
@@ -42,6 +43,14 @@ function editableFixture(): TripData {
   return data
 }
 
+function estimatedAllAboardFixture(): TripData {
+  const data = editableFixture()
+  data.cruises[0].embarkationDate = '2030-05-10'
+  delete data.portCalls[0].allAboardAt
+  delete data.portCalls[0].allAboardVerification
+  return data
+}
+
 function TripEditingHarness({
   baseline,
   repository,
@@ -54,13 +63,18 @@ function TripEditingHarness({
     repository.getSnapshot,
     repository.getSnapshot,
   )
+  const effectiveBaseline =
+    withPlanningAllAboardEstimates(baseline)
+  const effectiveTripData = withPlanningAllAboardEstimates(
+    applyTripOverrides(baseline, overrides),
+  )
   return (
     <MemoryRouter initialEntries={['/trip']}>
       <TripScreen
-        baselineTripData={baseline}
+        baselineTripData={effectiveBaseline}
         now={new Date('2030-05-11T12:00:00Z')}
         tripContent={tripContentFixture}
-        tripData={applyTripOverrides(baseline, overrides)}
+        tripData={effectiveTripData}
         tripOverrideRepository={repository}
         tripOverrides={overrides}
       />
@@ -68,8 +82,7 @@ function TripEditingHarness({
   )
 }
 
-function renderEditor() {
-  const baseline = editableFixture()
+function renderEditor(baseline = editableFixture()) {
   const repository = new LocalTripOverrideRepository(
     window.localStorage,
     baseline,
@@ -166,11 +179,24 @@ describe('Trip operational editing', () => {
       repository.getSnapshot().eventOverrides['event-excursion'],
     ).toMatchObject({ status: 'CHANGED' })
     expect(
+      repository.getSnapshot().dayOverrides['day-2030-05-11'],
+    ).toMatchObject({
+      allAboardVerification: 'CONFIRMED',
+    })
+    expect(
       new LocalTripOverrideRepository(
         window.localStorage,
         baseline,
       ).getSnapshot().eventOverrides['event-excursion'],
     ).toMatchObject({ status: 'CHANGED' })
+    expect(
+      new LocalTripOverrideRepository(
+        window.localStorage,
+        baseline,
+      ).getSnapshot().dayOverrides['day-2030-05-11'],
+    ).toMatchObject({
+      allAboardVerification: 'CONFIRMED',
+    })
   })
 
   it('disables Save, associates inline errors, and focuses the first invalid field', () => {
@@ -235,6 +261,56 @@ describe('Trip operational editing', () => {
     ).toBeEnabled()
   })
 
+  it('blocks tender times outside the ship arrival and departure window', () => {
+    renderEditor()
+    fireEvent.change(screen.getByLabelText('Port access status'), {
+      target: { value: 'TENDER_REQUIRED' },
+    })
+
+    const firstTender = screen.getByLabelText('First tender time')
+    fireEvent.change(firstTender, { target: { value: '18:01' } })
+    expect(
+      screen.getByText(
+        'First tender cannot be after ship departure at 18:00.',
+      ),
+    ).toBeInTheDocument()
+    expect(firstTender).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Use original for First tender time',
+      }),
+    )
+    expect(
+      screen.queryByText(/First tender cannot be after ship departure/),
+    ).not.toBeInTheDocument()
+
+    fireEvent.change(firstTender, { target: { value: '18:00' } })
+    expect(
+      screen.queryByText(/First tender cannot be after ship departure/),
+    ).not.toBeInTheDocument()
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Use original for First tender time',
+      }),
+    )
+    const lastTender = screen.getByLabelText(
+      'Last tender back to ship',
+    )
+    fireEvent.change(lastTender, { target: { value: '06:59' } })
+    expect(
+      screen.getByText(
+        'Last tender cannot be before ship arrival at 07:00.',
+      ),
+    ).toBeInTheDocument()
+    expect(lastTender).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
+
+    fireEvent.change(lastTender, { target: { value: '07:00' } })
+    expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled()
+  })
+
   it('shows non-blocking warnings while keeping Save available', () => {
     const { repository } = renderEditor()
     fireEvent.change(screen.getByLabelText('Port access status'), {
@@ -266,11 +342,17 @@ describe('Trip operational editing', () => {
     })
   })
 
-  it('shows original and updated values, then resets the full day', () => {
-    const { repository } = renderEditor()
+  it('restores the derived estimate after a local value is reset', () => {
+    const { repository } = renderEditor(
+      estimatedAllAboardFixture(),
+    )
     fireEvent.change(screen.getByLabelText('All Aboard time'), {
       target: { value: '17:10' },
     })
+    fireEvent.change(
+      screen.getByLabelText('All Aboard time status'),
+      { target: { value: 'CONFIRMED' } },
+    )
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     const todayCard = screen.getByText('Today').closest('details')
     fireEvent.click(
@@ -279,14 +361,24 @@ describe('Trip operational editing', () => {
       }),
     )
 
-    expect(screen.getByText('Original: 17:30')).toBeInTheDocument()
-    expect(screen.getByText('Updated: 17:10')).toBeInTheDocument()
+    expect(
+      screen.getByText('Original: 17:30 · Estimated'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('Updated: 17:10 · Confirmed'),
+    ).toBeInTheDocument()
     vi.spyOn(window, 'confirm').mockReturnValue(true)
     fireEvent.click(
       screen.getByRole('button', { name: 'Reset this day' }),
     )
     expect(repository.getSnapshot().dayOverrides).toEqual({})
-    expect(screen.getAllByText('17:30').length).toBeGreaterThan(0)
+    expect(
+      screen.getByText(
+        (_, element) =>
+          element?.tagName === 'STRONG' &&
+          element.textContent === '17:30 · Estimated',
+      ),
+    ).toBeInTheDocument()
   })
 
   it('discards unsaved changes after confirmation', () => {

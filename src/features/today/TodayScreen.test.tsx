@@ -1,8 +1,10 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 
+import { withPlanningAllAboardEstimates } from '../../domain/trip/allAboardPlanning'
 import { tripFixture } from '../../test/fixtures/tripFixture'
+import { oceaniaMarina2026TripData } from '../../trips/oceania-marina-2026/tripData'
 import { todayReviewFixtures } from './fixtures/todayReviewFixtures'
 import { TodayScreen } from './TodayScreen'
 import { TodayView } from './TodayView'
@@ -16,6 +18,43 @@ function renderToday(route: string) {
 }
 
 describe('TodayScreen', () => {
+  it('visibly marks estimated All Aboard today and tomorrow', () => {
+    const tripData = withPlanningAllAboardEstimates(
+      oceaniaMarina2026TripData,
+    )
+    const { rerender } = render(
+      <MemoryRouter initialEntries={['/today']}>
+        <TodayScreen
+          now={new Date('2026-08-25T08:00:00Z')}
+          tripData={tripData}
+        />
+      </MemoryRouter>,
+    )
+
+    const operationalStatus = screen.getByText('All Aboard').closest(
+      'section',
+    )
+    expect(operationalStatus).not.toBeNull()
+    expect(
+      within(operationalStatus as HTMLElement).getByText('15:30'),
+    ).toBeInTheDocument()
+    expect(
+      within(operationalStatus as HTMLElement).getByText('Estimated'),
+    ).toBeInTheDocument()
+
+    rerender(
+      <MemoryRouter initialEntries={['/today']}>
+        <TodayScreen
+          now={new Date('2026-08-24T12:00:00Z')}
+          tripData={tripData}
+        />
+      </MemoryRouter>,
+    )
+    expect(
+      screen.getByText('All Aboard 15:30 · Estimated'),
+    ).toBeInTheDocument()
+  })
+
   it('renders verified port information and semantic times', () => {
     renderToday('/today?state=port-day')
 

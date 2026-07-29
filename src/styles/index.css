@@ -504,6 +504,12 @@ a:focus-visible {
   font-variant-numeric: tabular-nums;
 }
 
+.today-operational-deadline small {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+
 .today-operational-deadline strong {
   color: var(--text);
   font-size: 0.8rem;

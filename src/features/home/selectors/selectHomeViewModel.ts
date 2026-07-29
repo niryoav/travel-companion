@@ -88,6 +88,11 @@ function milestoneFromPortCall(
     allAboardTime: portCall.allAboardAt
       ? formatLocalTime(portCall.allAboardAt, portCall.timeZone)
       : undefined,
+    allAboardStatusLabel: portCall.allAboardAt
+      ? portCall.allAboardVerification === 'ESTIMATED'
+        ? 'Estimated'
+        : 'Confirmed'
+      : undefined,
   }
 }
 
@@ -158,8 +163,14 @@ export function selectHomeViewModel(
     cruiseContext?.portCall ?? null,
   )
   const milestone =
-    eventMilestone ??
-    portMilestone ??
+    (eventMilestone
+      ? {
+          ...eventMilestone,
+          allAboardTime: portMilestone?.allAboardTime,
+          allAboardStatusLabel:
+            portMilestone?.allAboardStatusLabel,
+        }
+      : portMilestone) ??
     (today.kind === 'SEA_DAY'
       ? { label: 'Today', title: 'Enjoy a day at sea' }
       : undefined)

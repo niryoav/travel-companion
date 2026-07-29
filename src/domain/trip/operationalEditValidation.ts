@@ -57,6 +57,7 @@ interface ExcursionTimingInput {
 
 export interface OperationalEditValidationInput {
   allAboardTime: string
+  allAboardVerification: OperationalEntryStatus
   arrivalTime: string
   departureTime: string
   excursions: ExcursionTimingInput[]
@@ -195,9 +196,12 @@ export function validateOperationalEditTiming(
     'Ship departure',
     issues,
   )
-  const allAboard = resolveTime(
+  const allAboard = resolveTenderTime(
+    {
+      time: input.allAboardTime,
+      verification: input.allAboardVerification,
+    },
     input.localDate,
-    input.allAboardTime,
     input.timeZone,
     'allAboardTime',
     'All Aboard',
@@ -279,6 +283,18 @@ export function validateOperationalEditTiming(
       )
     }
     if (
+      firstTender !== undefined &&
+      departure !== undefined &&
+      firstTender > departure
+    ) {
+      addIssue(
+        issues,
+        'ERROR',
+        'firstTenderTime',
+        `First tender cannot be after ship departure at ${input.departureTime}.`,
+      )
+    }
+    if (
       ourTender !== undefined &&
       firstTender !== undefined &&
       ourTender < firstTender
@@ -288,6 +304,18 @@ export function validateOperationalEditTiming(
         'ERROR',
         'ourTenderTime',
         `Our tender cannot be before the first tender at ${input.firstTender.time}.`,
+      )
+    }
+    if (
+      lastTender !== undefined &&
+      arrival !== undefined &&
+      lastTender < arrival
+    ) {
+      addIssue(
+        issues,
+        'ERROR',
+        'lastTenderTime',
+        `Last tender cannot be before ship arrival at ${input.arrivalTime}.`,
       )
     }
     if (

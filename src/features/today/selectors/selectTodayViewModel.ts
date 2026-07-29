@@ -420,6 +420,9 @@ function operationalStatusViewModel(
   if (!status) {
     return undefined
   }
+  const timeStatusLabel = status.allAboardVerification
+    ? operationalStatusLabel(status.allAboardVerification)
+    : undefined
 
   switch (status.state) {
     case 'SEA_DAY':
@@ -440,6 +443,7 @@ function operationalStatusViewModel(
         detail: 'The ship is not yet in port.',
         time: status.allAboardTime,
         dateTime: status.allAboardAt,
+        timeStatusLabel,
         timeRemaining: status.timeRemaining
           ? `${status.timeRemaining} remaining`
           : undefined,
@@ -459,9 +463,13 @@ function operationalStatusViewModel(
         state: status.state,
         label: 'Alongside',
         title: status.location ?? 'Port day',
-        detail: 'Verified All Aboard time',
+        detail:
+          status.allAboardVerification === 'ESTIMATED'
+            ? 'Estimated All Aboard planning time'
+            : 'Confirmed All Aboard time',
         time: status.allAboardTime,
         dateTime: status.allAboardAt,
+        timeStatusLabel,
         timeRemaining: `${status.timeRemaining} remaining`,
         urgency: 'CALM',
       }
@@ -473,6 +481,7 @@ function operationalStatusViewModel(
         detail: status.location ?? 'Port day',
         time: status.allAboardTime,
         dateTime: status.allAboardAt,
+        timeStatusLabel,
         timeRemaining: `${status.timeRemaining} remaining`,
         urgency: 'ATTENTION',
       }
@@ -484,6 +493,7 @@ function operationalStatusViewModel(
         detail: status.location ?? 'Port day',
         time: status.allAboardTime,
         dateTime: status.allAboardAt,
+        timeStatusLabel,
         urgency: 'URGENT',
       }
   }
@@ -496,6 +506,10 @@ function returnGuidanceViewModel(
   const context = independent
     ? 'Independent excursion planning guidance.'
     : 'Ship-operated excursion; follow operator instructions.'
+  const estimateContext =
+    result.allAboardVerification === 'ESTIMATED'
+      ? ' Based on estimated All Aboard.'
+      : ''
 
   switch (result.state) {
     case 'COMFORTABLE':
@@ -503,7 +517,7 @@ function returnGuidanceViewModel(
         state: result.state,
         label: 'Return to ship',
         title: 'Comfortable scheduled buffer',
-        detail: context,
+        detail: `${context}${estimateContext}`,
         bufferLabel: `${result.bufferMinutes} min before All Aboard`,
       }
     case 'LIMITED':
@@ -511,7 +525,8 @@ function returnGuidanceViewModel(
         state: result.state,
         label: 'Return to ship',
         title: 'Limited scheduled buffer',
-        detail: `${context} Keep the return plan visible.`,
+        detail:
+          `${context} Keep the return plan visible.${estimateContext}`,
         bufferLabel: `${result.bufferMinutes} min before All Aboard`,
       }
     case 'TIGHT':
@@ -519,7 +534,7 @@ function returnGuidanceViewModel(
         state: result.state,
         label: 'Return to ship',
         title: 'Tight scheduled buffer',
-        detail: `${context} Review the confirmed schedule carefully.`,
+        detail: `${context} Review the schedule carefully.${estimateContext}`,
         bufferLabel: `${result.bufferMinutes} min before All Aboard`,
       }
     case 'TIMING_PENDING':
@@ -639,6 +654,15 @@ function tomorrowViewModel(
         ? 'Port access: Docked'
         : 'Port access to be confirmed.'
     })(),
+    allAboardNote:
+      tomorrowPortCall?.allAboardAt
+        ? `All Aboard ${formatLocalTime(
+            tomorrowPortCall.allAboardAt,
+            tomorrowPortCall.timeZone,
+          )} · ${operationalStatusLabel(
+            tomorrowPortCall.allAboardVerification ?? 'CONFIRMED',
+          )}`
+        : undefined,
     emptyMessage:
       events.length === 0
         ? tomorrow.kind === 'SEA_DAY'

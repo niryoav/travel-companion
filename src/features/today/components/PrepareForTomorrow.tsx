@@ -42,6 +42,9 @@ export function PrepareForTomorrow({
         {tomorrow.portAccessNote ? (
           <p>{tomorrow.portAccessNote}</p>
         ) : null}
+        {tomorrow.allAboardNote ? (
+          <p>{tomorrow.allAboardNote}</p>
+        ) : null}
         {tomorrow.emptyMessage ? <p>{tomorrow.emptyMessage}</p> : null}
 
         {tomorrow.requiredItems.length > 0 ? (

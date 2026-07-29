@@ -1,10 +1,23 @@
 import { describe, expect, it } from 'vitest'
 
+import { withPlanningAllAboardEstimates } from '../../../domain/trip/allAboardPlanning'
 import { tripFixture } from '../../../test/fixtures/tripFixture'
 import { oceaniaMarina2026TripData } from '../../../trips/oceania-marina-2026/tripData'
 import { selectHomeViewModel } from './selectHomeViewModel'
 
 describe('selectHomeViewModel', () => {
+  it('keeps estimated All Aboard visible with an event milestone', () => {
+    const viewModel = selectHomeViewModel(
+      withPlanningAllAboardEstimates(oceaniaMarina2026TripData),
+      new Date('2026-08-25T08:00:00Z'),
+    )
+
+    expect(viewModel.milestone).toMatchObject({
+      allAboardTime: '15:30',
+      allAboardStatusLabel: 'Estimated',
+    })
+  })
+
   it.each([
     ['2030-05-01T12:00:00Z', 'PRE_TRIP', 'Our journey begins soon'],
     ['2030-05-10T12:00:00Z', 'DEPARTURE_DAY', 'Travel to Harbor City'],

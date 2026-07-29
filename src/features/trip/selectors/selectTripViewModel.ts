@@ -399,6 +399,12 @@ function portViewModel(
         : undefined,
     allAboardAt:
       includeAllAboard ? portCall.allAboardAt : undefined,
+    allAboardStatusLabel:
+      includeAllAboard && portCall.allAboardAt
+        ? entryStatusLabel(
+            portCall.allAboardVerification ?? 'CONFIRMED',
+          )
+        : undefined,
     accessStatus,
     accessLabel: portAccessLabel(accessStatus),
     operationalNote: portCall.operationalNote,
@@ -541,6 +547,12 @@ function dayViewModel(
         : undefined,
     summaryAllAboardAt:
       showAllAboardInSummary ? portCall?.allAboardAt : undefined,
+    summaryAllAboardStatusLabel:
+      showAllAboardInSummary && portCall?.allAboardAt
+        ? entryStatusLabel(
+            portCall.allAboardVerification ?? 'CONFIRMED',
+          )
+        : undefined,
     summaryPortAccessStatus: port?.accessStatus,
     summaryPortAccessLabel: port?.accessLabel,
     summaryOurTenderTime: port?.tender?.ourTender?.time,

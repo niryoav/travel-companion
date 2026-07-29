@@ -113,6 +113,7 @@ export interface TripPortViewModel {
   departureAt?: string
   allAboardTime?: string
   allAboardAt?: string
+  allAboardStatusLabel?: string
   accessStatus?:
     | 'DOCKED'
     | 'TENDER_REQUIRED'
@@ -154,6 +155,7 @@ export interface TripDayViewModel {
   port?: TripPortViewModel
   summaryAllAboardTime?: string
   summaryAllAboardAt?: string
+  summaryAllAboardStatusLabel?: string
   summaryPortAccessStatus?: TripPortViewModel['accessStatus']
   summaryPortAccessLabel?: string
   summaryOurTenderTime?: string

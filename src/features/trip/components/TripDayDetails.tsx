@@ -271,11 +271,14 @@ export function TripDayDetails({ day }: TripDayDetailsProps) {
               ) : null}
               {day.port.allAboardTime ? (
                 <div className="trip-port-critical">
-                  <dt>Verified all aboard</dt>
+                  <dt>All Aboard</dt>
                   <dd>
                     <time dateTime={day.port.allAboardAt}>
                       {day.port.allAboardTime}
                     </time>
+                    {day.port.allAboardStatusLabel
+                      ? ` · ${day.port.allAboardStatusLabel}`
+                      : null}
                   </dd>
                 </div>
               ) : null}

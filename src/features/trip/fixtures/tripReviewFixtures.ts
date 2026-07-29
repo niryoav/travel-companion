@@ -192,6 +192,7 @@ const baseDays: TripDayViewModel[] = [
     },
     summaryAllAboardTime: '17:30',
     summaryAllAboardAt: '2030-05-11T17:30:00+02:00',
+    summaryAllAboardStatusLabel: 'Confirmed',
     relatedDocumentCount: 0,
     destination: {
       title: 'Harbor City',

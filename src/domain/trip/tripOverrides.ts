@@ -25,6 +25,7 @@ export interface DayOperationalOverride {
   arrivalAt?: string | null
   departureAt?: string | null
   allAboardAt?: string | null
+  allAboardVerification?: OperationalEntryStatus | null
   note?: string | null
   firstTender?: OperationalTimeOverride | null
   ourTender?: OperationalTimeOverride | null
@@ -147,6 +148,7 @@ const DAY_OVERRIDE_KEYS = new Set([
   'arrivalAt',
   'departureAt',
   'allAboardAt',
+  'allAboardVerification',
   'note',
   'firstTender',
   'ourTender',
@@ -187,6 +189,16 @@ function isDayOverride(
     isOptionalNullableInstant(value.arrivalAt) &&
     isOptionalNullableInstant(value.departureAt) &&
     isOptionalNullableInstant(value.allAboardAt) &&
+    (
+      value.allAboardVerification === undefined ||
+      value.allAboardVerification === null ||
+      (
+        typeof value.allAboardVerification === 'string' &&
+        OPERATIONAL_ENTRY_STATUSES.has(
+          value.allAboardVerification as OperationalEntryStatus,
+        )
+      )
+    ) &&
     isOptionalNullableString(value.note) &&
     isOptionalNullableOperationalTime(value.firstTender) &&
     isOptionalNullableOperationalTime(value.ourTender) &&
@@ -334,11 +346,19 @@ function applyDayOverride(
   applyNullable(effective, 'arrivalAt', override.arrivalAt)
   applyNullable(effective, 'departureAt', override.departureAt)
   applyNullable(effective, 'allAboardAt', override.allAboardAt)
+  applyNullable(
+    effective,
+    'allAboardVerification',
+    override.allAboardVerification,
+  )
   applyNullable(effective, 'operationalNote', override.note)
-  if (override.allAboardAt !== undefined) {
+  if (
+    override.allAboardAt !== undefined &&
+    override.allAboardVerification === undefined
+  ) {
     effective.allAboardVerification = override.allAboardAt
       ? 'CONFIRMED'
-      : undefined
+      : 'TO_BE_CONFIRMED'
   }
 
   const baselineAccess = portCall.portAccess

@@ -18,6 +18,7 @@ import {
   type TripOverrideRepository,
 } from '../storage/TripOverrideRepository'
 import { applyTripOverrides } from '../domain/trip/tripOverrides'
+import { withPlanningAllAboardEstimates } from '../domain/trip/allAboardPlanning'
 import { StartupRouteGate } from './StartupRouteGate'
 import { TripLifecycleProvider } from './TripLifecycleProvider'
 import {
@@ -50,13 +51,17 @@ export function App({
   tripStateRepository,
   now = new Date(),
 }: AppProps) {
-  const baselineTripData = tripRepository.getActiveTrip()
+  const canonicalTripData = tripRepository.getActiveTrip()
+  const baselineTripData =
+    withPlanningAllAboardEstimates(canonicalTripData)
   const tripOverrides = useSyncExternalStore(
     tripOverrideRepository.subscribe,
     tripOverrideRepository.getSnapshot,
     tripOverrideRepository.getSnapshot,
   )
-  const tripData = applyTripOverrides(baselineTripData, tripOverrides)
+  const tripData = withPlanningAllAboardEstimates(
+    applyTripOverrides(canonicalTripData, tripOverrides),
+  )
   const tripContent = tripContentRepository.getContentForTrip(
     tripData.trip.id,
   )

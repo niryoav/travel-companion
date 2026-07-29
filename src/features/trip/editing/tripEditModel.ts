@@ -50,6 +50,7 @@ export interface TripDayEditDraft {
   arrivalTime: string
   departureTime: string
   allAboardTime: string
+  allAboardVerification: OperationalEntryStatus
   dayNote: string
   firstTender: TenderTimeDraft
   ourTender: TenderTimeDraft
@@ -151,6 +152,9 @@ export function createTripDayEditDraft(
     arrivalTime: timeInputValue(portCall.arrivalAt, day.timeZone),
     departureTime: timeInputValue(portCall.departureAt, day.timeZone),
     allAboardTime: timeInputValue(portCall.allAboardAt, day.timeZone),
+    allAboardVerification:
+      portCall.allAboardVerification ??
+      (portCall.allAboardAt ? 'CONFIRMED' : 'TO_BE_CONFIRMED'),
     dayNote: portCall.operationalNote ?? '',
     firstTender: tenderTimeDraft(
       tender?.firstTender?.at,
@@ -337,18 +341,35 @@ export function buildTripDayOverrides(
       errors,
     ),
   )
-  setWhenDefined(
-    dayOverride,
-    'allAboardAt',
-    timeChange(
-      portCall.allAboardAt,
-      draft.allAboardTime,
-      day.localDate,
-      day.timeZone,
-      'All Aboard',
-      errors,
-    ),
+  const baselineAllAboard =
+    portCall.allAboardAt || portCall.allAboardVerification
+      ? {
+          at: portCall.allAboardAt,
+          verification:
+            portCall.allAboardVerification ??
+            (
+              portCall.allAboardAt
+                ? 'CONFIRMED'
+                : 'TO_BE_CONFIRMED'
+            ),
+        }
+      : undefined
+  const allAboardChange = operationalTimeChange(
+    baselineAllAboard,
+    {
+      time: draft.allAboardTime,
+      verification: draft.allAboardVerification,
+    },
+    day.localDate,
+    day.timeZone,
+    'All Aboard',
+    errors,
   )
+  if (allAboardChange !== undefined) {
+    dayOverride.allAboardAt = allAboardChange?.at ?? null
+    dayOverride.allAboardVerification =
+      allAboardChange?.verification ?? null
+  }
   setWhenDefined(
     dayOverride,
     'note',

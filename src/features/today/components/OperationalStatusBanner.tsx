@@ -23,6 +23,9 @@ export function OperationalStatusBanner({
         <div className="today-operational-deadline">
           <span>All Aboard</span>
           <time dateTime={status.dateTime}>{status.time}</time>
+          {status.timeStatusLabel ? (
+            <small>{status.timeStatusLabel}</small>
+          ) : null}
           {status.timeRemaining ? <strong>{status.timeRemaining}</strong> : null}
         </div>
       ) : null}

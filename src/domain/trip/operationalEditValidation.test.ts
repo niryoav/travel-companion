@@ -19,6 +19,7 @@ function tenderTime(time = '') {
 function baseInput(): OperationalEditValidationInput {
   return {
     allAboardTime: '15:30',
+    allAboardVerification: 'ESTIMATED',
     arrivalTime: '09:00',
     departureTime: '16:00',
     excursions: [],
@@ -71,6 +72,22 @@ describe('operational edit timing validation', () => {
     expect(equal.errors).toEqual([])
   })
 
+  it('blocks first tender after departure and accepts equality', () => {
+    const invalid = validate((input) => {
+      input.firstTender = tenderTime('16:15')
+    })
+    const equal = validate((input) => {
+      input.firstTender = tenderTime('16:00')
+    })
+
+    expect(invalid.errors).toContainEqual({
+      field: 'firstTenderTime',
+      message: 'First tender cannot be after ship departure at 16:00.',
+      severity: 'ERROR',
+    })
+    expect(equal.errors).toEqual([])
+  })
+
   it('blocks our tender before first tender and accepts equality', () => {
     const invalid = validate((input) => {
       input.firstTender = tenderTime('09:15')
@@ -100,6 +117,22 @@ describe('operational edit timing validation', () => {
     expect(invalid.errors).toContainEqual({
       field: 'lastTenderTime',
       message: 'Last tender cannot be after ship departure at 16:00.',
+      severity: 'ERROR',
+    })
+    expect(equal.errors).toEqual([])
+  })
+
+  it('blocks last tender before arrival and accepts equality', () => {
+    const invalid = validate((input) => {
+      input.lastTender = tenderTime('08:45')
+    })
+    const equal = validate((input) => {
+      input.lastTender = tenderTime('09:00')
+    })
+
+    expect(invalid.errors).toContainEqual({
+      field: 'lastTenderTime',
+      message: 'Last tender cannot be before ship arrival at 09:00.',
       severity: 'ERROR',
     })
     expect(equal.errors).toEqual([])
@@ -152,7 +185,10 @@ describe('operational edit timing validation', () => {
   )
 
   it('keeps missing and TBC tender values neutral', () => {
-    const result = validate(() => {})
+    const result = validate((input) => {
+      input.allAboardTime = ''
+      input.allAboardVerification = 'TO_BE_CONFIRMED'
+    })
 
     expect(result.issues).toEqual([])
   })

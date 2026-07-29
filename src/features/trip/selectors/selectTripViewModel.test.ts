@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { withPlanningAllAboardEstimates } from '../../../domain/trip/allAboardPlanning'
 import type { TripData } from '../../../domain/trip/tripTypes'
 import { tripFixture } from '../../../test/fixtures/tripFixture'
 import { createDocumentFixture } from '../../../test/fixtures/documentFixture'
@@ -12,6 +13,22 @@ import {
 import { selectTripViewModel } from './selectTripViewModel'
 
 describe('selectTripViewModel', () => {
+  it('shows the derived estimate in the active day summary and details', () => {
+    const result = selectTripViewModel(
+      withPlanningAllAboardEstimates(oceaniaMarina2026TripData),
+      new Date('2026-08-25T08:00:00Z'),
+    )
+    const day = result.days.find(
+      ({ dateTime }) => dateTime === '2026-08-25',
+    )
+
+    expect(day).toMatchObject({
+      summaryAllAboardTime: '15:30',
+      summaryAllAboardStatusLabel: 'Estimated',
+    })
+    expect(day?.port?.allAboardTime).toBeUndefined()
+  })
+
   it.each([
     ['2026-08-23', 'Docked'],
     ['2026-08-24', 'Tender required'],

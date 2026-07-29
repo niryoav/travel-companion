@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { withPlanningAllAboardEstimates } from '../../../domain/trip/allAboardPlanning'
 import { selectCurrentEvent } from '../../../domain/trip/selectors/selectCurrentEvent'
 import { selectTodayEvents } from '../../../domain/trip/selectors/selectTodayEvents'
 import {
@@ -13,6 +14,31 @@ import { oceaniaMarina2026TripData } from '../../../trips/oceania-marina-2026/tr
 import { selectTodayViewModel } from './selectTodayViewModel'
 
 describe('selectTodayViewModel', () => {
+  it('uses the derived estimate in Today and Prepare for Tomorrow', () => {
+    const data = withPlanningAllAboardEstimates(
+      oceaniaMarina2026TripData,
+    )
+    const today = selectTodayViewModel(
+      data,
+      new Date('2026-08-25T08:00:00Z'),
+    )
+    const previousDay = selectTodayViewModel(
+      data,
+      new Date('2026-08-24T12:00:00Z'),
+    )
+
+    expect(today.operationalStatus).toMatchObject({
+      time: '15:30',
+      timeStatusLabel: 'Estimated',
+    })
+    expect(today.returnGuidance?.detail).toContain(
+      'Based on estimated All Aboard.',
+    )
+    expect(previousDay.tomorrow?.allAboardNote).toBe(
+      'All Aboard 15:30 · Estimated',
+    )
+  })
+
   it('creates a calm pre-trip state with departure and next event', () => {
     const result = selectTodayViewModel(
       tripFixture,

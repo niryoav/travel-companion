@@ -76,10 +76,15 @@ export function TripDayCard({ day, onEdit }: TripDayCardProps) {
 
         {day.summaryAllAboardTime ? (
           <div className="trip-all-aboard">
-            <span>Verified all aboard</span>
-            <time dateTime={day.summaryAllAboardAt}>
-              {day.summaryAllAboardTime}
-            </time>
+            <span>All Aboard</span>
+            <strong>
+              <time dateTime={day.summaryAllAboardAt}>
+                {day.summaryAllAboardTime}
+              </time>
+              {day.summaryAllAboardStatusLabel
+                ? ` · ${day.summaryAllAboardStatusLabel}`
+                : null}
+            </strong>
           </div>
         ) : null}
 

@@ -8,6 +8,7 @@ import {
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 
+import { withPlanningAllAboardEstimates } from '../../domain/trip/allAboardPlanning'
 import { tripFixture } from '../../test/fixtures/tripFixture'
 import { tripContentFixture } from '../../test/fixtures/tripContentFixture'
 import type { TripContentBundle } from '../../domain/content/contentTypes'
@@ -33,6 +34,33 @@ function renderTrip(
 }
 
 describe('TripScreen', () => {
+  it('visibly marks the production planning fallback as estimated', () => {
+    render(
+      <MemoryRouter initialEntries={['/trip']}>
+        <TripScreen
+          now={new Date('2026-08-25T08:00:00Z')}
+          tripContent={oceaniaMarina2026TripContent}
+          tripData={withPlanningAllAboardEstimates(
+            oceaniaMarina2026TripData,
+          )}
+        />
+      </MemoryRouter>,
+    )
+
+    const currentDay = document.getElementById('day-2026-08-25')
+    expect(currentDay).not.toBeNull()
+    expect(
+      within(currentDay as HTMLElement).getByText('All Aboard'),
+    ).toBeInTheDocument()
+    expect(
+      within(currentDay as HTMLElement).getByText(
+        (_, element) =>
+          element?.tagName === 'STRONG' &&
+          element.textContent === '15:30 · Estimated',
+      ),
+    ).toBeInTheDocument()
+  })
+
   it('exposes stable day anchors for contextual tomorrow links', () => {
     renderTrip('/trip')
 
@@ -317,27 +345,33 @@ describe('TripScreen', () => {
     expect(screen.getByText('1 more event')).toBeInTheDocument()
   })
 
-  it('shows verified all aboard once in an active port card', () => {
+  it('shows confirmed all aboard once in an active port card', () => {
     renderTrip('/trip?state=port-day')
 
-    expect(screen.getAllByText('Verified all aboard')).toHaveLength(1)
-    expect(screen.getAllByText('17:30')).toHaveLength(1)
+    expect(screen.getAllByText('All Aboard')).toHaveLength(1)
+    expect(
+      screen.getByText(
+        (_, element) =>
+          element?.tagName === 'STRONG' &&
+          element.textContent === '17:30 · Confirmed',
+      ),
+    ).toBeInTheDocument()
   })
 
   it('keeps historical all aboard in completed-day detail only', () => {
     renderTrip('/trip?state=completed')
-    const allAboard = screen.getByText('Verified all aboard')
+    const allAboard = screen.getByText('All Aboard')
     const portCard = allAboard.closest('details')
 
     expect(portCard).not.toHaveAttribute('open')
-    expect(screen.getAllByText('Verified all aboard')).toHaveLength(1)
+    expect(screen.getAllByText('All Aboard')).toHaveLength(1)
   })
 
   it('omits missing all-aboard and renders sparse data intentionally', () => {
     renderTrip('/trip?state=missing-data')
 
     expect(
-      screen.queryByText('Verified all aboard'),
+      screen.queryByText('All Aboard'),
     ).not.toBeInTheDocument()
     expect(
       screen.getByText('No timed plans are configured for this day.'),
