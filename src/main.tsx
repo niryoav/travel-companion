@@ -7,12 +7,15 @@ import { appBuildInfo } from './app/buildInfo'
 import { BundledTripRepository } from './data/trips/BundledTripRepository'
 import { BundledTripContentRepository } from './data/content/BundledTripContentRepository'
 import { LocalTripStateRepository } from './storage/LocalTripStateRepository'
-import { LocalTripOverrideRepository } from './storage/LocalTripOverrideRepository'
+import { IndexedDbTripSnapshotCache } from './storage/IndexedDbTripSnapshotCache'
 import { oceaniaMarina2026TripData } from './trips/oceania-marina-2026/tripData'
 import { oceaniaMarina2026TripContent } from './content/oceania-marina-2026/tripContent'
 import { oceaniaMarina2026DailyLoveMessages } from './content/oceania-marina-2026/dailyLoveMessages'
 import { PwaUpdateManager } from './pwa/PwaUpdateManager'
 import { registerPwaUpdates } from './pwa/registerPwa'
+import { HttpTripSnapshotApiClient } from './services/TripSnapshotApiClient'
+import { bootstrapTripSync } from './sync/bootstrapTripSync'
+import { LocalEditorCredentialRepository } from './storage/LocalEditorCredentialRepository'
 import './styles/index.css'
 
 const tripRepository = new BundledTripRepository(
@@ -28,10 +31,6 @@ const tripStateRepository = new LocalTripStateRepository(
   tripData.trip.id,
   new Set(tripData.travelers.map(({ id }) => id)),
 )
-const tripOverrideRepository = new LocalTripOverrideRepository(
-  window.localStorage,
-  tripData,
-)
 const pwaUpdateManager = new PwaUpdateManager(
   'serviceWorker' in navigator,
 )
@@ -42,19 +41,42 @@ const rootElement = document.getElementById('root')
 if (!rootElement) {
   throw new Error('Travel Companion root element is unavailable')
 }
+const applicationRootElement = rootElement
 
-createRoot(rootElement).render(
-  <StrictMode>
-    <ApplicationErrorBoundary>
-      <App
-        appBuildInfo={appBuildInfo}
-        loveMessageSchedule={oceaniaMarina2026DailyLoveMessages}
-        pwaUpdateManager={pwaUpdateManager}
-        tripRepository={tripRepository}
-        tripContentRepository={tripContentRepository}
-        tripOverrideRepository={tripOverrideRepository}
-        tripStateRepository={tripStateRepository}
-      />
-    </ApplicationErrorBoundary>
-  </StrictMode>,
-)
+async function startApplication(): Promise<void> {
+  const cache = new IndexedDbTripSnapshotCache(tripData)
+  const apiClient = new HttpTripSnapshotApiClient(tripData)
+  const credentialRepository = new LocalEditorCredentialRepository(
+    window.localStorage,
+  )
+  const {
+    tripOverrideRepository,
+    refreshFromRemote,
+  } = await bootstrapTripSync({
+    tripData,
+    cache,
+    apiClient,
+    localStorage: window.localStorage,
+    credentialRepository,
+  })
+
+  createRoot(applicationRootElement).render(
+    <StrictMode>
+      <ApplicationErrorBoundary>
+        <App
+          appBuildInfo={appBuildInfo}
+          loveMessageSchedule={oceaniaMarina2026DailyLoveMessages}
+          pwaUpdateManager={pwaUpdateManager}
+          tripRepository={tripRepository}
+          tripContentRepository={tripContentRepository}
+          tripOverrideRepository={tripOverrideRepository}
+          tripStateRepository={tripStateRepository}
+        />
+      </ApplicationErrorBoundary>
+    </StrictMode>,
+  )
+
+  void refreshFromRemote()
+}
+
+void startApplication()

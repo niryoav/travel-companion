@@ -183,6 +183,50 @@ ashore is derived in memory from the planned outbound tender and crossing
 duration. This device-local layer performs no network request and introduces
 no account, collaboration, or synchronization behavior. See ADR-003.
 
+## Shared operational snapshot foundation
+
+The approved next storage boundary will share only the existing operational
+override bundle. One complete, revisioned JSON snapshot will live in a private
+Vercel Blob and will be read or written only through Vercel API functions.
+Canonical `TripData`, destination and excursion guides, daily messages, PDFs,
+and images remain bundled. The bundled trip remains the first-launch and
+failure fallback.
+
+Each browser now keeps the last validated accepted snapshot in IndexedDB.
+Existing small device preferences remain in `localStorage`, and the IndexedDB
+pending candidate store remains reserved for a later increment. Yoav is the
+sole editor through lightweight bearer-token write protection. The optional
+local token is stored separately from trip data and is sent only on PUT;
+selected traveler identity remains local personalization and is not
+authorization.
+
+`GET /api/trips/oceania-marina-2026` now reads the fixed private Blob pathname
+`trips/oceania-marina-2026/operational-snapshot.json` in production and the
+isolated `preview/trips/oceania-marina-2026/operational-snapshot.json` outside
+production, with mutable caching disabled. The function returns only a
+validated snapshot and never exposes the private Blob URL or storage token.
+The client renders after the IndexedDB read without waiting for this network
+request, then refreshes in the background.
+
+During this read-only transition, a non-empty legacy local override bundle is
+treated as unsynchronized work and remains the effective state. A newer remote
+snapshot may be cached but cannot replace those local edits. When no local
+changes exist, the accepted cache is the startup state and a newer validated
+remote revision replaces it in memory. No fields are merged.
+
+Every write names its base revision. The server rejects stale revisions and
+uses the current Blob ETag as a conditional-write precondition. The server,
+not the browser, creates the next revision, timestamp, and `updatedBy` value.
+Local override state records its base revision, last modification time, and
+sync state. A local edit makes one immediate write attempt when both a known
+base revision and editor token exist; success updates the accepted cache,
+whereas 409 marks conflict and other failures remain unsynced without losing
+the local data.
+
+Pending-candidate processing, reconnect upload, recovery controls, and visible
+sync status remain future increments. There is no retry queue, realtime
+synchronization, automatic conflict resolution, or merge engine. See ADR-004.
+
 ## Guidance
 
 - Keep trip-specific content separate from reusable app components.
