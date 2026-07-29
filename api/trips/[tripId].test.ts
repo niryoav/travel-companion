@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { emptyTripOverrideBundle } from '../../src/domain/trip/tripOverrides'
-import { oceaniaMarina2026TripData } from '../../src/trips/oceania-marina-2026/tripData'
-import type { TripSnapshotBlobReadResult } from '../lib/tripSnapshotBlob'
-import { handleTripSnapshotRequest } from './[tripId]'
+import { emptyTripOverrideBundle } from '../../src/domain/trip/tripOverrides.js'
+import { oceaniaMarina2026TripData } from '../../src/trips/oceania-marina-2026/tripData.js'
+import type { TripSnapshotBlobReadResult } from '../lib/tripSnapshotBlob.js'
+import { handleTripSnapshotRequest } from './[tripId].js'
 
 const snapshot = {
   tripId: oceaniaMarina2026TripData.trip.id,

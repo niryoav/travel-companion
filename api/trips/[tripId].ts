@@ -4,12 +4,12 @@ import {
   type TripSnapshotBlobReadResult,
   type TripSnapshotBlobWriteResult,
   writeTripSnapshotBlob,
-} from '../lib/tripSnapshotBlob'
+} from '../lib/tripSnapshotBlob.js'
 import {
   parsePutTripSnapshotRequest,
   type PutTripSnapshotRequest,
-} from '../../src/domain/trip/tripSnapshot'
-import { oceaniaMarina2026TripData } from '../../src/trips/oceania-marina-2026/tripData'
+} from '../../src/domain/trip/tripSnapshot.js'
+import { oceaniaMarina2026TripData } from '../../src/trips/oceania-marina-2026/tripData.js'
 
 type SnapshotReader = (
   tripId: string,

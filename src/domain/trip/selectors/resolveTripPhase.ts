@@ -1,5 +1,5 @@
-import type { TripData, TripPhase } from '../tripTypes'
-import { selectToday } from './selectToday'
+import type { TripData, TripPhase } from '../tripTypes.js'
+import { selectToday } from './selectToday.js'
 
 export function resolveTripPhase(
   data: TripData,

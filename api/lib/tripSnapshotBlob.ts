@@ -10,9 +10,9 @@ import {
   parseTripSnapshot,
   type PutTripSnapshotRequest,
   type TripSnapshot,
-} from '../../src/domain/trip/tripSnapshot'
-import type { TripData } from '../../src/domain/trip/tripTypes'
-import { oceaniaMarina2026TripData } from '../../src/trips/oceania-marina-2026/tripData'
+} from '../../src/domain/trip/tripSnapshot.js'
+import type { TripData } from '../../src/domain/trip/tripTypes.js'
+import { oceaniaMarina2026TripData } from '../../src/trips/oceania-marina-2026/tripData.js'
 
 const TRIP_SNAPSHOT_PATHS = {
   'oceania-marina-2026':
