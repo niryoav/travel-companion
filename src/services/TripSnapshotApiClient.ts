@@ -65,7 +65,8 @@ implements TripSnapshotApiClient {
 
     let response: Response
     try {
-      response = await this.fetchRequest(
+      response = await this.fetchRequest.call(
+        globalThis,
         `/api/trips/${encodeURIComponent(routeId)}`,
         {
           method: 'GET',
@@ -122,7 +123,8 @@ implements TripSnapshotApiClient {
       TRIP_SNAPSHOT_PUT_TIMEOUT_MS,
     )
     try {
-      const response = await this.fetchRequest(
+      const response = await this.fetchRequest.call(
+        globalThis,
         `/api/trips/${encodeURIComponent(routeId)}`,
         {
           method: 'PUT',

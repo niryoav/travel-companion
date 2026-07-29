@@ -5,7 +5,10 @@ import {
   type TripOverrideBundle,
 } from '../domain/trip/tripOverrides'
 import type { TripSnapshot } from '../domain/trip/tripSnapshot'
-import type { TripSnapshotApiClient } from '../services/TripSnapshotApiClient'
+import {
+  HttpTripSnapshotApiClient,
+  type TripSnapshotApiClient,
+} from '../services/TripSnapshotApiClient'
 import {
   localTripOverrideStorageKey,
 } from '../storage/LocalTripOverrideRepository'
@@ -14,6 +17,7 @@ import type {
   TripSnapshotCache,
 } from '../storage/TripSnapshotCache'
 import { tripFixture } from '../test/fixtures/tripFixture'
+import { oceaniaMarina2026TripData } from '../trips/oceania-marina-2026/tripData'
 import { bootstrapTripSync } from './bootstrapTripSync'
 
 function overrides(note?: string): TripOverrideBundle {
@@ -340,6 +344,125 @@ describe('bootstrapTripSync', () => {
       0,
       expect.any(Object),
     )
+  })
+
+  it('uses the runtime API client for one GET and one PUT when the base revision is unknown', async () => {
+    const methods: string[] = []
+    const fetchRequest = vi.fn(async function (
+      this: typeof globalThis,
+      _input: RequestInfo | URL,
+      init?: RequestInit,
+    ): Promise<Response> {
+      expect(this).toBe(globalThis)
+      const method = init?.method ?? 'GET'
+      methods.push(method)
+      if (method === 'GET') {
+        return Response.json(
+          { code: 'TRIP_NOT_FOUND' },
+          { status: 404 },
+        )
+      }
+      const request = JSON.parse(String(init?.body)) as {
+        baseRevision: number
+        operationalOverrides: TripOverrideBundle
+      }
+      return Response.json({
+        tripId: oceaniaMarina2026TripData.trip.id,
+        schemaVersion: 1,
+        revision: request.baseRevision + 1,
+        updatedAt: '2026-07-30T12:00:00Z',
+        updatedBy: 'yoav',
+        operationalOverrides: request.operationalOverrides,
+      })
+    })
+    const result = await bootstrapTripSync({
+      tripData: oceaniaMarina2026TripData,
+      cache: new FakeCache(),
+      apiClient: new HttpTripSnapshotApiClient(
+        oceaniaMarina2026TripData,
+        fetchRequest,
+      ),
+      localStorage: window.localStorage,
+    })
+    const editableDay = oceaniaMarina2026TripData.days.find(
+      ({ portCallId }) => Boolean(portCallId),
+    )
+    if (!editableDay) {
+      throw new Error('Production fixture needs an editable trip day')
+    }
+
+    await expect(
+      result.tripOverrideRepository.saveDayEdits(
+        editableDay.id,
+        { note: 'First shared operational update' },
+        {},
+      ),
+    ).resolves.toBe('shared')
+
+    expect(methods).toEqual(['GET', 'PUT'])
+    expect(fetchRequest).toHaveBeenCalledTimes(2)
+  })
+
+  it('uses the runtime API client for one PUT without GET when the base revision is known', async () => {
+    const cache = new FakeCache()
+    cache.accepted = {
+      tripId: oceaniaMarina2026TripData.trip.id,
+      schemaVersion: 1,
+      revision: 3,
+      updatedAt: '2026-07-30T11:00:00Z',
+      updatedBy: 'yoav',
+      operationalOverrides: emptyTripOverrideBundle(
+        oceaniaMarina2026TripData.trip.id,
+      ),
+    }
+    const methods: string[] = []
+    const fetchRequest = vi.fn(async function (
+      this: typeof globalThis,
+      _input: RequestInfo | URL,
+      init?: RequestInit,
+    ): Promise<Response> {
+      expect(this).toBe(globalThis)
+      const method = init?.method ?? 'GET'
+      methods.push(method)
+      const request = JSON.parse(String(init?.body)) as {
+        baseRevision: number
+        operationalOverrides: TripOverrideBundle
+      }
+      return Response.json({
+        tripId: oceaniaMarina2026TripData.trip.id,
+        schemaVersion: 1,
+        revision: request.baseRevision + 1,
+        updatedAt: '2026-07-30T12:00:00Z',
+        updatedBy: 'yoav',
+        operationalOverrides: request.operationalOverrides,
+      })
+    })
+    const result = await bootstrapTripSync({
+      tripData: oceaniaMarina2026TripData,
+      cache,
+      apiClient: new HttpTripSnapshotApiClient(
+        oceaniaMarina2026TripData,
+        fetchRequest,
+      ),
+      localStorage: window.localStorage,
+    })
+    const editableDay = oceaniaMarina2026TripData.days.find(
+      ({ portCallId }) => Boolean(portCallId),
+    )
+    if (!editableDay) {
+      throw new Error('Production fixture needs an editable trip day')
+    }
+
+    await expect(
+      result.tripOverrideRepository.saveDayEdits(
+        editableDay.id,
+        { note: 'Known-base operational update' },
+        {},
+      ),
+    ).resolves.toBe('shared')
+
+    expect(methods).toEqual(['PUT'])
+    expect(fetchRequest).toHaveBeenCalledOnce()
   })
 
   it('retrieves a shared revision in a separate read-only storage context', async () => {
