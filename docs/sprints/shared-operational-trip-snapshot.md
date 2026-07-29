@@ -18,8 +18,8 @@ newer shared revision.
 - A minimal, versioned snapshot containing envelope metadata and the existing
   `TripOverrideBundle`.
 - One private Vercel Blob accessed only through Vercel API functions.
-- Public application reads and lightweight bearer-token protection for Yoav's
-  writes.
+- Public application reads and writes, with editing shown only for Yoav in the
+  normal UI.
 - Revision comparison and Blob ETag conditional writes.
 - One accepted IndexedDB snapshot and one pending offline candidate per trip.
 - Bundled baseline and valid legacy local overrides as startup fallbacks.
@@ -49,22 +49,23 @@ newer shared revision.
 - Accepted-cache startup and post-render background refresh.
 - A transitional repository wrapper that preserves existing local editing.
 
-### Increment 4: authenticated conditional writes
+### Increment 4: conditional writes
 
-- Bearer-token-protected PUT through the Vercel API boundary.
+- PUT through the Vercel API boundary.
 - Server-authored revision, timestamp, and updater.
 - Revision rejection plus Blob ETag conditional replacement.
 - Local base-revision, last-modified, and sync-state metadata.
 - One immediate write attempt only; no queue, retry, or conflict resolution.
 - Explicit Preview and Production Blob pathname isolation.
 
-### Later increments
+### Increment 5: shared edit flow
 
-1. Offline pending-save and reconnect orchestration.
-2. Editor/read-only controls, sync status, conflict recovery, and full
-   regression verification.
-
-These later increments remain proposed work.
+- Yoav-only editing controls and an Isabel read-only interface.
+- Local-first Save with one immediate PUT attempt and truthful status.
+- Revision-zero creation for an empty shared store.
+- Explicit, confirmed sharing for unknown-base legacy edits.
+- One manual retry for unsynced edits.
+- No credentials, queue, retry scheduler, merge, or realtime behavior.
 
 ## Expected Offline Behavior
 
@@ -96,7 +97,7 @@ These later increments remain proposed work.
 - Parse the existing local override bundle with the current domain validator.
 - Use a valid legacy bundle as a pending migration candidate when no newer
   pending candidate exists.
-- Do not upload from an installation without Yoav's editor token.
+- Do not upload unknown-base legacy work without Yoav's explicit action.
 - Retain the legacy local value until the candidate has been accepted remotely
   and stored locally as the accepted snapshot.
 - Ignore malformed, unsupported, or wrong-trip legacy data safely.
@@ -133,17 +134,27 @@ These later increments remain proposed work.
 
 ### Increment 4
 
-- [x] Missing and invalid bearer credentials are rejected; valid credentials
-  can reach PUT.
+- [x] PUT accepts a validated whole-snapshot candidate.
 - [x] The server authors accepted revision, timestamp, and updater.
 - [x] Stale base revisions and failed ETag preconditions return conflict
   without overwriting.
 - [x] Legacy overrides retain their data with unknown base revision and
   unsynced metadata.
-- [x] Successful immediate writes update the accepted cache; 401, network
-  failure, and conflict retain local edits.
+- [x] Successful immediate writes update the accepted cache; network failure
+  and conflict retain local edits.
 - [x] Production and Preview Blob pathnames are explicitly isolated.
 - [x] No pending queue, retry, merge, sync UI, or realtime behavior exists.
+
+### Increment 5
+
+- [x] Yoav sees editing controls and Isabel remains read-only in the normal UI.
+- [x] Save persists locally before one PUT and reports the actual outcome.
+- [x] An empty shared store supports first creation from base revision zero.
+- [x] Unknown-base legacy work requires explicit confirmed sharing.
+- [x] Unsynced work offers one manual retry.
+- [x] PUT has no credential or token dependency.
+- [x] No queue, scheduler, merge, automatic conflict resolution, or realtime
+  behavior exists.
 
 ### Complete feature
 
@@ -189,7 +200,7 @@ These later increments remain proposed work.
 ## Testing
 
 - Focused domain validation and malformed-input tests.
-- Repository, IndexedDB, API authorization, conditional-write, migration, and
+- Repository, IndexedDB, API PUT, conditional-write, migration, and
   UI tests in the later increment that introduces each responsibility.
 - Complete tests, lint, TypeScript build, production PWA build, and mobile
   manual checks before delivery of the full feature.

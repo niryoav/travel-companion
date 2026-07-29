@@ -38,14 +38,11 @@ accepted snapshot has been fully stored. This cache is a local persistence
 boundary only; creating it does not connect it to application startup or add
 network behavior.
 
-Yoav is the sole editor and Isabel is read-only. Selected traveler identity is
-not authorization. This version will not introduce a master PIN, OAuth, or user
-accounts. Writes will use a lightweight bearer token whose authoritative value
-is held in a Vercel environment variable. Yoav's installation may retain a
-local copy and send it in the write request; Isabel's installation will not.
-This is lightweight protection for a private family application, not strong
-authentication, because a locally stored bearer credential can be exposed by a
-compromised browser origin or device.
+Yoav is the sole editor and Isabel is read-only in the normal interface.
+Selected traveler identity determines whether editing controls are shown. It is
+a pragmatic application rule for two trusted users, not authentication or a
+security boundary. This version does not introduce a master PIN, OAuth, user
+accounts, or roles, and PUT does not require credentials.
 
 Writes include the revision on which the candidate is based. The server
 rejects a mismatched revision and also uses the Blob ETag as a
@@ -67,15 +64,13 @@ conservatively treated as unsynchronized work: remote data may be cached but
 does not replace the effective local state. This temporary precedence prevents
 read-only refresh from losing edits until pending writes exist.
 
-The authenticated-write increment stores Yoav's optional editor token under a
-separate local preference key and sends it only as an Authorization bearer
-credential on PUT. Missing or invalid credentials are rejected. Local override
-storage now carries `baseRevision`, `lastModified`, and a `synced`,
+Local override storage carries `baseRevision`, `lastModified`, and a `synced`,
 `unsynced`, or `conflict` state. Legacy bundles are retained conservatively
 with unknown base revision and unsynced state. A successful immediate write
-updates the accepted cache and metadata; failures retain local edits. Pending
-candidate processing, automatic reconnect uploads, recovery UI, and read-only
-UI enforcement remain later increments.
+updates the accepted cache and metadata; failures retain local edits and expose
+one manual retry. A missing shared snapshot establishes base revision zero.
+Unknown-base legacy edits require an explicit action and confirmation before
+their complete operational override set replaces shared data.
 
 ## Alternatives considered
 
@@ -88,9 +83,8 @@ UI enforcement remain later increments.
   editing need.
 - Realtime updates and field-level merging were rejected because there is one
   editor and revision rejection provides a simpler, explicit conflict model.
-- Selected traveler identity, a master PIN, OAuth, and user accounts were
-  rejected as either insufficient authorization or unjustified complexity for
-  this private family application.
+- Additional authentication mechanisms were rejected as unjustified
+  operational complexity for this private family application.
 
 ## Consequences
 
@@ -103,9 +97,8 @@ UI enforcement remain later increments.
 - Conflicting work requires explicit recovery and is not merged automatically.
 - The Vercel API and environment configuration become part of the operational
   deployment boundary.
-- A bearer token stored on Yoav's installation is intentionally limited
-  protection and must not be represented as an account or strong
-  authentication.
+- The UI distinction between Yoav and Isabel is intentionally not a security
+  control; a caller can invoke the same-origin PUT endpoint directly.
 - ADR-003 remains the source for override semantics, but its device-only
   storage and no-synchronization boundary is superseded by this ADR when the
   later implementation increments are delivered.

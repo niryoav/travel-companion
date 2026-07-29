@@ -26,7 +26,6 @@ export interface TripSnapshotConflictResponse {
 
 export type TripSnapshotApiErrorCode =
   | 'INVALID_REQUEST'
-  | 'UNAUTHORIZED'
   | 'TRIP_NOT_FOUND'
   | 'REVISION_CONFLICT'
   | 'INVALID_STORED_SNAPSHOT'

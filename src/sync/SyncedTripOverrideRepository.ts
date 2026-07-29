@@ -6,17 +6,20 @@ import type {
 import type { EventId, TripDayId } from '../domain/trip/tripTypes'
 import type { LocalTripOverrideRepository } from '../storage/LocalTripOverrideRepository'
 import type { TripOverrideRepository } from '../storage/TripOverrideRepository'
+import type {
+  ShareSavedChangesPreparation,
+  TripOverrideSaveResult,
+} from '../storage/TripOverrideRepository'
 import type { TripSnapshot } from '../domain/trip/tripSnapshot'
 import type { TripId } from '../domain/trip/tripTypes'
 import type { TripSnapshotCache } from '../storage/TripSnapshotCache'
 import type { TripSnapshotApiClient } from '../services/TripSnapshotApiClient'
 import { TripSnapshotApiError } from '../services/TripSnapshotApiClient'
-import type { EditorCredentialRepository } from '../storage/EditorCredentialRepository'
 
 /**
- * Local editing remains immediately available. When a known base revision and
- * editor credential exist, one immediate PUT is attempted. Failures are
- * recorded locally and are never retried or merged by this increment.
+ * Local editing remains immediately available. When a known base revision
+ * exists, one immediate PUT is attempted. Failures remain local and are
+ * retried only through an explicit user action.
  */
 export class SyncedTripOverrideRepository
 implements TripOverrideRepository {
@@ -34,7 +37,6 @@ implements TripOverrideRepository {
       tripId: TripId
       cache: TripSnapshotCache
       apiClient: TripSnapshotApiClient
-      credentialRepository: EditorCredentialRepository
     },
   ) {
     this.snapshot = initialSnapshot
@@ -49,6 +51,8 @@ implements TripOverrideRepository {
   }
 
   getSnapshot = (): TripOverrideBundle => this.snapshot
+
+  getSyncMetadata = () => this.localRepository.getMetadata()
 
   subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener)
@@ -75,6 +79,23 @@ implements TripOverrideRepository {
     return true
   }
 
+  acceptNoRemoteSnapshot(): boolean {
+    if (this.protectsLocalChanges) {
+      return false
+    }
+    this.applyingAcceptedRemote = true
+    try {
+      this.localRepository.replaceSnapshotForRead(this.snapshot, {
+        baseRevision: 0,
+        lastModified: this.localRepository.getMetadata().lastModified,
+        syncState: 'synced',
+      })
+    } finally {
+      this.applyingAcceptedRemote = false
+    }
+    return true
+  }
+
   saveDayEdits(
     dayId: TripDayId,
     dayOverride: DayOperationalOverrideInput | null,
@@ -82,34 +103,75 @@ implements TripOverrideRepository {
       EventId,
       EventOperationalOverrideInput | null
     >,
-  ): void {
+  ): Promise<TripOverrideSaveResult> {
     this.localRepository.saveDayEdits(
       dayId,
       dayOverride,
       eventOverrides,
     )
-    void this.attemptImmediateWrite()
+    return this.attemptImmediateWrite()
   }
 
-  resetEvent(eventId: EventId): void {
+  resetEvent(eventId: EventId): Promise<TripOverrideSaveResult> {
     this.localRepository.resetEvent(eventId)
-    void this.attemptImmediateWrite()
+    return this.attemptImmediateWrite()
   }
 
-  resetDay(dayId: TripDayId, eventIds: EventId[]): void {
+  resetDay(
+    dayId: TripDayId,
+    eventIds: EventId[],
+  ): Promise<TripOverrideSaveResult> {
     this.localRepository.resetDay(dayId, eventIds)
-    void this.attemptImmediateWrite()
+    return this.attemptImmediateWrite()
   }
 
-  private async attemptImmediateWrite(): Promise<void> {
-    if (!this.writeDependencies || this.writeInFlight) {
-      return
+  async prepareShareSavedChanges(): Promise<ShareSavedChangesPreparation> {
+    if (!this.writeDependencies) {
+      return { status: 'unavailable' }
     }
-    const editorToken =
-      this.writeDependencies.credentialRepository.loadToken()
+    try {
+      const remote =
+        await this.writeDependencies.apiClient.getTripSnapshot(
+          this.writeDependencies.tripId,
+        )
+      if (remote) {
+        try {
+          await this.writeDependencies.cache.saveAcceptedSnapshot(remote)
+        } catch {
+          // A current server revision is still usable for this explicit write.
+        }
+      }
+      return {
+        status: 'ready',
+        baseRevision: remote?.revision ?? 0,
+        sharedSnapshotExists: remote !== null,
+      }
+    } catch {
+      return { status: 'unavailable' }
+    }
+  }
+
+  shareSavedChanges(
+    baseRevision: number,
+  ): Promise<TripOverrideSaveResult> {
+    return this.attemptImmediateWrite(baseRevision)
+  }
+
+  retryShare(): Promise<TripOverrideSaveResult> {
+    return this.attemptImmediateWrite()
+  }
+
+  private async attemptImmediateWrite(
+    explicitBaseRevision?: number,
+  ): Promise<TripOverrideSaveResult> {
+    if (!this.writeDependencies || this.writeInFlight) {
+      return 'local-only'
+    }
     const metadata = this.localRepository.getMetadata()
-    if (!editorToken || metadata.baseRevision === null) {
-      return
+    const baseRevision =
+      explicitBaseRevision ?? metadata.baseRevision
+    if (baseRevision === null) {
+      return 'local-only'
     }
 
     this.writeInFlight = true
@@ -118,18 +180,9 @@ implements TripOverrideRepository {
       const accepted =
         await this.writeDependencies.apiClient.putTripSnapshot(
           this.writeDependencies.tripId,
-          metadata.baseRevision,
+          baseRevision,
           submittedSnapshot,
-          editorToken,
         )
-      try {
-        await this.writeDependencies.cache.saveAcceptedSnapshot(accepted)
-      } catch {
-        this.localRepository.markUnsyncedAtBaseRevision(
-          accepted.revision,
-        )
-        return
-      }
       if (this.snapshot === submittedSnapshot) {
         this.applyingAcceptedRemote = true
         try {
@@ -143,14 +196,22 @@ implements TripOverrideRepository {
           accepted.revision,
         )
       }
+      try {
+        await this.writeDependencies.cache.saveAcceptedSnapshot(accepted)
+      } catch {
+        // The authoritative write succeeded; localStorage remains the fallback.
+      }
+      return 'shared'
     } catch (error) {
       if (
         error instanceof TripSnapshotApiError &&
         error.code === 'REVISION_CONFLICT'
       ) {
         this.localRepository.markSyncState('conflict')
+        return 'conflict'
       } else {
         this.localRepository.markSyncState('unsynced')
+        return 'local-only'
       }
     } finally {
       this.writeInFlight = false

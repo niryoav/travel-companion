@@ -10,7 +10,6 @@ import {
 } from '../storage/LocalTripOverrideRepository'
 import type { TripSnapshotCache } from '../storage/TripSnapshotCache'
 import { SyncedTripOverrideRepository } from './SyncedTripOverrideRepository'
-import type { EditorCredentialRepository } from '../storage/EditorCredentialRepository'
 import type { LocalTripOverrideMetadata } from '../storage/LocalTripOverrideMetadata'
 
 export interface TripSyncBootstrapDependencies {
@@ -18,7 +17,6 @@ export interface TripSyncBootstrapDependencies {
   cache: TripSnapshotCache
   apiClient: TripSnapshotApiClient
   localStorage: Storage
-  credentialRepository: EditorCredentialRepository
 }
 
 export interface TripSyncBootstrapResult {
@@ -38,7 +36,6 @@ export async function bootstrapTripSync({
   cache,
   apiClient,
   localStorage,
-  credentialRepository,
 }: TripSyncBootstrapDependencies): Promise<TripSyncBootstrapResult> {
   let acceptedSnapshot = null
   try {
@@ -94,7 +91,6 @@ export async function bootstrapTripSync({
       tripId: tripData.trip.id,
       cache,
       apiClient,
-      credentialRepository,
     },
   )
   let acceptedRevision = acceptedSnapshot?.revision ?? null
@@ -111,12 +107,17 @@ export async function bootstrapTripSync({
         return
       }
       if (
-        !remoteSnapshot ||
+        remoteSnapshot &&
         (
           acceptedRevision !== null &&
           remoteSnapshot.revision <= acceptedRevision
         )
       ) {
+        return
+      }
+
+      if (!remoteSnapshot) {
+        tripOverrideRepository.acceptNoRemoteSnapshot()
         return
       }
 

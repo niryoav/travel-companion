@@ -107,26 +107,7 @@ describe('PUT /api/trips/[tripId]', () => {
     operationalOverrides: snapshot.operationalOverrides,
   }
 
-  it.each(['UNAUTHORIZED', 'MISCONFIGURED'] as const)(
-    'rejects %s authorization before writing',
-    async (authorization) => {
-      const writeSnapshot = vi.fn()
-      const response = await handleTripSnapshotRequest(
-        request('oceania-marina-2026', 'PUT', putBody),
-        {
-          authorizeEditor: () => authorization,
-          writeSnapshot,
-        },
-      )
-
-      expect(response.status).toBe(
-        authorization === 'UNAUTHORIZED' ? 401 : 503,
-      )
-      expect(writeSnapshot).not.toHaveBeenCalled()
-    },
-  )
-
-  it('returns the server-authored accepted snapshot', async () => {
+  it('accepts PUT without credentials and returns server-authored state', async () => {
     const accepted = {
       ...snapshot,
       revision: 2,
@@ -139,7 +120,6 @@ describe('PUT /api/trips/[tripId]', () => {
     const response = await handleTripSnapshotRequest(
       request('oceania-marina-2026', 'PUT', putBody),
       {
-        authorizeEditor: () => 'AUTHORIZED',
         writeSnapshot,
       },
     )
@@ -157,7 +137,6 @@ describe('PUT /api/trips/[tripId]', () => {
     const response = await handleTripSnapshotRequest(
       request('oceania-marina-2026', 'PUT', putBody),
       {
-        authorizeEditor: () => 'AUTHORIZED',
         writeSnapshot: vi.fn(async () => ({
           status: 'CONFLICT' as const,
           currentRevision: 4,
@@ -182,7 +161,6 @@ describe('PUT /api/trips/[tripId]', () => {
         updatedBy: 'isabel',
       }),
       {
-        authorizeEditor: () => 'AUTHORIZED',
         writeSnapshot,
       },
     )
@@ -191,14 +169,14 @@ describe('PUT /api/trips/[tripId]', () => {
     expect(writeSnapshot).not.toHaveBeenCalled()
   })
 
-  it('returns 404 for an unknown trip before authorization', async () => {
-    const authorizeEditor = vi.fn(() => 'AUTHORIZED' as const)
+  it('returns 404 for an unknown trip without writing', async () => {
+    const writeSnapshot = vi.fn()
     const response = await handleTripSnapshotRequest(
       request('unknown', 'PUT', putBody),
-      { authorizeEditor },
+      { writeSnapshot },
     )
 
     expect(response.status).toBe(404)
-    expect(authorizeEditor).not.toHaveBeenCalled()
+    expect(writeSnapshot).not.toHaveBeenCalled()
   })
 })

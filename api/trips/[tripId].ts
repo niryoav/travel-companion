@@ -6,10 +6,6 @@ import {
   writeTripSnapshotBlob,
 } from '../lib/tripSnapshotBlob'
 import {
-  authorizeEditorRequest,
-  type EditorAuthorizationResult,
-} from '../lib/editorAuthorization'
-import {
   parsePutTripSnapshotRequest,
   type PutTripSnapshotRequest,
 } from '../../src/domain/trip/tripSnapshot'
@@ -23,12 +19,9 @@ type SnapshotWriter = (
   request: PutTripSnapshotRequest,
   updatedBy: 'yoav',
 ) => Promise<TripSnapshotBlobWriteResult>
-type EditorAuthorizer = (request: Request) => EditorAuthorizationResult
-
 interface TripSnapshotRouteDependencies {
   readSnapshot?: SnapshotReader
   writeSnapshot?: SnapshotWriter
-  authorizeEditor?: EditorAuthorizer
 }
 
 const RESPONSE_HEADERS = {
@@ -79,22 +72,6 @@ export async function handleTripSnapshotRequest(
     if (!isSupportedSharedTripId(tripId)) {
       return jsonResponse({ code: 'TRIP_NOT_FOUND' }, 404)
     }
-    const authorization = (
-      dependencies.authorizeEditor ?? authorizeEditorRequest
-    )(request)
-    if (authorization === 'UNAUTHORIZED') {
-      return new Response(JSON.stringify({ code: 'UNAUTHORIZED' }), {
-        status: 401,
-        headers: {
-          ...RESPONSE_HEADERS,
-          'WWW-Authenticate': 'Bearer',
-        },
-      })
-    }
-    if (authorization === 'MISCONFIGURED') {
-      return jsonResponse({ code: 'STORAGE_UNAVAILABLE' }, 503)
-    }
-
     let body: unknown
     try {
       body = await request.json()

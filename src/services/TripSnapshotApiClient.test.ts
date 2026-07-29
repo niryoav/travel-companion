@@ -4,6 +4,7 @@ import { emptyTripOverrideBundle } from '../domain/trip/tripOverrides'
 import { tripFixture } from '../test/fixtures/tripFixture'
 import {
   HttpTripSnapshotApiClient,
+  TRIP_SNAPSHOT_PUT_TIMEOUT_MS,
   TripSnapshotApiError,
 } from './TripSnapshotApiClient'
 
@@ -106,7 +107,7 @@ describe('HttpTripSnapshotApiClient', () => {
     ).rejects.toMatchObject({ code: 'NETWORK_FAILURE' })
   })
 
-  it('writes overrides with the editor bearer token and base revision', async () => {
+  it('writes overrides without credentials and includes the base revision', async () => {
     const accepted = { ...snapshot(), revision: 3 }
     const fetchRequest = vi
       .fn<typeof fetch>()
@@ -121,7 +122,6 @@ describe('HttpTripSnapshotApiClient', () => {
         productionTrip.trip.id,
         2,
         snapshot().operationalOverrides,
-        'editor-secret',
       ),
     ).resolves.toEqual(accepted)
 
@@ -129,10 +129,10 @@ describe('HttpTripSnapshotApiClient', () => {
     expect(init).toMatchObject({
       method: 'PUT',
       headers: {
-        Authorization: 'Bearer editor-secret',
         'Content-Type': 'application/json',
       },
     })
+    expect(JSON.stringify(init?.headers)).not.toContain('Authorization')
     expect(JSON.parse(String(init?.body))).toEqual({
       baseRevision: 2,
       operationalOverrides: snapshot().operationalOverrides,
@@ -140,11 +140,6 @@ describe('HttpTripSnapshotApiClient', () => {
   })
 
   it.each([
-    [
-      'unauthorized',
-      Response.json({ code: 'UNAUTHORIZED' }, { status: 401 }),
-      { code: 'UNAUTHORIZED' },
-    ],
     [
       'conflict',
       Response.json(
@@ -164,7 +159,6 @@ describe('HttpTripSnapshotApiClient', () => {
         productionTrip.trip.id,
         1,
         snapshot().operationalOverrides,
-        'editor-secret',
       ),
     ).rejects.toMatchObject(error)
   })
@@ -173,7 +167,7 @@ describe('HttpTripSnapshotApiClient', () => {
     const client = new HttpTripSnapshotApiClient(
       productionTrip,
       vi.fn(async () => {
-        throw new Error('editor-secret')
+        throw new Error('offline')
       }),
     )
     await expect(
@@ -181,8 +175,78 @@ describe('HttpTripSnapshotApiClient', () => {
         productionTrip.trip.id,
         1,
         snapshot().operationalOverrides,
-        'editor-secret',
       ),
     ).rejects.toMatchObject({ code: 'NETWORK_FAILURE' })
+  })
+
+  it('aborts a stalled PUT after the fixed timeout', async () => {
+    vi.useFakeTimers()
+    try {
+      let requestSignal: AbortSignal | undefined
+      const fetchRequest = vi.fn<typeof fetch>(
+        async (_input, init) =>
+          new Promise<Response>((_resolve, reject) => {
+            requestSignal = init?.signal ?? undefined
+            requestSignal?.addEventListener('abort', () => {
+              reject(new DOMException('Aborted', 'AbortError'))
+            })
+          }),
+      )
+      const client = new HttpTripSnapshotApiClient(
+        productionTrip,
+        fetchRequest,
+      )
+      const write = client.putTripSnapshot(
+        productionTrip.trip.id,
+        1,
+        snapshot().operationalOverrides,
+      )
+      const timedOut = expect(write).rejects.toMatchObject({
+        code: 'NETWORK_FAILURE',
+      })
+
+      await vi.advanceTimersByTimeAsync(
+        TRIP_SNAPSHOT_PUT_TIMEOUT_MS,
+      )
+
+      await timedOut
+      expect(requestSignal?.aborted).toBe(true)
+      expect(vi.getTimerCount()).toBe(0)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('clears the PUT timeout after a successful response', async () => {
+    vi.useFakeTimers()
+    try {
+      let requestSignal: AbortSignal | undefined
+      const fetchRequest = vi.fn<typeof fetch>(
+        async (_input, init) => {
+          requestSignal = init?.signal ?? undefined
+          return Response.json({ ...snapshot(), revision: 2 })
+        },
+      )
+      const client = new HttpTripSnapshotApiClient(
+        productionTrip,
+        fetchRequest,
+      )
+
+      await expect(
+        client.putTripSnapshot(
+          productionTrip.trip.id,
+          1,
+          snapshot().operationalOverrides,
+        ),
+      ).resolves.toMatchObject({ revision: 2 })
+
+      expect(vi.getTimerCount()).toBe(0)
+      await vi.advanceTimersByTimeAsync(
+        TRIP_SNAPSHOT_PUT_TIMEOUT_MS,
+      )
+      expect(requestSignal?.aborted).toBe(false)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })
