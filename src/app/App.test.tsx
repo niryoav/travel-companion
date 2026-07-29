@@ -792,4 +792,53 @@ describe('App', () => {
 
     expect(repository.lastMeaningfulRoute).toBe('/trip')
   })
+
+  it('shows Trip immediately at the top after repeated primary navigation', async () => {
+    const repository = new MemoryTripStateRepository()
+    repository.activateTrip()
+    repository.travelerId = 'traveler-alex'
+    window.history.replaceState({}, '', '/home')
+    renderApp(repository, new Date('2030-05-11T12:00:00Z'))
+
+    const openTripFrom = async (source: 'Home' | 'Today' | 'Documents') => {
+      if (window.location.pathname !== `/${source.toLowerCase()}`) {
+        fireEvent.click(screen.getByRole('link', { name: source }))
+      }
+      if (source === 'Today') {
+        await waitFor(() =>
+          expect(document.querySelector('.today-screen')).toBeVisible(),
+        )
+      } else {
+        await screen.findByRole('heading', {
+          level: 1,
+          name:
+            source === 'Home'
+              ? /Good (morning|afternoon|evening), Alex/
+              : source,
+        })
+      }
+      document.documentElement.scrollTop = 700
+
+      fireEvent.click(screen.getByRole('link', { name: 'Trip' }))
+
+      expect(
+        await screen.findByRole('heading', {
+          level: 1,
+          name: 'Northern Coast Journey',
+        }),
+      ).toBeVisible()
+      expect(document.documentElement.scrollTop).toBe(0)
+      expect(
+        document.querySelector('.trip-day-card summary'),
+      ).toBeVisible()
+      expect(
+        screen.getByRole('navigation', { name: 'Primary navigation' }),
+      ).toBeVisible()
+    }
+
+    await openTripFrom('Home')
+    await openTripFrom('Today')
+    await openTripFrom('Documents')
+    await openTripFrom('Home')
+  })
 })

@@ -12,6 +12,7 @@ import { reviewStateFromSearch } from './fixtures/reviewStateFromSearch'
 import { selectTripViewModel } from './selectors/selectTripViewModel'
 import { TripView } from './TripView'
 import { TripEditSheet } from './components/TripEditSheet'
+import { useTripRouteActivation } from './useTripRouteActivation'
 
 interface TripScreenProps {
   baselineTripData?: TripData
@@ -30,6 +31,8 @@ export function TripScreen({
   tripOverrideRepository,
   tripOverrides,
 }: TripScreenProps) {
+  useTripRouteActivation()
+
   const baseline = baselineTripData ?? tripData
   const { search } = useLocation()
   const [editingDayId, setEditingDayId] = useState<string | null>(null)

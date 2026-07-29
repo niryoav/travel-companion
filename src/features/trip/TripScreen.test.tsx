@@ -1,6 +1,12 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { tripFixture } from '../../test/fixtures/tripFixture'
 import { tripContentFixture } from '../../test/fixtures/tripContentFixture'
@@ -176,6 +182,64 @@ describe('TripScreen', () => {
     expect(
       reopened.container.querySelectorAll('.trip-day-card'),
     ).toHaveLength(oceaniaMarina2026TripData.trip.dayIds.length)
+  })
+
+  it('resets a stale document offset before paint and verifies it after layout', () => {
+    const scrollingElement = document.documentElement
+    let postLayoutCheck: FrameRequestCallback | undefined
+    const requestFrame = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((callback) => {
+        postLayoutCheck = callback
+        return 17
+      })
+    const cancelFrame = vi
+      .spyOn(window, 'cancelAnimationFrame')
+      .mockImplementation(() => undefined)
+    const originalScrollingElement = Object.getOwnPropertyDescriptor(
+      document,
+      'scrollingElement',
+    )
+    Object.defineProperty(document, 'scrollingElement', {
+      configurable: true,
+      value: scrollingElement,
+    })
+    scrollingElement.scrollTop = 900
+
+    try {
+      const trip = renderTrip('/trip?state=active')
+
+      expect(scrollingElement.scrollTop).toBe(0)
+      expect(trip.container.querySelector('.trip-progress')).toBeVisible()
+      expect(
+        trip.container.querySelectorAll('.trip-day-card'),
+      ).toHaveLength(3)
+      expect(requestFrame).toHaveBeenCalledTimes(1)
+
+      // Model WebKit applying a stale restoration after React's layout pass.
+      scrollingElement.scrollTop = 700
+      act(() => postLayoutCheck?.(performance.now()))
+
+      expect(scrollingElement.scrollTop).toBe(0)
+      expect(
+        trip.container.querySelector('.trip-day-card summary'),
+      ).toBeVisible()
+      trip.unmount()
+      expect(cancelFrame).toHaveBeenCalledWith(17)
+    } finally {
+      if (originalScrollingElement) {
+        Object.defineProperty(
+          document,
+          'scrollingElement',
+          originalScrollingElement,
+        )
+      } else {
+        Reflect.deleteProperty(document, 'scrollingElement')
+      }
+      scrollingElement.scrollTop = 0
+      requestFrame.mockRestore()
+      cancelFrame.mockRestore()
+    }
   })
 
   it('renders specific operational timing without generic travel warnings', () => {

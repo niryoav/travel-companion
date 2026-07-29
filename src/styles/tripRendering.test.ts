@@ -74,12 +74,19 @@ describe('Trip foreground rendering styles', () => {
 
   it('defines horizontal-overflow and safe-area protection', () => {
     expect(declarationsFor('body')).toMatch(/\boverflow-x:\s*(?:hidden|clip)\b/)
-    expect(declarationsFor('.app-shell')).toContain(
+    const appShell = declarationsFor('.app-shell')
+    const bottomNavigation = declarationsFor('.bottom-navigation')
+
+    expect(appShell).toContain(
       'env(safe-area-inset-bottom)',
     )
-    expect(declarationsFor('.bottom-navigation')).toContain(
+    expect(bottomNavigation).toContain(
       'env(safe-area-inset-bottom)',
     )
+    expect(appShell).toContain(
+      'padding-bottom: calc(5.5rem + env(safe-area-inset-bottom))',
+    )
+    expect(bottomNavigation).toContain('min-height: 4.75rem')
   })
 
   it('keeps fixed background layers behind the isolated app foreground', () => {
