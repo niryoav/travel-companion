@@ -3,7 +3,7 @@ import type {
   PortCall,
   TripData,
   TripDay,
-} from '../../domain/trip/tripTypes'
+} from '../../domain/trip/tripTypes.js'
 
 // Public cruise dates, ports, and published arrival/departure times:
 // https://www.oceaniacruises.com/cruises/MNA260823/

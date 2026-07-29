@@ -1,5 +1,5 @@
-import { resolveTripPhase } from './selectors/resolveTripPhase'
-import { formatLocalTime, calendarDateInTimeZone } from './tripTime'
+import { resolveTripPhase } from './selectors/resolveTripPhase.js'
+import { formatLocalTime, calendarDateInTimeZone } from './tripTime.js'
 import type {
   OperationalEntryStatus,
   PortCall,
@@ -7,7 +7,7 @@ import type {
   TripData,
   TripDay,
   TripEvent,
-} from './tripTypes'
+} from './tripTypes.js'
 
 // Ninety minutes gives travelers an early, calm safety signal before the
 // verified deadline becomes the primary remaining port-day constraint.

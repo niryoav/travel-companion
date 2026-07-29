@@ -1,9 +1,9 @@
 import {
   parseTripOverrideBundle,
   type TripOverrideBundle,
-} from './tripOverrides'
-import { isValidInstant } from './tripTime'
-import type { TripData, TripId } from './tripTypes'
+} from './tripOverrides.js'
+import { isValidInstant } from './tripTime.js'
+import type { TripData, TripId } from './tripTypes.js'
 
 export interface TripSnapshot {
   tripId: TripId

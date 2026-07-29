@@ -1,14 +1,14 @@
-import { instantFromLocalTime } from './localTimeInput'
+import { instantFromLocalTime } from './localTimeInput.js'
 import {
   RETURN_BUFFER_THRESHOLDS,
   TIGHT_CONNECTION_WARNING_MINUTES,
-} from './operationalTiming'
+} from './operationalTiming.js'
 import type {
   ExcursionOperationalStatus,
   OperationalEntryStatus,
   PortAccessStatus,
   TripEvent,
-} from './tripTypes'
+} from './tripTypes.js'
 
 export const MAX_TENDER_CROSSING_MINUTES = 240
 export const MAX_EXCURSION_TRAVEL_MINUTES = 1_440

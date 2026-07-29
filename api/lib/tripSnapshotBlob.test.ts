@@ -5,13 +5,13 @@ import {
 } from '@vercel/blob'
 import { describe, expect, it, vi } from 'vitest'
 
-import { emptyTripOverrideBundle } from '../../src/domain/trip/tripOverrides'
-import { oceaniaMarina2026TripData } from '../../src/trips/oceania-marina-2026/tripData'
+import { emptyTripOverrideBundle } from '../../src/domain/trip/tripOverrides.js'
+import { oceaniaMarina2026TripData } from '../../src/trips/oceania-marina-2026/tripData.js'
 import {
   readTripSnapshotBlob,
   tripSnapshotBlobPathname,
   writeTripSnapshotBlob,
-} from './tripSnapshotBlob'
+} from './tripSnapshotBlob.js'
 
 function snapshot() {
   return {

@@ -1,5 +1,5 @@
-import { MAX_TENDER_CROSSING_MINUTES } from './operationalEditValidation'
-import { isValidInstant } from './tripTime'
+import { MAX_TENDER_CROSSING_MINUTES } from './operationalEditValidation.js'
+import { isValidInstant } from './tripTime.js'
 import type {
   EventId,
   ExcursionOperationalStatus,
@@ -12,7 +12,7 @@ import type {
   TripDayId,
   TripEvent,
   TripId,
-} from './tripTypes'
+} from './tripTypes.js'
 
 export interface OperationalTimeOverride {
   at?: string
