@@ -106,6 +106,9 @@ export function App({
             path="/profile-setup"
             element={
               <TravelerSetupScreen
+                onTravelerChanged={() =>
+                  tripOverrideRepository.travelerChanged?.()
+                }
                 travelers={tripData.travelers}
                 tripStateRepository={tripStateRepository}
               />
@@ -130,6 +133,7 @@ export function App({
                   appBuildInfo={appBuildInfo}
                   pwaUpdateManager={pwaUpdateManager}
                   tripDataVersion={tripData.dataVersion}
+                  tripOverrideRepository={tripOverrideRepository}
                   travelers={tripData.travelers}
                   tripStateRepository={tripStateRepository}
                 />

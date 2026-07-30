@@ -12,23 +12,18 @@ export function AppInformationCard({
 }: AppInformationCardProps) {
   return (
     <SurfaceCard className="app-information-card">
-      <p className="card-eyebrow">App information</p>
-      <h2>Travel Companion</h2>
+      <p className="card-eyebrow">Installed deployment</p>
+      <h2>App version</h2>
+      <p className="app-deployment-version">{buildInfo.version}</p>
+      <p className="app-deployment-time">
+        Deployed:{' '}
+        {buildInfo.builtAt ? (
+          <time dateTime={buildInfo.builtAt}>{buildInfo.buildLabel}</time>
+        ) : (
+          buildInfo.buildLabel
+        )}
+      </p>
       <dl>
-        <div>
-          <dt>Version</dt>
-          <dd>{buildInfo.version}</dd>
-        </div>
-        <div>
-          <dt>Build</dt>
-          <dd>
-            {buildInfo.builtAt ? (
-              <time dateTime={buildInfo.builtAt}>{buildInfo.buildLabel}</time>
-            ) : (
-              buildInfo.buildLabel
-            )}
-          </dd>
-        </div>
         <div>
           <dt>Environment</dt>
           <dd>{buildInfo.environmentLabel}</dd>

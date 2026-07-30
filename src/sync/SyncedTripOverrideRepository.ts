@@ -3,47 +3,65 @@ import type {
   EventOperationalOverrideInput,
   TripOverrideBundle,
 } from '../domain/trip/tripOverrides'
-import type { EventId, TripDayId } from '../domain/trip/tripTypes'
+import type {
+  EventId,
+  TravelerId,
+  TripDayId,
+  TripId,
+} from '../domain/trip/tripTypes'
+import { TripSnapshotApiError } from '../services/TripSnapshotApiClient'
+import type { TripSnapshotApiClient } from '../services/TripSnapshotApiClient'
 import type { LocalTripOverrideRepository } from '../storage/LocalTripOverrideRepository'
 import type { TripOverrideRepository } from '../storage/TripOverrideRepository'
-import type { TripOverrideSaveResult } from '../storage/TripOverrideRepository'
-import type { TripSnapshot } from '../domain/trip/tripSnapshot'
-import type { TripId } from '../domain/trip/tripTypes'
 import type { TripSnapshotCache } from '../storage/TripSnapshotCache'
-import type { TripSnapshotApiClient } from '../services/TripSnapshotApiClient'
-import { TripSnapshotApiError } from '../services/TripSnapshotApiClient'
+import type { TripSnapshot } from '../domain/trip/tripSnapshot'
+
+const DEFAULT_RETRY_DELAY_MS = 15_000
+const MAX_PAYLOADS_PER_SYNC_CYCLE = 3
+
+interface RoleBasedSyncDependencies {
+  apiClient: TripSnapshotApiClient
+  cache: TripSnapshotCache
+  getTravelerId(): TravelerId | null
+  retryDelayMs?: number
+  tripId: TripId
+}
+
+type SyncRole = 'editor' | 'follower' | null
+
+function roleForTraveler(travelerId: TravelerId | null): SyncRole {
+  if (travelerId === 'traveler-yoav') {
+    return 'editor'
+  }
+  if (travelerId === 'traveler-isabel') {
+    return 'follower'
+  }
+  return null
+}
 
 /**
- * Local editing remains immediately available. Every save makes one bounded
- * sharing attempt: a known base goes directly to PUT, while an unknown base
- * is observed with one GET before PUT. Failures remain local and are retried
- * only through an explicit user action.
+ * Yoav's complete local override bundle is the working master. Isabel is a
+ * read-only follower of the latest accepted server snapshot.
  */
 export class SyncedTripOverrideRepository
 implements TripOverrideRepository {
   private readonly listeners = new Set<() => void>()
+  private readonly retryDelayMs: number
+  private inFlight: Promise<void> | null = null
+  private roleChangePending = false
+  private retryTimer: ReturnType<typeof setTimeout> | null = null
   private snapshot: TripOverrideBundle
-  private protectsLocalChanges: boolean
-  private applyingAcceptedRemote = false
-  private writeInFlight = false
 
   constructor(
     private readonly localRepository: LocalTripOverrideRepository,
     initialSnapshot: TripOverrideBundle,
-    protectsLocalChanges: boolean,
-    private readonly writeDependencies?: {
-      tripId: TripId
-      cache: TripSnapshotCache
-      apiClient: TripSnapshotApiClient
-    },
+    private readonly dependencies?: RoleBasedSyncDependencies,
   ) {
     this.snapshot = initialSnapshot
-    this.protectsLocalChanges = protectsLocalChanges
+    this.retryDelayMs =
+      dependencies?.retryDelayMs ?? DEFAULT_RETRY_DELAY_MS
     this.localRepository.subscribe(() => {
       this.snapshot = this.localRepository.getSnapshot()
-      if (!this.applyingAcceptedRemote) {
-        this.protectsLocalChanges = true
-      }
       this.notify()
     })
   }
@@ -57,48 +75,6 @@ implements TripOverrideRepository {
     return () => this.listeners.delete(listener)
   }
 
-  canAcceptRemoteSnapshot(): boolean {
-    return !this.protectsLocalChanges && !this.writeInFlight
-  }
-
-  acceptRemoteSnapshot(snapshot: TripSnapshot): boolean {
-    const metadata = this.localRepository.getMetadata()
-    if (
-      !this.canAcceptRemoteSnapshot() ||
-      (
-        metadata.syncState === 'synced' &&
-        metadata.baseRevision !== null &&
-        snapshot.revision <= metadata.baseRevision
-      )
-    ) {
-      return false
-    }
-    this.applyingAcceptedRemote = true
-    try {
-      this.localRepository.acceptSyncedSnapshot(snapshot)
-    } finally {
-      this.applyingAcceptedRemote = false
-    }
-    return true
-  }
-
-  acceptNoRemoteSnapshot(): boolean {
-    if (!this.canAcceptRemoteSnapshot()) {
-      return false
-    }
-    this.applyingAcceptedRemote = true
-    try {
-      this.localRepository.replaceSnapshotForRead(this.snapshot, {
-        baseRevision: 0,
-        lastModified: this.localRepository.getMetadata().lastModified,
-        syncState: 'synced',
-      })
-    } finally {
-      this.applyingAcceptedRemote = false
-    }
-    return true
-  }
-
   saveDayEdits(
     dayId: TripDayId,
     dayOverride: DayOperationalOverrideInput | null,
@@ -106,94 +82,223 @@ implements TripOverrideRepository {
       EventId,
       EventOperationalOverrideInput | null
     >,
-  ): Promise<TripOverrideSaveResult> {
+  ): void {
     this.localRepository.saveDayEdits(
       dayId,
       dayOverride,
       eventOverrides,
     )
-    return this.attemptImmediateWrite()
+    void this.synchronizeForCurrentRole()
   }
 
-  resetEvent(eventId: EventId): Promise<TripOverrideSaveResult> {
+  resetEvent(eventId: EventId): void {
     this.localRepository.resetEvent(eventId)
-    return this.attemptImmediateWrite()
+    void this.synchronizeForCurrentRole()
   }
 
-  resetDay(
-    dayId: TripDayId,
-    eventIds: EventId[],
-  ): Promise<TripOverrideSaveResult> {
+  resetDay(dayId: TripDayId, eventIds: EventId[]): void {
     this.localRepository.resetDay(dayId, eventIds)
-    return this.attemptImmediateWrite()
+    void this.synchronizeForCurrentRole()
   }
 
-  retryShare(): Promise<TripOverrideSaveResult> {
-    return this.attemptImmediateWrite()
-  }
-
-  private async attemptImmediateWrite(): Promise<TripOverrideSaveResult> {
-    if (!this.writeDependencies || this.writeInFlight) {
-      return 'local-only'
+  travelerChanged(): void {
+    this.clearRetryTimer()
+    if (this.inFlight) {
+      this.roleChangePending = true
+      return
     }
-    const metadata = this.localRepository.getMetadata()
+    void this.synchronizeForCurrentRole()
+  }
 
-    this.writeInFlight = true
-    const submittedSnapshot = this.snapshot
-    try {
-      let baseRevision = metadata.baseRevision
-      if (baseRevision === null) {
-        const remote =
-          await this.writeDependencies.apiClient.getTripSnapshot(
-            this.writeDependencies.tripId,
-          )
-        baseRevision = remote?.revision ?? 0
-        if (remote) {
-          try {
-            await this.writeDependencies.cache.saveAcceptedSnapshot(remote)
-          } catch {
-            // The observed revision is still valid for this one write attempt.
-          }
-        }
+  synchronizeForCurrentRole(): Promise<void> {
+    if (!this.dependencies) {
+      return Promise.resolve()
+    }
+    if (this.inFlight) {
+      return this.inFlight
+    }
+
+    const role = roleForTraveler(
+      this.dependencies.getTravelerId(),
+    )
+    if (!role) {
+      return Promise.resolve()
+    }
+
+    this.clearRetryTimer()
+    const operation =
+      role === 'editor'
+        ? this.pushEditorChanges()
+        : this.refreshFollower()
+    this.inFlight = operation.finally(() => {
+      this.inFlight = null
+      if (this.roleChangePending) {
+        this.roleChangePending = false
+        void this.synchronizeForCurrentRole()
       }
-      const accepted =
-        await this.writeDependencies.apiClient.putTripSnapshot(
-          this.writeDependencies.tripId,
-          baseRevision,
+    })
+    return this.inFlight
+  }
+
+  private async pushEditorChanges(): Promise<void> {
+    if (
+      !this.dependencies ||
+      this.localRepository.getMetadata().syncState === 'synced'
+    ) {
+      return
+    }
+
+    for (
+      let payloadIndex = 0;
+      payloadIndex < MAX_PAYLOADS_PER_SYNC_CYCLE;
+      payloadIndex += 1
+    ) {
+      const submittedSnapshot = this.snapshot
+      try {
+        const accepted = await this.putEditorSnapshot(
           submittedSnapshot,
         )
-      if (this.snapshot === submittedSnapshot) {
-        this.applyingAcceptedRemote = true
-        try {
-          this.localRepository.acceptSyncedSnapshot(accepted)
-          this.protectsLocalChanges = false
-        } finally {
-          this.applyingAcceptedRemote = false
+        const newerLocalPayloadExists =
+          this.snapshot !== submittedSnapshot
+        if (!newerLocalPayloadExists) {
+          this.acceptSnapshot(accepted)
+        } else {
+          this.localRepository.markUnsyncedAtBaseRevision(
+            accepted.revision,
+          )
         }
-      } else {
-        this.localRepository.markUnsyncedAtBaseRevision(
-          accepted.revision,
-        )
-      }
-      try {
-        await this.writeDependencies.cache.saveAcceptedSnapshot(accepted)
+        try {
+          await this.dependencies.cache.saveAcceptedSnapshot(
+            accepted,
+          )
+        } catch {
+          // localStorage is Yoav's canonical persisted working copy.
+        }
+
+        if (!newerLocalPayloadExists) {
+          return
+        }
       } catch {
-        // The authoritative write succeeded; localStorage remains the fallback.
+        this.localRepository.markSyncState('unsynced')
+        this.scheduleRetry()
+        return
       }
-      return 'shared'
+    }
+
+    if (this.localRepository.getMetadata().syncState !== 'synced') {
+      this.scheduleRetry()
+    }
+  }
+
+  private async putEditorSnapshot(
+    operationalOverrides: TripOverrideBundle,
+  ): Promise<TripSnapshot> {
+    if (!this.dependencies) {
+      throw new Error('Shared trip sync is unavailable')
+    }
+
+    let baseRevision =
+      this.localRepository.getMetadata().baseRevision
+    if (baseRevision === null) {
+      const observed =
+        await this.dependencies.apiClient.getTripSnapshot(
+          this.dependencies.tripId,
+        )
+      baseRevision = observed?.revision ?? 0
+    }
+
+    try {
+      return await this.dependencies.apiClient.putTripSnapshot(
+        this.dependencies.tripId,
+        baseRevision,
+        operationalOverrides,
+      )
     } catch (error) {
       if (
-        error instanceof TripSnapshotApiError &&
-        error.code === 'REVISION_CONFLICT'
+        !(
+          error instanceof TripSnapshotApiError &&
+          error.code === 'REVISION_CONFLICT'
+        )
       ) {
-        this.localRepository.markSyncState('conflict')
-        return 'conflict'
-      } else {
-        this.localRepository.markSyncState('unsynced')
-        return 'local-only'
+        throw error
       }
-    } finally {
-      this.writeInFlight = false
+
+      const latest =
+        await this.dependencies.apiClient.getTripSnapshot(
+          this.dependencies.tripId,
+        )
+      const retryBaseRevision =
+        latest?.revision ?? error.currentRevision ?? 0
+      return this.dependencies.apiClient.putTripSnapshot(
+        this.dependencies.tripId,
+        retryBaseRevision,
+        operationalOverrides,
+      )
+    }
+  }
+
+  private async refreshFollower(): Promise<void> {
+    if (!this.dependencies) {
+      return
+    }
+    try {
+      const remote =
+        await this.dependencies.apiClient.getTripSnapshot(
+          this.dependencies.tripId,
+        )
+      if (!remote) {
+        return
+      }
+
+      const metadata = this.localRepository.getMetadata()
+      if (
+        metadata.syncState === 'synced' &&
+        metadata.baseRevision !== null &&
+        remote.revision < metadata.baseRevision
+      ) {
+        return
+      }
+      if (
+        metadata.syncState === 'synced' &&
+        remote.revision === metadata.baseRevision &&
+        metadata.lastSuccessfulSyncAt
+      ) {
+        return
+      }
+
+      this.acceptSnapshot(remote)
+      try {
+        await this.dependencies.cache.saveAcceptedSnapshot(remote)
+      } catch {
+        // The accepted follower snapshot is already safe in localStorage.
+      }
+    } catch {
+      // Isabel continues with the last accepted cached snapshot.
+    }
+  }
+
+  private acceptSnapshot(snapshot: TripSnapshot): void {
+    this.localRepository.acceptSyncedSnapshot(snapshot)
+  }
+
+  private scheduleRetry(): void {
+    if (
+      !this.dependencies ||
+      this.retryTimer ||
+      roleForTraveler(this.dependencies.getTravelerId()) !== 'editor'
+    ) {
+      return
+    }
+    this.retryTimer = setTimeout(() => {
+      this.retryTimer = null
+      void this.synchronizeForCurrentRole()
+    }, this.retryDelayMs)
+  }
+
+  private clearRetryTimer(): void {
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer)
+      this.retryTimer = null
     }
   }
 

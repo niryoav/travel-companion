@@ -38,4 +38,21 @@ describe('PwaStatusCard', () => {
 
     expect(applyUpdate).toHaveBeenCalledWith(true)
   })
+
+  it('labels the software control explicitly as an app update', () => {
+    const manager = new PwaUpdateManager(true)
+    manager.registered(
+      { update: vi.fn(async () => {}) } as unknown as ServiceWorkerRegistration,
+      true,
+    )
+    render(<PwaStatusCard manager={manager} />)
+
+    expect(screen.getByText('App update')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Check for app update' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Check for update' }),
+    ).not.toBeInTheDocument()
+  })
 })

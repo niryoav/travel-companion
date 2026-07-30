@@ -6,119 +6,94 @@ import {
   parseTripSnapshot,
   type TripSnapshot,
 } from '../domain/trip/tripSnapshot'
-import type { TripData } from '../domain/trip/tripTypes'
+import type {
+  TravelerId,
+  TripData,
+} from '../domain/trip/tripTypes'
 import type { TripSnapshotApiClient } from '../services/TripSnapshotApiClient'
 import {
   LocalTripOverrideRepository,
   readLocalTripOverrideState,
 } from '../storage/LocalTripOverrideRepository'
+import type { LocalTripOverrideMetadata } from '../storage/LocalTripOverrideMetadata'
 import type { TripSnapshotCache } from '../storage/TripSnapshotCache'
 import { SyncedTripOverrideRepository } from './SyncedTripOverrideRepository'
-import type { LocalTripOverrideMetadata } from '../storage/LocalTripOverrideMetadata'
 
 export interface TripSyncBootstrapDependencies {
-  tripData: TripData
-  cache: TripSnapshotCache
   apiClient: TripSnapshotApiClient
+  cache: TripSnapshotCache
+  getTravelerId(): TravelerId | null
   localStorage: Storage
+  retryDelayMs?: number
+  tripData: TripData
 }
 
 export interface TripSyncBootstrapResult {
   tripOverrideRepository: SyncedTripOverrideRepository
-  refreshFromRemote(): Promise<void>
 }
 
 interface InitialTripSyncState {
-  operationalOverrides: TripOverrideBundle
   metadata: LocalTripOverrideMetadata
+  operationalOverrides: TripOverrideBundle
   source: 'accepted' | 'canonical' | 'local'
-  revision: number | null
 }
 
-function syncedSnapshotFromLocalState(
-  localState: ReturnType<typeof readLocalTripOverrideState>,
-  tripId: string,
-): TripSnapshot | null {
-  if (
-    !localState ||
-    localState.metadata.syncState !== 'synced' ||
-    localState.metadata.baseRevision === null ||
-    localState.metadata.baseRevision === 0
-  ) {
-    return null
-  }
+function acceptedState(snapshot: TripSnapshot): InitialTripSyncState {
   return {
-    tripId,
-    schemaVersion: 1,
-    revision: localState.metadata.baseRevision,
-    updatedAt: localState.metadata.lastModified,
-    updatedBy: 'yoav',
-    operationalOverrides: localState.operationalOverrides,
+    operationalOverrides: snapshot.operationalOverrides,
+    metadata: {
+      baseRevision: snapshot.revision,
+      lastModified: snapshot.updatedAt,
+      lastSuccessfulSyncAt: snapshot.updatedAt,
+      syncState: 'synced',
+    },
+    source: 'accepted',
   }
 }
 
-function selectInitialTripSyncState(
-  tripData: TripData,
-  localState: ReturnType<typeof readLocalTripOverrideState>,
-  acceptedSnapshot: TripSnapshot | null,
+function localState(
+  state: NonNullable<
+    ReturnType<typeof readLocalTripOverrideState>
+  >,
 ): InitialTripSyncState {
-  const protectedLocalState =
-    localState?.metadata.syncState !== undefined &&
-    localState.metadata.syncState !== 'synced'
-  if (localState && protectedLocalState) {
-    return {
-      operationalOverrides: localState.operationalOverrides,
-      metadata: localState.metadata,
-      source: 'local',
-      revision: localState.metadata.baseRevision,
-    }
+  return {
+    operationalOverrides: state.operationalOverrides,
+    metadata: state.metadata,
+    source: 'local',
+  }
+}
+
+function selectCachedState(
+  tripData: TripData,
+  local: ReturnType<typeof readLocalTripOverrideState>,
+  accepted: TripSnapshot | null,
+  travelerId: TravelerId | null,
+): InitialTripSyncState {
+  if (travelerId === 'traveler-yoav' && local) {
+    return localState(local)
   }
 
-  if (localState && acceptedSnapshot) {
-    const localRevision = localState.metadata.baseRevision
+  if (local && accepted) {
     if (
-      localRevision !== null &&
-      localRevision >= acceptedSnapshot.revision
+      travelerId === 'traveler-isabel' &&
+      local.metadata.syncState !== 'synced'
     ) {
-      return {
-        operationalOverrides: localState.operationalOverrides,
-        metadata: localState.metadata,
-        source: 'local',
-        revision: localRevision,
-      }
+      return acceptedState(accepted)
     }
-    return {
-      operationalOverrides: acceptedSnapshot.operationalOverrides,
-      metadata: {
-        baseRevision: acceptedSnapshot.revision,
-        lastModified: acceptedSnapshot.updatedAt,
-        syncState: 'synced',
-      },
-      source: 'accepted',
-      revision: acceptedSnapshot.revision,
-    }
+    const localRevision = local.metadata.baseRevision
+    return (
+      localRevision !== null &&
+      localRevision >= accepted.revision
+    )
+      ? localState(local)
+      : acceptedState(accepted)
   }
 
-  if (localState) {
-    return {
-      operationalOverrides: localState.operationalOverrides,
-      metadata: localState.metadata,
-      source: 'local',
-      revision: localState.metadata.baseRevision,
-    }
+  if (accepted) {
+    return acceptedState(accepted)
   }
-
-  if (acceptedSnapshot) {
-    return {
-      operationalOverrides: acceptedSnapshot.operationalOverrides,
-      metadata: {
-        baseRevision: acceptedSnapshot.revision,
-        lastModified: acceptedSnapshot.updatedAt,
-        syncState: 'synced',
-      },
-      source: 'accepted',
-      revision: acceptedSnapshot.revision,
-    }
+  if (local) {
+    return localState(local)
   }
 
   return {
@@ -126,18 +101,43 @@ function selectInitialTripSyncState(
     metadata: {
       baseRevision: null,
       lastModified: tripData.publishedAt,
-      syncState: 'unsynced',
+      syncState: 'synced',
     },
     source: 'canonical',
-    revision: null,
+  }
+}
+
+function snapshotFromSyncedLocal(
+  state: ReturnType<typeof readLocalTripOverrideState>,
+  tripData: TripData,
+): TripSnapshot | null {
+  if (
+    !state ||
+    state.metadata.syncState !== 'synced' ||
+    state.metadata.baseRevision === null ||
+    state.metadata.baseRevision === 0
+  ) {
+    return null
+  }
+  return {
+    tripId: tripData.trip.id,
+    schemaVersion: 1,
+    revision: state.metadata.baseRevision,
+    updatedAt:
+      state.metadata.lastSuccessfulSyncAt ??
+      state.metadata.lastModified,
+    updatedBy: 'yoav',
+    operationalOverrides: state.operationalOverrides,
   }
 }
 
 export async function bootstrapTripSync({
-  tripData,
-  cache,
   apiClient,
+  cache,
+  getTravelerId,
   localStorage,
+  retryDelayMs,
+  tripData,
 }: TripSyncBootstrapDependencies): Promise<TripSyncBootstrapResult> {
   let acceptedSnapshot: TripSnapshot | null = null
   try {
@@ -146,22 +146,19 @@ export async function bootstrapTripSync({
       tripData,
     )
   } catch {
-    // IndexedDB is optional; bundled/local operation remains available.
+    // IndexedDB is an optional cache; localStorage remains usable.
   }
 
-  const localState = readLocalTripOverrideState(
+  const persistedLocalState = readLocalTripOverrideState(
     localStorage,
     tripData,
   )
-  const initialState = selectInitialTripSyncState(
+  const initialState = selectCachedState(
     tripData,
-    localState,
+    persistedLocalState,
     acceptedSnapshot,
+    getTravelerId(),
   )
-  const protectsLocalChanges = Boolean(
-    localState && localState.metadata.syncState !== 'synced',
-  )
-
   const localRepository = new LocalTripOverrideRepository(
     localStorage,
     tripData,
@@ -169,81 +166,34 @@ export async function bootstrapTripSync({
     initialState.operationalOverrides,
     initialState.metadata,
   )
+
   if (initialState.source === 'accepted' && acceptedSnapshot) {
     localRepository.acceptSyncedSnapshot(acceptedSnapshot)
-  }
-  const tripOverrideRepository = new SyncedTripOverrideRepository(
-    localRepository,
-    initialState.operationalOverrides,
-    protectsLocalChanges,
-    {
-      tripId: tripData.trip.id,
-      cache,
-      apiClient,
-    },
-  )
-  let acceptedRevision = initialState.revision
-
-  const localAcceptedSnapshot = syncedSnapshotFromLocalState(
-    localState,
-    tripData.trip.id,
-  )
-  if (
-    initialState.source === 'local' &&
-    !protectsLocalChanges &&
-    localAcceptedSnapshot
-  ) {
-    try {
-      await cache.saveAcceptedSnapshot(localAcceptedSnapshot)
-    } catch {
-      // localStorage remains the selected synced source.
+  } else if (initialState.source === 'local') {
+    const acceptedLocal = snapshotFromSyncedLocal(
+      persistedLocalState,
+      tripData,
+    )
+    if (acceptedLocal) {
+      try {
+        await cache.saveAcceptedSnapshot(acceptedLocal)
+      } catch {
+        // localStorage is the canonical local persistence boundary.
+      }
     }
   }
 
   return {
-    tripOverrideRepository,
-    refreshFromRemote: async () => {
-      if (!tripOverrideRepository.canAcceptRemoteSnapshot()) {
-        return
-      }
-      let remoteSnapshot
-      try {
-        remoteSnapshot = await apiClient.getTripSnapshot(
-          tripData.trip.id,
-        )
-      } catch {
-        return
-      }
-      if (
-        remoteSnapshot &&
-        (
-          acceptedRevision !== null &&
-          remoteSnapshot.revision <= acceptedRevision
-        )
-      ) {
-        return
-      }
-
-      if (!remoteSnapshot) {
-        if (acceptedRevision === null) {
-          tripOverrideRepository.acceptNoRemoteSnapshot()
-          acceptedRevision = 0
-        }
-        return
-      }
-
-      if (!tripOverrideRepository.canAcceptRemoteSnapshot()) {
-        return
-      }
-      if (!tripOverrideRepository.acceptRemoteSnapshot(remoteSnapshot)) {
-        return
-      }
-      acceptedRevision = remoteSnapshot.revision
-      try {
-        await cache.saveAcceptedSnapshot(remoteSnapshot)
-      } catch {
-        // The accepted snapshot is still persisted in localStorage.
-      }
-    },
+    tripOverrideRepository: new SyncedTripOverrideRepository(
+      localRepository,
+      initialState.operationalOverrides,
+      {
+        apiClient,
+        cache,
+        getTravelerId,
+        retryDelayMs,
+        tripId: tripData.trip.id,
+      },
+    ),
   }
 }

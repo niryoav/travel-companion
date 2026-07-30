@@ -6,11 +6,6 @@ import type {
 import type { EventId, TripDayId } from '../domain/trip/tripTypes'
 import type { LocalTripOverrideMetadata } from './LocalTripOverrideMetadata'
 
-export type TripOverrideSaveResult =
-  | 'shared'
-  | 'local-only'
-  | 'conflict'
-
 export interface TripOverrideRepository {
   getSnapshot(): TripOverrideBundle
   subscribe(listener: () => void): () => void
@@ -18,14 +13,15 @@ export interface TripOverrideRepository {
     dayId: TripDayId,
     dayOverride: DayOperationalOverrideInput | null,
     eventOverrides: Record<EventId, EventOperationalOverrideInput | null>,
-  ): void | Promise<TripOverrideSaveResult>
-  resetEvent(eventId: EventId): void | Promise<TripOverrideSaveResult>
+  ): void
+  resetEvent(eventId: EventId): void
   resetDay(
     dayId: TripDayId,
     eventIds: EventId[],
-  ): void | Promise<TripOverrideSaveResult>
+  ): void
   getSyncMetadata?(): LocalTripOverrideMetadata
-  retryShare?(): Promise<TripOverrideSaveResult>
+  synchronizeForCurrentRole?(): Promise<void>
+  travelerChanged?(): void
 }
 
 const unavailableSnapshot: TripOverrideBundle = {

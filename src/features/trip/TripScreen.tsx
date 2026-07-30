@@ -5,7 +5,6 @@ import type { TripData } from '../../domain/trip/tripTypes'
 import type { TripContentBundle } from '../../domain/content/contentTypes'
 import type { TripOverrideBundle } from '../../domain/trip/tripOverrides'
 import type { TripOverrideRepository } from '../../storage/TripOverrideRepository'
-import type { TripOverrideSaveResult } from '../../storage/TripOverrideRepository'
 import type { TripStateRepository } from '../../storage/TripStateRepository'
 import {
   tripReviewFixtures,
@@ -40,7 +39,6 @@ export function TripScreen({
   const baseline = baselineTripData ?? tripData
   const { search } = useLocation()
   const [editingDayId, setEditingDayId] = useState<string | null>(null)
-  const [confirmation, setConfirmation] = useState<string | null>(null)
   const canEdit =
     !tripStateRepository ||
     tripStateRepository.getTravelerId() === 'traveler-yoav'
@@ -52,21 +50,6 @@ export function TripScreen({
       Object.keys(tripOverrides.eventOverrides).length > 0
     ),
   )
-  const shareResultMessage = (result: TripOverrideSaveResult) =>
-    result === 'shared'
-      ? 'Opgeslagen en gedeeld'
-      : result === 'conflict'
-        ? 'De gedeelde versie is gewijzigd — je lokale wijziging is bewaard'
-        : 'Opgeslagen op dit apparaat — nog niet gedeeld'
-
-  const retryShare = async () => {
-    if (!tripOverrideRepository?.retryShare) {
-      return
-    }
-    setConfirmation(
-      shareResultMessage(await tripOverrideRepository.retryShare()),
-    )
-  }
   const reviewState = reviewStateFromSearch(search)
   const viewModel = reviewState
     ? tripReviewFixtures[reviewState]
@@ -80,31 +63,15 @@ export function TripScreen({
 
   return (
     <>
-      {confirmation ? (
-        <p className="trip-save-confirmation" role="status">
-          {confirmation}
+      {canEdit && hasLocalChanges && syncMetadata ? (
+        <p className="trip-sync-status" role="status">
+          {syncMetadata.syncState === 'synced' ? 'Synced' : 'Saved'}
         </p>
-      ) : null}
-      {canEdit &&
-      hasLocalChanges &&
-      (syncMetadata?.syncState === 'unsynced' ||
-        syncMetadata?.syncState === 'conflict') ? (
-        <section className="trip-sync-actions" aria-label="Sharing status">
-          <p>
-            {syncMetadata.syncState === 'conflict'
-              ? 'Shared version changed — your local edit is preserved.'
-              : 'Saved on this device — not yet shared.'}
-          </p>
-          <button type="button" onClick={() => void retryShare()}>
-            Try sharing again
-          </button>
-        </section>
       ) : null}
       <TripView
         onEditDay={
           !reviewState && canEdit && tripOverrideRepository
             ? (dayId) => {
-                setConfirmation(null)
                 setEditingDayId(dayId)
               }
             : undefined
@@ -118,7 +85,7 @@ export function TripScreen({
           effectiveTripData={tripData}
           key={editingDayId}
           onClose={() => setEditingDayId(null)}
-          onSaved={setConfirmation}
+          onSaved={() => {}}
           overrides={tripOverrides}
           repository={tripOverrideRepository}
         />

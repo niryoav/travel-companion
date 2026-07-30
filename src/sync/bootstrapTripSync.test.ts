@@ -5,38 +5,32 @@ import {
   type TripOverrideBundle,
 } from '../domain/trip/tripOverrides'
 import type { TripSnapshot } from '../domain/trip/tripSnapshot'
-import {
-  HttpTripSnapshotApiClient,
-  type TripSnapshotApiClient,
-} from '../services/TripSnapshotApiClient'
+import type { TravelerId } from '../domain/trip/tripTypes'
+import type { TripSnapshotApiClient } from '../services/TripSnapshotApiClient'
 import {
   localTripOverrideStorageKey,
   readLocalTripOverrideState,
 } from '../storage/LocalTripOverrideRepository'
-import type { LocalTripOverrideSyncState } from '../storage/LocalTripOverrideMetadata'
 import { LocalTripStateRepository } from '../storage/LocalTripStateRepository'
-import type {
-  PendingTripSnapshot,
-  TripSnapshotCache,
-} from '../storage/TripSnapshotCache'
+import type { TripSnapshotCache } from '../storage/TripSnapshotCache'
 import { tripFixture } from '../test/fixtures/tripFixture'
 import { oceaniaMarina2026TripData } from '../trips/oceania-marina-2026/tripData'
 import { bootstrapTripSync } from './bootstrapTripSync'
 
-function overrides(note?: string): TripOverrideBundle {
-  if (!note) {
-    return emptyTripOverrideBundle(tripFixture.trip.id)
-  }
-  return {
-    ...emptyTripOverrideBundle(tripFixture.trip.id),
-    dayOverrides: {
-      'day-2030-05-11': {
-        dayId: 'day-2030-05-11',
-        note,
-        updatedAt: '2030-05-10T12:00:00Z',
-      },
-    },
-  }
+function bundle(note?: string): TripOverrideBundle {
+  const empty = emptyTripOverrideBundle(tripFixture.trip.id)
+  return note
+    ? {
+        ...empty,
+        dayOverrides: {
+          'day-2030-05-11': {
+            dayId: 'day-2030-05-11',
+            note,
+            updatedAt: '2030-05-10T12:00:00Z',
+          },
+        },
+      }
+    : empty
 }
 
 function snapshot(revision: number, note: string): TripSnapshot {
@@ -46,21 +40,21 @@ function snapshot(revision: number, note: string): TripSnapshot {
     revision,
     updatedAt: `2030-05-10T12:0${revision}:00Z`,
     updatedBy: 'yoav',
-    operationalOverrides: overrides(note),
+    operationalOverrides: bundle(note),
   }
 }
 
-function storeLocalState(
-  note: string | undefined,
+function storeLocal(
+  note: string,
   baseRevision: number | null,
-  syncState: LocalTripOverrideSyncState = 'synced',
+  syncState: 'synced' | 'unsynced',
 ) {
   window.localStorage.setItem(
     localTripOverrideStorageKey(tripFixture.trip.id),
     JSON.stringify({
       storageVersion: 1,
       tripId: tripFixture.trip.id,
-      operationalOverrides: overrides(note),
+      operationalOverrides: bundle(note),
       metadata: {
         baseRevision,
         lastModified: '2030-05-10T12:09:00Z',
@@ -72,645 +66,236 @@ function storeLocalState(
 
 class FakeCache implements TripSnapshotCache {
   accepted: TripSnapshot | null = null
-  pending: PendingTripSnapshot | null = null
+  getAcceptedSnapshot = vi.fn(async () => this.accepted)
   saveAcceptedSnapshot = vi.fn(async (value: TripSnapshot) => {
     this.accepted = value
   })
-  getAcceptedSnapshot = vi.fn(async () => this.accepted)
-  getPendingSnapshot = vi.fn(async () => this.pending)
-  savePendingSnapshot = vi.fn(async (value: PendingTripSnapshot) => {
-    this.pending = value
-  })
-  deletePendingSnapshot = vi.fn(async () => {
-    this.pending = null
-  })
+  getPendingSnapshot = vi.fn(async () => null)
+  savePendingSnapshot = vi.fn(async () => {})
+  deletePendingSnapshot = vi.fn(async () => {})
 }
 
-function apiClient(
-  value: TripSnapshot | null | Error,
-): TripSnapshotApiClient {
+function client(remote: TripSnapshot | null): TripSnapshotApiClient {
   return {
-    getTripSnapshot: vi.fn(async () => {
-      if (value instanceof Error) {
-        throw value
-      }
-      return value
-    }),
-    putTripSnapshot: vi.fn(async () => {
-      throw new Error('unexpected write')
-    }),
+    getTripSnapshot: vi.fn(async () => remote),
+    putTripSnapshot: vi.fn(
+      async (
+        _tripId: string,
+        baseRevision: number,
+        overrides: TripOverrideBundle,
+      ): Promise<TripSnapshot> => ({
+        tripId: tripFixture.trip.id,
+        schemaVersion: 1,
+        revision: baseRevision + 1,
+        updatedAt: '2030-05-10T13:00:00Z',
+        updatedBy: 'yoav',
+        operationalOverrides: overrides,
+      }),
+    ),
   }
 }
 
-describe('bootstrapTripSync', () => {
-  beforeEach(() => {
-    window.localStorage.clear()
-    window.sessionStorage.clear()
+async function bootstrap(
+  travelerId: TravelerId | null,
+  cache = new FakeCache(),
+  apiClient = client(null),
+) {
+  return bootstrapTripSync({
+    tripData: tripFixture,
+    cache,
+    apiClient,
+    getTravelerId: () => travelerId,
+    localStorage: window.localStorage,
   })
+}
 
-  it('uses a valid accepted cache when local overrides are empty', async () => {
-    const cache = new FakeCache()
-    cache.accepted = snapshot(2, 'Accepted')
+describe('bootstrapTripSync role-based startup', () => {
+  beforeEach(() => window.localStorage.clear())
 
-    const result = await bootstrapTripSync({
-      tripData: tripFixture,
-      cache,
-      apiClient: apiClient(null),
-      localStorage: window.localStorage,
-    })
+  it('renders Yoav unsynced local master immediately and pushes it', async () => {
+    storeLocal('Yoav offline edit', 2, 'unsynced')
+    const apiClient = client(snapshot(4, 'Remote'))
+    const result = await bootstrap(
+      'traveler-yoav',
+      new FakeCache(),
+      apiClient,
+    )
 
     expect(
       result.tripOverrideRepository.getSnapshot().dayOverrides[
         'day-2030-05-11'
       ]?.note,
-    ).toBe('Accepted')
-  })
+    ).toBe('Yoav offline edit')
 
-  it('prefers a newer synced local snapshot over an older accepted snapshot', async () => {
-    storeLocalState('Newer local', 4)
-    const cache = new FakeCache()
-    cache.accepted = snapshot(3, 'Older accepted')
+    await result.tripOverrideRepository.synchronizeForCurrentRole()
 
-    const result = await bootstrapTripSync({
-      tripData: tripFixture,
-      cache,
-      apiClient: apiClient(null),
-      localStorage: window.localStorage,
-    })
-
-    expect(
-      result.tripOverrideRepository.getSnapshot().dayOverrides[
-        'day-2030-05-11'
-      ]?.note,
-    ).toBe('Newer local')
-    expect(result.tripOverrideRepository.getSyncMetadata()).toMatchObject({
-      baseRevision: 4,
-      syncState: 'synced',
-    })
-    expect(cache.saveAcceptedSnapshot).toHaveBeenCalledWith(
+    expect(apiClient.putTripSnapshot).toHaveBeenCalledWith(
+      tripFixture.trip.id,
+      2,
       expect.objectContaining({
-        revision: 4,
-        operationalOverrides: overrides('Newer local'),
+        dayOverrides: expect.objectContaining({
+          'day-2030-05-11': expect.objectContaining({
+            note: 'Yoav offline edit',
+          }),
+        }),
       }),
     )
   })
 
-  it('prefers a newer accepted snapshot over an older synced local snapshot', async () => {
-    storeLocalState('Older local', 2)
+  it('never replaces Yoav local state with a newer accepted cache', async () => {
+    storeLocal('Yoav local', 2, 'synced')
     const cache = new FakeCache()
-    cache.accepted = snapshot(3, 'Newer accepted')
+    cache.accepted = snapshot(5, 'Accepted follower cache')
 
-    const result = await bootstrapTripSync({
-      tripData: tripFixture,
-      cache,
-      apiClient: apiClient(null),
-      localStorage: window.localStorage,
-    })
+    const result = await bootstrap('traveler-yoav', cache)
 
     expect(
       result.tripOverrideRepository.getSnapshot().dayOverrides[
         'day-2030-05-11'
       ]?.note,
-    ).toBe('Newer accepted')
-    expect(result.tripOverrideRepository.getSyncMetadata()).toMatchObject({
-      baseRevision: 3,
+    ).toBe('Yoav local')
+    await result.tripOverrideRepository.synchronizeForCurrentRole()
+    expect(cache.getAcceptedSnapshot).toHaveBeenCalledOnce()
+  })
+
+  it('renders Isabel accepted cache immediately, then downloads remote', async () => {
+    const cache = new FakeCache()
+    cache.accepted = snapshot(2, 'Cached shared')
+    const apiClient = client(snapshot(3, 'Latest shared'))
+    const result = await bootstrap(
+      'traveler-isabel',
+      cache,
+      apiClient,
+    )
+
+    expect(
+      result.tripOverrideRepository.getSnapshot().dayOverrides[
+        'day-2030-05-11'
+      ]?.note,
+    ).toBe('Cached shared')
+
+    await result.tripOverrideRepository.synchronizeForCurrentRole()
+
+    expect(
+      result.tripOverrideRepository.getSnapshot().dayOverrides[
+        'day-2030-05-11'
+      ]?.note,
+    ).toBe('Latest shared')
+    expect(apiClient.putTripSnapshot).not.toHaveBeenCalled()
+  })
+
+  it('uses Isabel synced local cache when IndexedDB is unavailable', async () => {
+    storeLocal('Local accepted cache', 3, 'synced')
+    const result = await bootstrap('traveler-isabel')
+
+    expect(
+      result.tripOverrideRepository.getSnapshot().dayOverrides[
+        'day-2030-05-11'
+      ]?.note,
+    ).toBe('Local accepted cache')
+  })
+
+  it('prefers Isabel accepted cache over unsynced editor state', async () => {
+    storeLocal('Unconfirmed Yoav edit', 2, 'unsynced')
+    const cache = new FakeCache()
+    cache.accepted = snapshot(2, 'Last shared')
+
+    const result = await bootstrap('traveler-isabel', cache)
+
+    expect(
+      result.tripOverrideRepository.getSnapshot().dayOverrides[
+        'day-2030-05-11'
+      ]?.note,
+    ).toBe('Last shared')
+  })
+
+  it('uses canonical data when no persisted snapshot exists', async () => {
+    const result = await bootstrap(null)
+
+    expect(result.tripOverrideRepository.getSnapshot()).toEqual(
+      emptyTripOverrideBundle(tripFixture.trip.id),
+    )
+    expect(
+      result.tripOverrideRepository.getSyncMetadata(),
+    ).toMatchObject({
+      baseRevision: null,
       syncState: 'synced',
     })
+  })
+
+  it('migrates retired conflict metadata to Saved state', async () => {
+    window.localStorage.setItem(
+      localTripOverrideStorageKey(tripFixture.trip.id),
+      JSON.stringify({
+        storageVersion: 1,
+        tripId: tripFixture.trip.id,
+        operationalOverrides: bundle('Preserved legacy conflict'),
+        metadata: {
+          baseRevision: 2,
+          lastModified: '2030-05-10T12:09:00Z',
+          syncState: 'conflict',
+        },
+      }),
+    )
+
+    const result = await bootstrap('traveler-yoav')
+
+    expect(
+      result.tripOverrideRepository.getSyncMetadata().syncState,
+    ).toBe('unsynced')
+    expect(
+      result.tripOverrideRepository.getSnapshot().dayOverrides[
+        'day-2030-05-11'
+      ]?.note,
+    ).toBe('Preserved legacy conflict')
+  })
+
+  it('persists Isabel remote revision and successful sync time', async () => {
+    const remote = snapshot(6, 'Latest')
+    const result = await bootstrap(
+      'traveler-isabel',
+      new FakeCache(),
+      client(remote),
+    )
+
+    await result.tripOverrideRepository.synchronizeForCurrentRole()
+
     expect(
       readLocalTripOverrideState(window.localStorage, tripFixture)
-        ?.operationalOverrides.dayOverrides['day-2030-05-11']?.note,
-    ).toBe('Newer accepted')
-  })
-
-  it('prefers local state when synced revisions are equal', async () => {
-    storeLocalState('Equal local', 3)
-    const cache = new FakeCache()
-    cache.accepted = snapshot(3, 'Equal accepted')
-
-    const result = await bootstrapTripSync({
-      tripData: tripFixture,
-      cache,
-      apiClient: apiClient(null),
-      localStorage: window.localStorage,
-    })
-
-    expect(
-      result.tripOverrideRepository.getSnapshot().dayOverrides[
-        'day-2030-05-11'
-      ]?.note,
-    ).toBe('Equal local')
-  })
-
-  it('protects unsynced local state even when its override bundle is empty', async () => {
-    storeLocalState(undefined, 2, 'unsynced')
-    const cache = new FakeCache()
-    cache.accepted = snapshot(4, 'Newer accepted')
-    const client = apiClient(snapshot(5, 'Newest remote'))
-
-    const result = await bootstrapTripSync({
-      tripData: tripFixture,
-      cache,
-      apiClient: client,
-      localStorage: window.localStorage,
-    })
-    await result.refreshFromRemote()
-
-    expect(result.tripOverrideRepository.getSnapshot()).toEqual(
-      emptyTripOverrideBundle(tripFixture.trip.id),
-    )
-    expect(client.getTripSnapshot).not.toHaveBeenCalled()
-  })
-
-  it('uses accepted overrides as the baseline for later local editing', async () => {
-    storeLocalState(undefined, 1)
-    const cache = new FakeCache()
-    cache.accepted = snapshot(2, 'Accepted')
-    const result = await bootstrapTripSync({
-      tripData: tripFixture,
-      cache,
-      apiClient: apiClient(null),
-      localStorage: window.localStorage,
-    })
-
-    result.tripOverrideRepository.saveDayEdits(
-      'day-2030-05-11',
-      { note: 'Accepted' },
-      {
-        'event-excursion': { status: 'CHANGED' },
-      },
-    )
-
-    expect(
-      result.tripOverrideRepository.getSnapshot().dayOverrides[
-        'day-2030-05-11'
-      ]?.note,
-    ).toBe('Accepted')
-    expect(
-      result.tripOverrideRepository.getSnapshot().eventOverrides[
-        'event-excursion'
-      ]?.status,
-    ).toBe('CHANGED')
-  })
-
-  it('uses valid local overrides when no accepted cache exists', async () => {
-    window.localStorage.setItem(
-      localTripOverrideStorageKey(tripFixture.trip.id),
-      JSON.stringify(overrides('Local')),
-    )
-
-    const result = await bootstrapTripSync({
-      tripData: tripFixture,
-      cache: new FakeCache(),
-      apiClient: apiClient(null),
-      localStorage: window.localStorage,
-    })
-
-    expect(
-      result.tripOverrideRepository.getSnapshot().dayOverrides[
-        'day-2030-05-11'
-      ]?.note,
-    ).toBe('Local')
-  })
-
-  it('uses synced local state when no accepted cache exists', async () => {
-    storeLocalState('Only local', 3)
-
-    const result = await bootstrapTripSync({
-      tripData: tripFixture,
-      cache: new FakeCache(),
-      apiClient: apiClient(null),
-      localStorage: window.localStorage,
-    })
-
-    expect(
-      result.tripOverrideRepository.getSnapshot().dayOverrides[
-        'day-2030-05-11'
-      ]?.note,
-    ).toBe('Only local')
-    expect(result.tripOverrideRepository.getSyncMetadata().baseRevision)
-      .toBe(3)
-  })
-
-  it('ignores an invalid accepted source and falls back to valid local state', async () => {
-    storeLocalState('Valid local', 2)
-    const cache = new FakeCache()
-    cache.accepted = {
-      ...snapshot(3, 'Invalid accepted'),
-      schemaVersion: 2,
-    } as unknown as TripSnapshot
-
-    const result = await bootstrapTripSync({
-      tripData: tripFixture,
-      cache,
-      apiClient: apiClient(null),
-      localStorage: window.localStorage,
-    })
-
-    expect(
-      result.tripOverrideRepository.getSnapshot().dayOverrides[
-        'day-2030-05-11'
-      ]?.note,
-    ).toBe('Valid local')
-  })
-
-  it('uses empty bundled overrides without cache or local state', async () => {
-    const result = await bootstrapTripSync({
-      tripData: tripFixture,
-      cache: new FakeCache(),
-      apiClient: apiClient(null),
-      localStorage: window.localStorage,
-    })
-
-    expect(result.tripOverrideRepository.getSnapshot()).toEqual(
-      emptyTripOverrideBundle(tripFixture.trip.id),
-    )
-  })
-
-  it('returns application-ready state before any remote request', async () => {
-    const client = apiClient(null)
-
-    const result = await bootstrapTripSync({
-      tripData: tripFixture,
-      cache: new FakeCache(),
-      apiClient: client,
-      localStorage: window.localStorage,
-    })
-
-    expect(client.getTripSnapshot).not.toHaveBeenCalled()
-    expect(result.tripOverrideRepository.getSnapshot().tripId).toBe(
-      tripFixture.trip.id,
-    )
-  })
-
-  it('stores and applies a newer remote snapshot', async () => {
-    const cache = new FakeCache()
-    cache.accepted = snapshot(1, 'Old')
-    const result = await bootstrapTripSync({
-      tripData: tripFixture,
-      cache,
-      apiClient: apiClient(snapshot(2, 'New')),
-      localStorage: window.localStorage,
-    })
-    const listener = vi.fn()
-    result.tripOverrideRepository.subscribe(listener)
-
-    await result.refreshFromRemote()
-
-    expect(cache.accepted?.revision).toBe(2)
-    expect(
-      result.tripOverrideRepository.getSnapshot().dayOverrides[
-        'day-2030-05-11'
-      ]?.note,
-    ).toBe('New')
-    expect(listener).toHaveBeenCalledOnce()
-    expect(
-      readLocalTripOverrideState(window.localStorage, tripFixture),
+        ?.metadata,
     ).toMatchObject({
-      metadata: {
-        baseRevision: 2,
-        syncState: 'synced',
-      },
-      operationalOverrides: overrides('New'),
+      baseRevision: 6,
+      lastSuccessfulSyncAt: remote.updatedAt,
+      syncState: 'synced',
     })
-  })
-
-  it.each([
-    ['equal', 2],
-    ['older', 1],
-  ])('does not regress an accepted snapshot for an %s revision', async (
-    _label,
-    remoteRevision,
-  ) => {
-    const cache = new FakeCache()
-    cache.accepted = snapshot(2, 'Current')
-    const result = await bootstrapTripSync({
-      tripData: tripFixture,
-      cache,
-      apiClient: apiClient(snapshot(remoteRevision, 'Remote')),
-      localStorage: window.localStorage,
-    })
-
-    await result.refreshFromRemote()
-
-    expect(cache.saveAcceptedSnapshot).not.toHaveBeenCalled()
-    expect(
-      result.tripOverrideRepository.getSnapshot().dayOverrides[
-        'day-2030-05-11'
-      ]?.note,
-    ).toBe('Current')
-  })
-
-  it.each([
-    ['not found', null],
-    ['network failure', new Error('offline')],
-  ])('preserves current state on %s', async (_label, remote) => {
-    const cache = new FakeCache()
-    cache.accepted = snapshot(1, 'Current')
-    const result = await bootstrapTripSync({
-      tripData: tripFixture,
-      cache,
-      apiClient: apiClient(remote),
-      localStorage: window.localStorage,
-    })
-
-    await result.refreshFromRemote()
-
-    expect(
-      result.tripOverrideRepository.getSnapshot().dayOverrides[
-        'day-2030-05-11'
-      ]?.note,
-    ).toBe('Current')
-  })
-
-  it('does not let a remote read discard local unsynchronized edits', async () => {
-    window.localStorage.setItem(
-      localTripOverrideStorageKey(tripFixture.trip.id),
-      JSON.stringify(overrides('Local unsynchronized')),
-    )
-    const cache = new FakeCache()
-    cache.accepted = snapshot(1, 'Accepted')
-    const client = apiClient(snapshot(2, 'Remote'))
-    const result = await bootstrapTripSync({
-      tripData: tripFixture,
-      cache,
-      apiClient: client,
-      localStorage: window.localStorage,
-    })
-
-    await result.refreshFromRemote()
-
-    expect(client.getTripSnapshot).not.toHaveBeenCalled()
-    expect(cache.accepted?.revision).toBe(1)
-    expect(
-      result.tripOverrideRepository.getSnapshot().dayOverrides[
-        'day-2030-05-11'
-      ]?.note,
-    ).toBe('Local unsynchronized')
-  })
-
-  it('survives IndexedDB reads and writes being unavailable', async () => {
-    const cache = new FakeCache()
-    cache.getAcceptedSnapshot.mockRejectedValueOnce(
-      new Error('IndexedDB unavailable'),
-    )
-    cache.saveAcceptedSnapshot.mockRejectedValueOnce(
-      new Error('IndexedDB unavailable'),
-    )
-    const result = await bootstrapTripSync({
-      tripData: tripFixture,
-      cache,
-      apiClient: apiClient(snapshot(1, 'Remote')),
-      localStorage: window.localStorage,
-    })
-
-    await result.refreshFromRemote()
-
-    expect(
-      result.tripOverrideRepository.getSnapshot().dayOverrides[
-        'day-2030-05-11'
-      ]?.note,
-    ).toBe('Remote')
-  })
-
-  it('does not read, write, delete, or upload a pending candidate', async () => {
-    const cache = new FakeCache()
-    const result = await bootstrapTripSync({
-      tripData: tripFixture,
-      cache,
-      apiClient: apiClient(snapshot(1, 'Remote')),
-      localStorage: window.localStorage,
-    })
-
-    await result.refreshFromRemote()
-
-    expect(cache.getPendingSnapshot).not.toHaveBeenCalled()
-    expect(cache.savePendingSnapshot).not.toHaveBeenCalled()
-    expect(cache.deletePendingSnapshot).not.toHaveBeenCalled()
-  })
-
-  it('uses revision zero for the first shared snapshot after remote not found', async () => {
-    const cache = new FakeCache()
-    const client = apiClient(null)
-    const accepted = snapshot(1, 'First shared')
-    vi.mocked(client.putTripSnapshot).mockResolvedValue(accepted)
-    const result = await bootstrapTripSync({
-      tripData: tripFixture,
-      cache,
-      apiClient: client,
-      localStorage: window.localStorage,
-    })
-
-    await result.refreshFromRemote()
-    await expect(
-      result.tripOverrideRepository.saveDayEdits(
-        'day-2030-05-11',
-        { note: 'First shared' },
-        {},
-      ),
-    ).resolves.toBe('shared')
-    expect(client.putTripSnapshot).toHaveBeenCalledWith(
-      tripFixture.trip.id,
-      0,
-      expect.any(Object),
-    )
-  })
-
-  it('uses the runtime API client for one GET and one PUT when the base revision is unknown', async () => {
-    const methods: string[] = []
-    const fetchRequest = vi.fn(async function (
-      this: typeof globalThis,
-      _input: RequestInfo | URL,
-      init?: RequestInit,
-    ): Promise<Response> {
-      expect(this).toBe(globalThis)
-      const method = init?.method ?? 'GET'
-      methods.push(method)
-      if (method === 'GET') {
-        return Response.json(
-          { code: 'TRIP_NOT_FOUND' },
-          { status: 404 },
-        )
-      }
-      const request = JSON.parse(String(init?.body)) as {
-        baseRevision: number
-        operationalOverrides: TripOverrideBundle
-      }
-      return Response.json({
-        tripId: oceaniaMarina2026TripData.trip.id,
-        schemaVersion: 1,
-        revision: request.baseRevision + 1,
-        updatedAt: '2026-07-30T12:00:00Z',
-        updatedBy: 'yoav',
-        operationalOverrides: request.operationalOverrides,
-      })
-    })
-    const result = await bootstrapTripSync({
-      tripData: oceaniaMarina2026TripData,
-      cache: new FakeCache(),
-      apiClient: new HttpTripSnapshotApiClient(
-        oceaniaMarina2026TripData,
-        fetchRequest,
-      ),
-      localStorage: window.localStorage,
-    })
-    const editableDay = oceaniaMarina2026TripData.days.find(
-      ({ portCallId }) => Boolean(portCallId),
-    )
-    if (!editableDay) {
-      throw new Error('Production fixture needs an editable trip day')
-    }
-
-    await expect(
-      result.tripOverrideRepository.saveDayEdits(
-        editableDay.id,
-        { note: 'First shared operational update' },
-        {},
-      ),
-    ).resolves.toBe('shared')
-
-    expect(methods).toEqual(['GET', 'PUT'])
-    expect(fetchRequest).toHaveBeenCalledTimes(2)
-  })
-
-  it('uses the runtime API client for one PUT without GET when the base revision is known', async () => {
-    const cache = new FakeCache()
-    cache.accepted = {
-      tripId: oceaniaMarina2026TripData.trip.id,
-      schemaVersion: 1,
-      revision: 3,
-      updatedAt: '2026-07-30T11:00:00Z',
-      updatedBy: 'yoav',
-      operationalOverrides: emptyTripOverrideBundle(
-        oceaniaMarina2026TripData.trip.id,
-      ),
-    }
-    const methods: string[] = []
-    const fetchRequest = vi.fn(async function (
-      this: typeof globalThis,
-      _input: RequestInfo | URL,
-      init?: RequestInit,
-    ): Promise<Response> {
-      expect(this).toBe(globalThis)
-      const method = init?.method ?? 'GET'
-      methods.push(method)
-      const request = JSON.parse(String(init?.body)) as {
-        baseRevision: number
-        operationalOverrides: TripOverrideBundle
-      }
-      return Response.json({
-        tripId: oceaniaMarina2026TripData.trip.id,
-        schemaVersion: 1,
-        revision: request.baseRevision + 1,
-        updatedAt: '2026-07-30T12:00:00Z',
-        updatedBy: 'yoav',
-        operationalOverrides: request.operationalOverrides,
-      })
-    })
-    const result = await bootstrapTripSync({
-      tripData: oceaniaMarina2026TripData,
-      cache,
-      apiClient: new HttpTripSnapshotApiClient(
-        oceaniaMarina2026TripData,
-        fetchRequest,
-      ),
-      localStorage: window.localStorage,
-    })
-    const editableDay = oceaniaMarina2026TripData.days.find(
-      ({ portCallId }) => Boolean(portCallId),
-    )
-    if (!editableDay) {
-      throw new Error('Production fixture needs an editable trip day')
-    }
-
-    await expect(
-      result.tripOverrideRepository.saveDayEdits(
-        editableDay.id,
-        { note: 'Known-base operational update' },
-        {},
-      ),
-    ).resolves.toBe('shared')
-
-    expect(methods).toEqual(['PUT'])
-    expect(fetchRequest).toHaveBeenCalledOnce()
-  })
-
-  it('retrieves a shared revision in a separate read-only storage context', async () => {
-    window.localStorage.setItem(
-      localTripOverrideStorageKey(tripFixture.trip.id),
-      JSON.stringify(overrides('Editor device local state')),
-    )
-    const shared = snapshot(3, 'Shared across devices')
-    const reader = await bootstrapTripSync({
-      tripData: tripFixture,
-      cache: new FakeCache(),
-      apiClient: apiClient(shared),
-      localStorage: window.sessionStorage,
-    })
-
-    await reader.refreshFromRemote()
-
-    expect(
-      reader.tripOverrideRepository.getSnapshot().dayOverrides[
-        'day-2030-05-11'
-      ]?.note,
-    ).toBe('Shared across devices')
-    expect(
-      readLocalStorageNote(window.localStorage),
-    ).toBe('Editor device local state')
   })
 
   it.each(['traveler-yoav', 'traveler-isabel'] as const)(
-    'preserves the selected %s identity while accepting shared state',
+    'preserves remembered identity %s during startup sync',
     async (travelerId) => {
-      const tripId = oceaniaMarina2026TripData.trip.id
-      const validTravelerIds = new Set(
-        oceaniaMarina2026TripData.travelers.map(({ id }) => id),
-      )
-      const tripStateRepository = new LocalTripStateRepository(
+      const tripData = oceaniaMarina2026TripData
+      const stateRepository = new LocalTripStateRepository(
         window.localStorage,
-        tripId,
-        validTravelerIds,
+        tripData.trip.id,
+        new Set(tripData.travelers.map(({ id }) => id)),
       )
-      tripStateRepository.setTravelerId(travelerId)
-      const cache = new FakeCache()
-      cache.accepted = {
-        tripId,
-        schemaVersion: 1,
-        revision: 2,
-        updatedAt: '2026-07-30T12:00:00Z',
-        updatedBy: 'yoav',
-        operationalOverrides: emptyTripOverrideBundle(tripId),
+      stateRepository.setTravelerId(travelerId)
+      const apiClient: TripSnapshotApiClient = {
+        getTripSnapshot: vi.fn(async () => null),
+        putTripSnapshot: vi.fn(async () => {
+          throw new Error('No write expected')
+        }),
       }
 
       await bootstrapTripSync({
-        tripData: oceaniaMarina2026TripData,
-        cache,
-        apiClient: apiClient(null),
+        apiClient,
+        cache: new FakeCache(),
+        getTravelerId: () => stateRepository.getTravelerId(),
         localStorage: window.localStorage,
+        tripData,
       })
 
-      const restartedTripStateRepository =
-        new LocalTripStateRepository(
-          window.localStorage,
-          tripId,
-          validTravelerIds,
-        )
-      expect(restartedTripStateRepository.getTravelerId()).toBe(
-        travelerId,
-      )
+      expect(stateRepository.getTravelerId()).toBe(travelerId)
     },
   )
 })
-
-function readLocalStorageNote(storage: Storage): string | undefined {
-  const raw = storage.getItem(
-    localTripOverrideStorageKey(tripFixture.trip.id),
-  )
-  if (!raw) {
-    return undefined
-  }
-  const parsed = JSON.parse(raw) as {
-    dayOverrides?: Record<string, { note?: string }>
-  }
-  return parsed.dayOverrides?.['day-2030-05-11']?.note
-}

@@ -12,11 +12,14 @@ import type { AppBuildInfo } from '../../app/buildInfo'
 import type { PwaUpdateManager } from '../../pwa/PwaUpdateManager'
 import { AppInformationCard } from './AppInformationCard'
 import { PwaStatusCard } from './PwaStatusCard'
+import type { TripOverrideRepository } from '../../storage/TripOverrideRepository'
+import { TripDataSyncStatus } from './TripDataSyncStatus'
 
 interface MoreScreenProps {
   appBuildInfo: AppBuildInfo
   pwaUpdateManager: PwaUpdateManager
   tripDataVersion: string
+  tripOverrideRepository: TripOverrideRepository
   travelers: Traveler[]
   tripStateRepository: TripStateRepository
 }
@@ -25,6 +28,7 @@ export function MoreScreen({
   appBuildInfo,
   pwaUpdateManager,
   tripDataVersion,
+  tripOverrideRepository,
   travelers,
   tripStateRepository,
 }: MoreScreenProps) {
@@ -35,6 +39,7 @@ export function MoreScreen({
   const chooseTraveler = (nextTravelerId: TravelerId) => {
     tripStateRepository.setTravelerId(nextTravelerId)
     setTravelerId(nextTravelerId)
+    tripOverrideRepository.travelerChanged?.()
   }
 
   return (
@@ -60,6 +65,9 @@ export function MoreScreen({
         />
       </SurfaceCard>
 
+      {travelerId === 'traveler-isabel' ? (
+        <TripDataSyncStatus repository={tripOverrideRepository} />
+      ) : null}
       <PwaStatusCard manager={pwaUpdateManager} />
       <AppInformationCard
         buildInfo={appBuildInfo}

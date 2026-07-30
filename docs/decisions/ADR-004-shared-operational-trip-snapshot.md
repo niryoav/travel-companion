@@ -3,6 +3,15 @@
 Status: Accepted
 Date: 2026-07-29
 
+Amended: 2026-07-30
+
+The shared snapshot transport remains accepted, but its client behavior is now
+role-based. Yoav is the sole editor and his local override bundle is the
+working master until confirmed by the server. Isabel is a read-only follower
+whose cache is replaced automatically from the shared snapshot. Revision
+conflicts are an internal write safeguard and are retried automatically with
+Yoav's complete current payload; they are no longer a user-facing state.
+
 ## Context
 
 ADR-003 introduced device-local operational overrides so onboard port, tender,
@@ -23,8 +32,8 @@ receive direct Blob access. The snapshot contains envelope metadata and the
 existing versioned `TripOverrideBundle`. The bundled `TripData` remains the
 trusted baseline and first-launch or failure fallback.
 
-Each browser caches one accepted snapshot and will later retain at most one
-pending offline candidate in IndexedDB. Existing small device preferences, including
+Each browser may cache one accepted snapshot in IndexedDB. The legacy pending
+store is not used as a queue. Existing small device preferences, including
 selected traveler identity and route restoration, remain in `localStorage`.
 Destination and excursion guides, daily messages, PDFs, images, and canonical
 trip data remain bundled initially. Only operational overrides synchronize.
@@ -56,23 +65,20 @@ Production uses
 deployment uses the explicitly isolated
 `preview/trips/oceania-marina-2026/operational-snapshot.json` pathname.
 
-The implemented read-only increment loads the accepted cache before rendering,
-then requests a newer snapshot through an unauthenticated GET without delaying
-rendering for the network. Only a fully validated newer revision replaces the
-accepted cache. If a non-empty legacy local override bundle exists, it is
-conservatively treated as unsynchronized work: remote data may be cached but
-does not replace the effective local state. This temporary precedence prevents
-read-only refresh from losing edits until pending writes exist.
+Isabel loads the accepted cache before rendering, then requests the shared
+snapshot without delaying rendering. A valid current shared snapshot replaces
+her local cached copy automatically. Yoav instead loads his localStorage
+override bundle as the canonical working copy and never replaces it from a
+remote read.
 
-Local override storage carries `baseRevision`, `lastModified`, and a `synced`,
-`unsynced`, or `conflict` state. Legacy bundles are retained conservatively
-with unknown base revision and unsynced state. A successful immediate write
-updates the accepted cache and metadata; failures retain local edits and expose
-one manual retry. A missing shared snapshot establishes base revision zero.
-Every operational Save first persists locally, then makes one bounded sharing
-attempt. A known base goes directly to PUT. An unknown base performs at most
-one GET and one PUT, using the observed shared revision or revision zero while
-preserving the complete local operational override set.
+Local override storage carries `baseRevision`, `lastModified`,
+`lastSuccessfulSyncAt`, and a `synced` or `unsynced` state. Legacy `conflict`
+state migrates to `unsynced`. Every operational Save persists locally first and
+starts an automatic whole-payload upload. Network failures remain `unsynced`
+and retry on normal lifecycle triggers and a modest in-memory timer. A
+revision conflict causes one bounded GET and automatic PUT retry against the
+observed revision. No manual trip-sync control or durable background queue is
+used.
 
 ## Alternatives considered
 
@@ -96,7 +102,8 @@ preserving the complete local operational override set.
 - Offline startup and editing can remain available through bundled fallback,
   an accepted IndexedDB cache, and one pending candidate.
 - Revision comparison plus an ETag precondition prevents silent lost updates.
-- Conflicting work requires explicit recovery and is not merged automatically.
+- Revision conflicts are retried automatically with Yoav's complete local
+  master; no merge is attempted.
 - The Vercel API and environment configuration become part of the operational
   deployment boundary.
 - The UI distinction between Yoav and Isabel is intentionally not a security

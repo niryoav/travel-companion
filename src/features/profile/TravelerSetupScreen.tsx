@@ -5,11 +5,13 @@ import type { TripStateRepository } from '../../storage/TripStateRepository'
 import { TravelerChoice } from './TravelerChoice'
 
 interface TravelerSetupScreenProps {
+  onTravelerChanged?: () => void
   travelers: Traveler[]
   tripStateRepository: TripStateRepository
 }
 
 export function TravelerSetupScreen({
+  onTravelerChanged,
   travelers,
   tripStateRepository,
 }: TravelerSetupScreenProps) {
@@ -22,6 +24,7 @@ export function TravelerSetupScreen({
 
   const chooseTraveler = (travelerId: TravelerId) => {
     tripStateRepository.setTravelerId(travelerId)
+    onTravelerChanged?.()
     navigate('/home', { replace: true })
   }
 

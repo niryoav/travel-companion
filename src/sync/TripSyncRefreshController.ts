@@ -1,22 +1,11 @@
 const DEFAULT_REFRESH_THROTTLE_MS = 5_000
 
 interface TripSyncRefreshControllerOptions {
-  canRefresh(): boolean
   documentTarget?: Document
   now?: () => number
-  refreshFromRemote(): Promise<void>
+  synchronize(): Promise<void>
   throttleMs?: number
   windowTarget?: Window
-}
-
-export function hasActiveTripEditSession(
-  documentTarget: Document = document,
-): boolean {
-  return Boolean(
-    documentTarget.querySelector(
-      '[role="dialog"][aria-modal="true"]',
-    ),
-  )
 }
 
 export class TripSyncRefreshController {
@@ -48,6 +37,7 @@ export class TripSyncRefreshController {
       'visibilitychange',
       this.handleVisibilityChange,
     )
+    this.windowTarget.addEventListener('online', this.handleOnline)
   }
 
   dispose(): void {
@@ -60,12 +50,12 @@ export class TripSyncRefreshController {
       'visibilitychange',
       this.handleVisibilityChange,
     )
+    this.windowTarget.removeEventListener('online', this.handleOnline)
   }
 
   requestRefresh(): Promise<void> {
     if (
-      this.documentTarget.visibilityState === 'hidden' ||
-      !this.options.canRefresh()
+      this.documentTarget.visibilityState === 'hidden'
     ) {
       return Promise.resolve()
     }
@@ -81,7 +71,7 @@ export class TripSyncRefreshController {
     }
 
     this.lastRefreshStartedAt = startedAt
-    this.inFlight = this.options.refreshFromRemote().finally(() => {
+    this.inFlight = this.options.synchronize().finally(() => {
       this.inFlight = null
     })
     return this.inFlight
@@ -95,5 +85,10 @@ export class TripSyncRefreshController {
     if (this.documentTarget.visibilityState === 'visible') {
       void this.requestRefresh()
     }
+  }
+
+  private readonly handleOnline = () => {
+    this.lastRefreshStartedAt = Number.NEGATIVE_INFINITY
+    void this.requestRefresh()
   }
 }

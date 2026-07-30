@@ -45,7 +45,7 @@ export function PwaStatusCard({ manager }: PwaStatusCardProps) {
 
   return (
     <SurfaceCard className="app-status-card">
-      <p className="card-eyebrow">App status</p>
+      <p className="card-eyebrow">App update</p>
       <p>
         Updates are managed automatically. No action is required unless an
         update is offered here.
@@ -68,7 +68,7 @@ export function PwaStatusCard({ manager }: PwaStatusCardProps) {
         status.updateStatus !== 'CHECKING' &&
         status.updateStatus !== 'APPLYING' ? (
         <button type="button" onClick={() => void manager.checkForUpdate()}>
-          Check for update
+          Check for app update
         </button>
       ) : null}
     </SurfaceCard>

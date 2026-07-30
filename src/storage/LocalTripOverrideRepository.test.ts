@@ -197,6 +197,7 @@ describe('LocalTripOverrideRepository', () => {
     expect(repository.getMetadata()).toEqual({
       baseRevision: 6,
       lastModified: '2030-05-10T14:00:00Z',
+      lastSuccessfulSyncAt: '2030-05-10T14:00:00Z',
       syncState: 'synced',
     })
   })

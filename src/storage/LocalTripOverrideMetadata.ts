@@ -4,10 +4,10 @@ import type { TripId } from '../domain/trip/tripTypes'
 export type LocalTripOverrideSyncState =
   | 'synced'
   | 'unsynced'
-  | 'conflict'
 
 export interface LocalTripOverrideMetadata {
   baseRevision: number | null
+  lastSuccessfulSyncAt?: string
   lastModified: string
   syncState: LocalTripOverrideSyncState
 }
