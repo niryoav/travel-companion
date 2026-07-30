@@ -231,12 +231,77 @@ The repository is private, but it must still be treated as if its contents could
 
 ---
 
+## Engineering decision guardrails
+
+These rules apply equally to coding agents and human contributors. The
+canonical detailed rules, templates, and reporting requirements live in
+[Engineering Decision Guardrails](docs/architecture.md#engineering-decision-guardrails).
+
+Use this decision sequence:
+
+1. Real workflow first.
+2. Smallest architecture second.
+3. Production evidence third.
+4. Implementation last.
+
+Before proposing architecture, establish who edits and who is read-only, the
+devices and contexts actually used, data size and frequency, required automatic
+behaviour, acceptable recovery, and explicit out-of-scope scenarios. Keep the
+real product workflow distinct from test simulations and hypothetical
+enterprise-scale use. Testing in multiple browsers is not evidence of a
+multi-editor requirement.
+
+Choose the smallest design that meets confirmed requirements. The default
+complexity budget for this private two-user application is low:
+
+> Design for two trusted users. If restarting the app or repeating one simple
+> action is acceptable, prefer that over extra complexity.
+
+Do not add or preserve concurrency, persistence, authentication, retry, or
+infrastructure mechanisms for hypothetical needs. A substantial proposal must
+first show the concrete requirement, why the simpler design fails, the
+complexity introduced, and how it will be tested in the real environment.
+Prefer removing unnecessary mechanisms over layering on compatibility paths.
+
+For deployed failures, follow this order:
+
+1. Confirm the deployed version.
+2. Reproduce the smallest real workflow.
+3. Inspect production logs, status codes, and request sequence.
+4. Identify the exact failing boundary.
+5. Review the relevant code.
+6. Check official primary-source documentation.
+7. Propose the smallest fix supported by the evidence.
+
+If production evidence is unavailable, say so and ask the product owner to
+collect it before implementation. Never imply that unavailable evidence was
+reviewed. Separate confirmed causes, likely hypotheses, and real code weaknesses
+that have not been proven to cause the production symptom. When production
+reality conflicts with tests or architecture assumptions, production evidence
+wins and the design must be reconsidered.
+
+After two consecutive production fixes fail or introduce new failures at the
+same read/write, sync, or storage boundary, stop symptom-level patching. Treat
+different errors at that shared boundary as the same recurring subsystem. Do
+not propose a third narrow fix until an independent end-to-end architecture
+review has restated the real workflow, checked official documentation,
+challenged assumptions, and identified mechanisms that can be removed. A
+passing automated test suite does not override this stop rule.
+
+Use the canonical architecture section for the proportional complexity budget,
+early real-environment acceptance tests, substantial-change review roles, and
+required implementation report.
+
+---
+
 ## Agent workflow
 
 Before changing code:
 
 1. Read this file.
-2. Read the relevant product and architecture documentation.
+2. Read the relevant product documentation and the canonical
+   [architecture](docs/architecture.md), including its engineering decision
+   guardrails.
 3. Inspect the current implementation.
 4. State any assumptions.
 5. Prefer the smallest change that solves the requested problem.
