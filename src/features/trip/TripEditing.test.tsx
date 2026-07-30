@@ -27,6 +27,8 @@ import type { TripOverrideRepository } from '../../storage/TripOverrideRepositor
 import type { TripStateRepository } from '../../storage/TripStateRepository'
 import { tripContentFixture } from '../../test/fixtures/tripContentFixture'
 import { tripFixture } from '../../test/fixtures/tripFixture'
+import { oceaniaMarina2026TripContent } from '../../content/oceania-marina-2026/tripContent'
+import { oceaniaMarina2026TripData } from '../../trips/oceania-marina-2026/tripData'
 import { TripScreen } from './TripScreen'
 
 function editableFixture(): TripData {
@@ -58,10 +60,14 @@ function TripEditingHarness({
   baseline,
   repository,
   travelerId = 'traveler-yoav',
+  now = new Date('2030-05-11T12:00:00Z'),
+  tripContent = tripContentFixture,
 }: {
   baseline: TripData
   repository: TripOverrideRepository
   travelerId?: string
+  now?: Date
+  tripContent?: typeof tripContentFixture
 }) {
   const overrides = useSyncExternalStore(
     repository.subscribe,
@@ -77,8 +83,8 @@ function TripEditingHarness({
     <MemoryRouter initialEntries={['/trip']}>
       <TripScreen
         baselineTripData={effectiveBaseline}
-        now={new Date('2030-05-11T12:00:00Z')}
-        tripContent={tripContentFixture}
+        now={now}
+        tripContent={tripContent}
         tripData={effectiveTripData}
         tripOverrideRepository={repository}
         tripOverrides={overrides}
@@ -107,6 +113,30 @@ function renderEditor(baseline = editableFixture()) {
   return { baseline, repository, todayCard }
 }
 
+function renderProductionEditor(now: Date) {
+  const repository = new LocalTripOverrideRepository(
+    window.localStorage,
+    oceaniaMarina2026TripData,
+  )
+  render(
+    <TripEditingHarness
+      baseline={oceaniaMarina2026TripData}
+      now={now}
+      repository={repository}
+      tripContent={oceaniaMarina2026TripContent}
+    />,
+  )
+  const todayCard = screen.getByText('Today').closest('details')
+  if (!todayCard) {
+    throw new Error('Production day card missing')
+  }
+  fireEvent.click(within(todayCard).getByRole('button', { name: 'Edit' }))
+}
+
+function renderEmbarkationEditor() {
+  renderProductionEditor(new Date('2026-08-23T10:00:00Z'))
+}
+
 describe('Trip operational editing', () => {
   beforeEach(() => {
     window.localStorage.clear()
@@ -116,6 +146,51 @@ describe('Trip operational editing', () => {
   it('shows operational editing controls for Yoav', () => {
     renderEditor()
     expect(screen.getByRole('dialog')).toBeInTheDocument()
+  })
+
+  it('keeps the estimated embarkation taxi editable only in Trip', () => {
+    renderEmbarkationEditor()
+
+    const taxiFields = screen
+      .getByRole('group', { name: 'Hotel Viking to Oceania Marina' })
+    expect(within(taxiFields).getByText('Estimated timing')).toBeInTheDocument()
+    expect(
+      within(taxiFields).getByLabelText('Start / pickup time'),
+    ).toHaveValue('12:00')
+    expect(
+      within(taxiFields).getByLabelText('End / arrival time'),
+    ).toHaveValue('12:30')
+  })
+
+  it('keeps estimated All Aboard and tender milestones editable only in Trip', () => {
+    renderProductionEditor(new Date('2026-08-25T06:00:00Z'))
+
+    expect(document.getElementById('trip-edit-all-aboard-time'))
+      .toHaveValue('15:30')
+    expect(document.getElementById('trip-edit-all-aboard-status'))
+      .toHaveValue('ESTIMATED')
+    expect(
+      (
+        screen.getByRole('option', {
+          name: 'Planning estimate · TBC',
+        }) as HTMLOptionElement
+      ).selected,
+    ).toBe(true)
+    expect(
+      document.getElementById(
+        'trip-edit-event-husavik-outbound-tender-report-startTime',
+      ),
+    ).toHaveValue('')
+  })
+
+  it('keeps the estimated Heathrow arrival editable only in Trip', () => {
+    renderProductionEditor(new Date('2026-09-04T05:00:00Z'))
+
+    expect(
+      document.getElementById(
+        'trip-edit-event-heathrow-arrival-estimate-startTime',
+      ),
+    ).toHaveValue('09:15')
   })
 
   it('keeps Isabel read-only in the normal UI', () => {
@@ -721,7 +796,9 @@ describe('Trip operational editing', () => {
     )
 
     expect(
-      screen.getByText('Original: 17:30 · Estimated'),
+      screen.getByText(
+        'Original: 17:30 · Planning estimate · TBC',
+      ),
     ).toBeInTheDocument()
     expect(
       screen.getByText('Updated: 17:10 · Confirmed'),
@@ -735,7 +812,8 @@ describe('Trip operational editing', () => {
       screen.getByText(
         (_, element) =>
           element?.tagName === 'STRONG' &&
-          element.textContent === '17:30 · Estimated',
+          element.textContent ===
+            '17:30 · Planning estimate · TBC',
       ),
     ).toBeInTheDocument()
   })

@@ -3,6 +3,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
 
@@ -18,6 +19,9 @@ import type {
 import { LocalTripOverrideRepository } from '../storage/LocalTripOverrideRepository'
 import { tripFixture } from '../test/fixtures/tripFixture'
 import { tripContentFixture } from '../test/fixtures/tripContentFixture'
+import { oceaniaMarina2026TripContent } from '../content/oceania-marina-2026/tripContent'
+import { oceaniaMarina2026DailyLoveMessages } from '../content/oceania-marina-2026/dailyLoveMessages'
+import { oceaniaMarina2026TripData } from '../trips/oceania-marina-2026/tripData'
 import { App } from './App'
 
 class MemoryTripStateRepository implements TripStateRepository {
@@ -70,6 +74,13 @@ const tripContentRepository = new BundledTripContentRepository(
   tripContentFixture,
   tripFixture,
 )
+const simulationTripRepository = new BundledTripRepository(
+  oceaniaMarina2026TripData,
+)
+const simulationTripContentRepository = new BundledTripContentRepository(
+  oceaniaMarina2026TripContent,
+  oceaniaMarina2026TripData,
+)
 const dailyLoveMessageFixture: DailyLoveMessageSchedule = {
   startsOn: '2030-05-01',
   endsOn: '2030-05-14',
@@ -108,6 +119,25 @@ function renderApp(
     />,
   )
   return tripStateRepository
+}
+
+function renderSimulationApp(
+  tripStateRepository: MemoryTripStateRepository,
+) {
+  const tripOverrideRepository = new LocalTripOverrideRepository(
+    window.localStorage,
+    oceaniaMarina2026TripData,
+  )
+  render(
+    <App
+      loveMessageSchedule={oceaniaMarina2026DailyLoveMessages}
+      now={new Date('2026-07-30T12:00:00Z')}
+      tripRepository={simulationTripRepository}
+      tripContentRepository={simulationTripContentRepository}
+      tripOverrideRepository={tripOverrideRepository}
+      tripStateRepository={tripStateRepository}
+    />,
+  )
 }
 
 describe('App', () => {
@@ -246,6 +276,101 @@ describe('App', () => {
       }),
     ).toBeInTheDocument()
     expect(window.location.pathname).toBe('/today')
+  })
+
+  it('shares one simulation between concise Home and complete Today', async () => {
+    const repository = new MemoryTripStateRepository()
+    repository.travelerId = 'traveler-yoav'
+    window.history.replaceState(
+      {},
+      '',
+      '/home?simulation=tender-port-day',
+    )
+    renderSimulationApp(repository)
+
+    expect(
+      await screen.findByRole('heading', { level: 2, name: 'Húsavík' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { level: 2, name: 'Timeline' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Edit' }),
+    ).not.toBeInTheDocument()
+
+    const navigation = screen.getByRole('navigation', {
+      name: 'Primary navigation',
+    })
+    expect(within(navigation).getAllByRole('link')).toHaveLength(5)
+    expect(
+      within(navigation).queryByRole('link', { name: 'Ship' }),
+    ).not.toBeInTheDocument()
+
+    fireEvent.click(within(navigation).getByRole('link', { name: 'Today' }))
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Húsavík' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Timeline' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Edit' }),
+    ).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Scenario')).toHaveValue('tender-port-day')
+    expect(window.location.search).toBe('?simulation=tender-port-day')
+
+    fireEvent.click(screen.getByRole('link', { name: 'Home' }))
+
+    expect(
+      await screen.findByRole('heading', { level: 2, name: 'Húsavík' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { level: 2, name: 'Timeline' }),
+    ).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('link', { name: 'Trip' }))
+
+    expect(window.location.pathname).toBe('/trip')
+    expect(window.location.search).toBe('?simulation=tender-port-day')
+    expect(
+      await screen.findAllByRole('button', { name: 'Edit' }),
+    ).not.toHaveLength(0)
+  })
+
+  it('restores normal Home and Today when simulation returns to live', async () => {
+    const repository = new MemoryTripStateRepository()
+    repository.travelerId = 'traveler-yoav'
+    window.history.replaceState({}, '', '/home?simulation=sea-day')
+    renderSimulationApp(repository)
+
+    expect(
+      await screen.findByRole('heading', { level: 2, name: 'At sea' }),
+    ).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Scenario'), {
+      target: { value: 'live' },
+    })
+
+    expect(
+      await screen.findByRole('heading', {
+        level: 2,
+        name: 'Our journey begins soon',
+      }),
+    ).toBeInTheDocument()
+    expect(window.location.search).toBe('')
+    expect(screen.getByLabelText('Scenario')).toHaveValue('live')
+
+    fireEvent.click(screen.getByRole('link', { name: 'Today' }))
+
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'Today starts when the journey begins',
+      }),
+    ).toBeInTheDocument()
+    expect(screen.getByLabelText('Scenario')).toHaveValue('live')
+    expect(window.location.search).toBe('')
   })
 
   it('opens the full Trip experience from primary navigation', async () => {

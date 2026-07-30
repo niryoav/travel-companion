@@ -1,12 +1,14 @@
 import { Outlet, useLocation } from 'react-router'
 
 import { BottomNavigation } from '../components/BottomNavigation'
+import { simulationScenarioFromSearch } from '../features/simulation/simulationScenarios'
 import { RouteErrorBoundary } from './RouteErrorBoundary'
 import { primaryNavigation } from './navigation/primaryNavigation'
 
 export function AppShell() {
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const isHome = pathname === '/home'
+  const simulationScenario = simulationScenarioFromSearch(search)
 
   return (
     <div className={`app-shell${isHome ? ' app-shell-home' : ''}`}>
@@ -26,7 +28,14 @@ export function AppShell() {
         </RouteErrorBoundary>
       </div>
 
-      <BottomNavigation items={primaryNavigation} />
+      <BottomNavigation
+        items={primaryNavigation}
+        preservedSearch={
+          simulationScenario
+            ? `?simulation=${simulationScenario}`
+            : undefined
+        }
+      />
     </div>
   )
 }

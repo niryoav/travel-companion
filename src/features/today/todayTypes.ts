@@ -43,6 +43,7 @@ export interface TodayEventViewModel {
   meetingPointLabel?: string
   timeZoneNote?: string
   operationalStatusLabel?: string
+  operationalNotes?: string[]
   localOperationalNote?: string
   isCancelled?: boolean
   leaveBy?: TodayLeaveByViewModel
@@ -139,6 +140,24 @@ export interface TodayPriorityViewModel {
   documentAction?: DocumentActionViewModel
 }
 
+export interface TodayWeatherViewModel {
+  location: string
+  condition: string
+  temperature: string
+  feelsLike?: string
+  wind?: string
+  rainChance?: string
+  seaCondition?: string
+  implication: string
+}
+
+export interface TodayPreparationViewModel {
+  breakfastActions?: string[]
+  take?: string[]
+  dress?: string[]
+  provided?: string[]
+}
+
 export interface TomorrowPreparationViewModel {
   dayId: string
   title: string
@@ -167,6 +186,9 @@ export interface TodayViewModel {
   nextEvent?: TodayEventViewModel
   timeline: TodayEventViewModel[]
   priorities?: TodayPriorityViewModel[]
+  weather?: TodayWeatherViewModel
+  additionalWeather?: TodayWeatherViewModel[]
+  preparation?: TodayPreparationViewModel
   returnGuidance?: TodayReturnGuidanceViewModel
   tomorrow?: TomorrowPreparationViewModel
   emptyMessage?: string

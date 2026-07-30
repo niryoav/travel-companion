@@ -410,9 +410,11 @@ function portViewModel(
       includeAllAboard ? portCall.allAboardAt : undefined,
     allAboardStatusLabel:
       includeAllAboard && portCall.allAboardAt
-        ? entryStatusLabel(
-            portCall.allAboardVerification ?? 'CONFIRMED',
-          )
+        ? portCall.allAboardVerification === 'ESTIMATED'
+          ? 'Planning estimate · TBC'
+          : entryStatusLabel(
+              portCall.allAboardVerification ?? 'CONFIRMED',
+            )
         : undefined,
     accessStatus,
     accessLabel: portAccessLabel(accessStatus),
@@ -581,9 +583,11 @@ function dayViewModel(
       showAllAboardInSummary ? portCall?.allAboardAt : undefined,
     summaryAllAboardStatusLabel:
       showAllAboardInSummary && portCall?.allAboardAt
-        ? entryStatusLabel(
-            portCall.allAboardVerification ?? 'CONFIRMED',
-          )
+        ? portCall.allAboardVerification === 'ESTIMATED'
+          ? 'Planning estimate · TBC'
+          : entryStatusLabel(
+              portCall.allAboardVerification ?? 'CONFIRMED',
+            )
         : undefined,
     summaryPortAccessStatus: port?.accessStatus,
     summaryPortAccessLabel: port?.accessLabel,
@@ -598,7 +602,12 @@ function dayViewModel(
     isEditable:
       Boolean(portCall) &&
       (day.kind === 'PORT_DAY' ||
-        domainEvents.some(({ kind }) => kind === 'EXCURSION')),
+        domainEvents.some(
+          ({ kind, scheduleStatus, timingVerification }) =>
+            kind === 'EXCURSION' ||
+            scheduleStatus === 'TO_BE_CONFIRMED' ||
+            timingVerification === 'ESTIMATED',
+        )),
     operationalUpdateLabel:
       hasDayOperationalChanges(overrides, day.id, day.eventIds) &&
       latestUpdate

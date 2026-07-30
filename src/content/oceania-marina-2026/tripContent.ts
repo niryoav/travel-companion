@@ -834,21 +834,12 @@ export const oceaniaMarina2026TripContent: TripContentBundle = {
         'Protect phones and cameras from spray',
         'Consider motion-sickness precautions when appropriate',
       ],
-      seasonalNote:
-        'The operator normally includes Puffin Island during the nesting period, approximately 15 April to 15 August. This excursion takes place on 25 August, so a Puffin Island visit and puffin sightings must not be assumed unless Gentle Giants confirms them closer to departure.',
       sourceReferences: [
         {
           id: 'source-gentle-giants-gg2',
           name: 'Gentle Giants Whale Watching',
           type: 'EXCURSION_OPERATOR',
           url: 'https://www.gentlegiants.is/tours-and-bookings/gg2-big-whale-safari-and-puffins/',
-          reviewedAt: '2026-07-27',
-        },
-        {
-          id: 'source-gentle-giants-puffins',
-          name: 'Gentle Giants Whale Watching',
-          type: 'EXCURSION_OPERATOR',
-          url: 'https://www.gentlegiants.is/wildlife/puffins/',
           reviewedAt: '2026-07-27',
         },
       ],

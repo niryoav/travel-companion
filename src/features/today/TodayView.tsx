@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 import type { TodayViewModel } from './todayTypes'
 import { CriticalInfoBanner } from './components/CriticalInfoBanner'
 import { DayTimeline } from './components/DayTimeline'
@@ -9,12 +11,18 @@ import { PrepareForTomorrow } from './components/PrepareForTomorrow'
 import { ReturnGuidanceCard } from './components/ReturnGuidanceCard'
 import { TodayEmptyState } from './components/TodayEmptyState'
 import { TodayHeader } from './components/TodayHeader'
+import { TodayPreparationCard } from './components/TodayPreparationCard'
+import { TodayWeatherCard } from './components/TodayWeatherCard'
 
 interface TodayViewProps {
   viewModel: TodayViewModel
+  previewControls?: ReactNode
 }
 
-export function TodayView({ viewModel }: TodayViewProps) {
+export function TodayView({
+  viewModel,
+  previewControls,
+}: TodayViewProps) {
   const primaryCriticalInfo =
     viewModel.criticalInfo?.prominence === 'PRIMARY'
       ? viewModel.criticalInfo
@@ -26,6 +34,8 @@ export function TodayView({ viewModel }: TodayViewProps) {
 
   return (
     <main className="today-screen" id="main-content">
+      {previewControls}
+
       <TodayHeader header={viewModel.header} />
 
       {viewModel.operationalStatus ? (
@@ -55,6 +65,21 @@ export function TodayView({ viewModel }: TodayViewProps) {
 
       {viewModel.priorities ? (
         <OperationalPriorities priorities={viewModel.priorities} />
+      ) : null}
+
+      {viewModel.weather ? (
+        <TodayWeatherCard weather={viewModel.weather} />
+      ) : null}
+
+      {viewModel.additionalWeather?.map((weather) => (
+        <TodayWeatherCard
+          key={weather.location}
+          weather={weather}
+        />
+      ))}
+
+      {viewModel.preparation ? (
+        <TodayPreparationCard preparation={viewModel.preparation} />
       ) : null}
 
       {viewModel.returnGuidance ? (

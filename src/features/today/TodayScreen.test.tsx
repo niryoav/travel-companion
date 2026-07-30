@@ -10,14 +10,435 @@ import { TodayScreen } from './TodayScreen'
 import { TodayView } from './TodayView'
 
 function renderToday(route: string) {
+  const tripData = route.includes('simulation=')
+    ? oceaniaMarina2026TripData
+    : tripFixture
   render(
     <MemoryRouter initialEntries={[route]}>
-      <TodayScreen tripData={tripFixture} />
+      <TodayScreen tripData={tripData} />
     </MemoryRouter>,
   )
 }
 
 describe('TodayScreen', () => {
+  it.each([
+    ['before-departure', 'Travel to Reykjavík', 'After baggage'],
+    ['embarkation-day', 'Board Oceania Marina', 'Boarding starts'],
+    ['tender-port-day', 'Húsavík', 'Prepare lunch boxes'],
+    ['sea-day', 'At sea', 'Red Ginger'],
+    [
+      'disembarkation-day',
+      'Journey home',
+      'Cabin must be vacated',
+    ],
+  ])(
+    'renders the %s Today simulation in the real Today view',
+    (scenario, title, keyContent) => {
+      renderToday(`/today?simulation=${scenario}`)
+
+      expect(
+        screen.getByRole('heading', { level: 1, name: title }),
+      ).toBeInTheDocument()
+      expect(screen.getByText(keyContent)).toBeInTheDocument()
+      expect(screen.getByLabelText('Scenario')).toHaveValue(scenario)
+    },
+  )
+
+  it('switches between simulated trip situations and returns to live Today', () => {
+    renderToday('/today?simulation=before-departure')
+
+    fireEvent.change(screen.getByLabelText('Scenario'), {
+      target: { value: 'tender-port-day' },
+    })
+
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Húsavík' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('All Aboard estimate')).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Scenario'), {
+      target: { value: 'live' },
+    })
+
+    expect(screen.getByLabelText('Scenario')).toHaveValue('live')
+    expect(screen.getByRole('option', { name: 'Actual trip' })).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { level: 1, name: 'Húsavík' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('uses the verified departure sequence without the false early time', () => {
+    renderToday('/today?simulation=before-departure')
+
+    const timeline = screen.getByRole('heading', {
+      level: 2,
+      name: 'Timeline',
+    }).closest('section')
+    expect(timeline).not.toBeNull()
+    expect(within(timeline as HTMLElement).getAllByText('10:30').length)
+      .toBeGreaterThan(0)
+    expect(
+      within(timeline as HTMLElement).getByText('Leave home with Anaïs'),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('06:45')).not.toBeInTheDocument()
+  })
+
+  it('shows actionable departure and destination weather', () => {
+    renderToday('/today?simulation=before-departure')
+
+    expect(screen.getByText('Weather · Ghent and Brussels'))
+      .toBeInTheDocument()
+    expect(
+      screen.getByText('Weather · Keflavík and Hafnarfjörður'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/put it on before leaving Arrivals/i),
+    ).toBeInTheDocument()
+  })
+
+  it('keeps embarkation estimates separate from confirmed boarding', () => {
+    renderToday('/today?simulation=embarkation-day')
+
+    expect(screen.getAllByText('12:00').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('13:00').length).toBeGreaterThan(0)
+    const boarding = screen.getByText('Boarding starts').closest('li')
+    expect(boarding).not.toBeNull()
+    expect(within(boarding as HTMLElement).getByText('13:00'))
+      .toBeInTheDocument()
+    expect(screen.queryByText(/boarding.*(?:11|12):\d{2}/i))
+      .not.toBeInTheDocument()
+  })
+
+  it('shows the complete actionable Húsavík sequence and preparation', () => {
+    renderToday('/today?simulation=tender-port-day')
+
+    const timeline = screen.getByRole('heading', {
+      level: 2,
+      name: 'Timeline',
+    }).closest('section')
+    expect(timeline).not.toBeNull()
+    for (const value of [
+      '07:00',
+      '08:50',
+      '09:05',
+      '09:30',
+      '13:00',
+      '15:30',
+      '16:00',
+      '20:00',
+    ]) {
+      expect(
+        within(timeline as HTMLElement).getAllByText(value).length,
+      ).toBeGreaterThan(0)
+    }
+    for (const title of [
+      'Ship arrives',
+      'Report for outbound tender',
+      'Tender departs',
+      'Arrive ashore',
+      'Whale safari finishes',
+      'Report for GeoSea excursion',
+      'GeoSea excursion starts',
+      'GeoSea excursion finishes',
+      'Board return tender',
+      'Return tender departs',
+      'Back onboard',
+      'Last tender',
+      'All Aboard estimate',
+      'Ship departs',
+      'Toscana',
+    ]) {
+      expect(
+        within(timeline as HTMLElement).getByText(title),
+      ).toBeInTheDocument()
+    }
+    expect(
+      within(timeline as HTMLElement)
+        .getAllByRole('heading', { level: 3 })
+        .map(({ textContent }) => textContent),
+    ).toEqual([
+      'Ship arrives',
+      'Report for outbound tender',
+      'Tender departs',
+      'Arrive ashore',
+      'Check in at Gentle Giants',
+      'Boarding and put on overalls',
+      'Whale safari departs',
+      'Whale safari finishes',
+      'Report for GeoSea excursion',
+      'GeoSea excursion starts',
+      'GeoSea excursion finishes',
+      'Board return tender',
+      'Return tender departs',
+      'Back onboard',
+      'Last tender',
+      'All Aboard estimate',
+      'Ship departs',
+      'Toscana',
+    ])
+    for (const title of [
+      'Report for outbound tender',
+      'Tender departs',
+      'Arrive ashore',
+      'Whale safari finishes',
+      'Report for GeoSea excursion',
+      'Board return tender',
+      'Return tender departs',
+      'Back onboard',
+      'Last tender',
+    ]) {
+      const item = within(timeline as HTMLElement)
+        .getByText(title)
+        .closest('li')
+      expect(item).not.toBeNull()
+      expect(within(item as HTMLElement).getAllByText('TBC').length)
+        .toBeGreaterThan(0)
+    }
+    expect(
+      within(timeline as HTMLElement).getAllByText(
+        'Gentle Giants Ticket Center, Húsavík',
+      ).length,
+    ).toBeGreaterThan(0)
+    expect(screen.getByText('Prepare lunch boxes')).toBeInTheDocument()
+    expect(screen.getByText('Fill drink bottles')).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { level: 3, name: 'What to take' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { level: 3, name: 'How to dress' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { level: 3, name: 'Provided' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Cold, windy showers')).toBeInTheDocument()
+    expect(screen.queryByText(/puffin season|puffin-season/i))
+      .not.toBeInTheDocument()
+    expect(screen.queryByText(/Atlantic\/|Local time/i))
+      .not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Edit' }))
+      .not.toBeInTheDocument()
+    expect(screen.queryByText(/cost|budget|expense/i))
+      .not.toBeInTheDocument()
+    for (const redundantLabel of [
+      'Required check-in',
+      'Return constraint',
+      'Next event',
+      'Safe return guidance',
+      'Port context',
+    ]) {
+      expect(screen.queryByText(redundantLabel)).not.toBeInTheDocument()
+    }
+    const shipDeparture = within(timeline as HTMLElement)
+      .getByText('Ship departs')
+      .closest('li')
+    expect(shipDeparture).not.toBeNull()
+    expect(within(shipDeparture as HTMLElement).getByText('Confirmed'))
+      .toBeInTheDocument()
+  })
+
+  it('derives estimated All Aboard and lets a confirmed value win', () => {
+    const { unmount } = render(
+      <MemoryRouter
+        initialEntries={['/today?simulation=tender-port-day']}
+      >
+        <TodayScreen tripData={oceaniaMarina2026TripData} />
+      </MemoryRouter>,
+    )
+    const estimate = screen.getByText('All Aboard estimate').closest(
+      'li',
+    )
+    expect(estimate).not.toBeNull()
+    expect(within(estimate as HTMLElement).getByText('15:30'))
+      .toBeInTheDocument()
+    expect(
+      within(estimate as HTMLElement).getByText(
+        'Planning estimate from ship departure minus 30 minutes; confirm onboard.',
+      ),
+    ).toBeInTheDocument()
+    expect(within(estimate as HTMLElement).getByText('TBC'))
+      .toBeInTheDocument()
+    expect(within(estimate as HTMLElement).queryByText('Confirmed'))
+      .not.toBeInTheDocument()
+    unmount()
+
+    const confirmed = structuredClone(oceaniaMarina2026TripData)
+    const portCall = confirmed.portCalls.find(
+      ({ id }) => id === 'port-call-husavik',
+    )
+    if (!portCall) {
+      throw new Error('Húsavík port call missing')
+    }
+    portCall.allAboardAt = '2026-08-25T15:20:00Z'
+    portCall.allAboardVerification = 'CONFIRMED'
+
+    render(
+      <MemoryRouter
+        initialEntries={['/today?simulation=tender-port-day']}
+      >
+        <TodayScreen tripData={confirmed} />
+      </MemoryRouter>,
+    )
+    const stored = screen.getByText('All Aboard').closest('li')
+    expect(stored).not.toBeNull()
+    expect(within(stored as HTMLElement).getByText('15:20'))
+      .toBeInTheDocument()
+    expect(screen.queryByText('All Aboard estimate'))
+      .not.toBeInTheDocument()
+  })
+
+  it('shows All Aboard as untimed TBC when ship departure is missing', () => {
+    const data = structuredClone(oceaniaMarina2026TripData)
+    const portCall = data.portCalls.find(
+      ({ id }) => id === 'port-call-husavik',
+    )
+    if (!portCall) {
+      throw new Error('Húsavík port call missing')
+    }
+    portCall.departureAt = undefined
+
+    render(
+      <MemoryRouter
+        initialEntries={['/today?simulation=tender-port-day']}
+      >
+        <TodayScreen tripData={data} />
+      </MemoryRouter>,
+    )
+
+    const allAboard = screen.getByText('All Aboard').closest('li')
+    expect(allAboard).not.toBeNull()
+    expect(within(allAboard as HTMLElement).getAllByText('TBC'))
+      .toHaveLength(2)
+    expect(within(allAboard as HTMLElement).queryByRole('time'))
+      .not.toBeInTheDocument()
+  })
+
+  it('does not apply the port-day fallback on embarkation day', () => {
+    renderToday('/today?simulation=embarkation-day')
+
+    expect(screen.queryByText(/All Aboard/i)).not.toBeInTheDocument()
+  })
+
+  it('shows one complete disembarkation timeline and dual weather', () => {
+    renderToday('/today?simulation=disembarkation-day')
+
+    const timeline = screen.getByRole('heading', {
+      level: 2,
+      name: 'Timeline',
+    }).closest('section')
+    expect(timeline).not.toBeNull()
+    for (const title of [
+      'Marina scheduled arrival',
+      'Breakfast opens',
+      'Cabin must be vacated',
+      'Disembarkation group called',
+      'Leave ship',
+      'Southampton to Heathrow Terminal 5',
+      'Estimated arrival at Heathrow Terminal 5',
+      'Bag drop',
+      'Security',
+      'BA386 departs for Brussels',
+      'BA386 arrives in Brussels',
+    ]) {
+      expect(
+        within(timeline as HTMLElement).getByText(title),
+      ).toBeInTheDocument()
+    }
+    for (const value of ['06:00', '07:45', '09:15', '13:55', '16:10']) {
+      expect(
+        within(timeline as HTMLElement).getAllByText(value).length,
+      ).toBeGreaterThan(0)
+    }
+    for (const title of [
+      'Breakfast opens',
+      'Cabin must be vacated',
+      'Disembarkation group called',
+      'Leave ship',
+      'Bag drop',
+      'Security',
+    ]) {
+      const item = within(timeline as HTMLElement)
+        .getByText(title)
+        .closest('li')
+      expect(item).not.toBeNull()
+      expect(within(item as HTMLElement).getAllByText('TBC').length)
+        .toBeGreaterThan(0)
+    }
+    expect(screen.getByText('Weather · Southampton')).toBeInTheDocument()
+    expect(screen.getByText('Weather · Brussels arrival'))
+      .toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Edit' }))
+      .not.toBeInTheDocument()
+  })
+
+  it('reads updated estimated timing from the effective Trip data', () => {
+    const data = structuredClone(oceaniaMarina2026TripData)
+    const taxi = data.events.find(
+      ({ id }) => id === 'event-hotel-ship-transfer',
+    )
+    if (!taxi) {
+      throw new Error('Embarkation taxi missing')
+    }
+    taxi.startsAt = '2026-08-23T12:15:00Z'
+
+    render(
+      <MemoryRouter initialEntries={['/today?simulation=embarkation-day']}>
+        <TodayScreen tripData={data} />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getAllByText('12:15').length).toBeGreaterThan(0)
+    expect(screen.queryByText('12:00')).not.toBeInTheDocument()
+  })
+
+  it('shows the Stornoway working assumption and unresolved details', () => {
+    render(
+      <MemoryRouter initialEntries={['/today']}>
+        <TodayScreen
+          now={new Date('2026-08-29T06:00:00Z')}
+          tripData={oceaniaMarina2026TripData}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getAllByText('08:30').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('TBC working assumption').length)
+      .toBeGreaterThan(0)
+    expect(screen.getAllByText('Exact pickup point TBC').length)
+      .toBeGreaterThan(0)
+    expect(
+      screen.getAllByText(
+        'Hugh verbally guaranteed return before ship departure.',
+      ).length,
+    ).toBeGreaterThan(0)
+    expect(
+      screen.getAllByText(
+        'Exact return time remains to be confirmed.',
+      ).length,
+    ).toBeGreaterThan(0)
+  })
+
+  it.each([
+    ['2026-08-25T06:00:00Z', 'Toscana', '20:00'],
+    ['2026-08-28T06:00:00Z', 'Red Ginger', '20:00'],
+    ['2026-08-31T06:00:00Z', 'Polo Grill', '19:30'],
+    ['2026-09-03T06:00:00Z', 'Jacques', '19:30'],
+  ])(
+    'renders the confirmed dining reservation on %s',
+    (now, title, time) => {
+      render(
+        <MemoryRouter initialEntries={['/today']}>
+          <TodayScreen
+            now={new Date(now)}
+            tripData={oceaniaMarina2026TripData}
+          />
+        </MemoryRouter>,
+      )
+
+      expect(screen.getAllByText(title).length).toBeGreaterThan(0)
+      expect(screen.getAllByText(time).length).toBeGreaterThan(0)
+    },
+  )
+
   it('visibly marks estimated All Aboard today and tomorrow', () => {
     const tripData = withPlanningAllAboardEstimates(
       oceaniaMarina2026TripData,
@@ -39,7 +460,9 @@ describe('TodayScreen', () => {
       within(operationalStatus as HTMLElement).getByText('15:30'),
     ).toBeInTheDocument()
     expect(
-      within(operationalStatus as HTMLElement).getByText('Estimated'),
+      within(operationalStatus as HTMLElement).getByText(
+        'Estimate · TBC',
+      ),
     ).toBeInTheDocument()
 
     rerender(
@@ -51,7 +474,7 @@ describe('TodayScreen', () => {
       </MemoryRouter>,
     )
     expect(
-      screen.getByText('All Aboard 15:30 · Estimated'),
+      screen.getByText('All Aboard 15:30 · Estimate · TBC'),
     ).toBeInTheDocument()
   })
 

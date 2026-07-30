@@ -10,15 +10,19 @@ export interface NavigationItem {
 
 interface BottomNavigationProps {
   items: NavigationItem[]
+  preservedSearch?: string
 }
 
-export function BottomNavigation({ items }: BottomNavigationProps) {
+export function BottomNavigation({
+  items,
+  preservedSearch = '',
+}: BottomNavigationProps) {
   return (
     <nav className="bottom-navigation" aria-label="Primary navigation">
       {items.map(({ icon, label, path }) => (
         <NavLink
           key={path}
-          to={`/${path}`}
+          to={`/${path}${preservedSearch}`}
           className={({ isActive }) =>
             `navigation-item${isActive ? ' navigation-item-active' : ''}`
           }

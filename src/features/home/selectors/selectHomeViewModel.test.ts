@@ -14,7 +14,7 @@ describe('selectHomeViewModel', () => {
 
     expect(viewModel.milestone).toMatchObject({
       allAboardTime: '15:30',
-      allAboardStatusLabel: 'Estimated',
+      allAboardStatusLabel: 'Estimate · TBC',
     })
   })
 

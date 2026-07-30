@@ -375,12 +375,12 @@ describe('Oceania Marina bundled editorial content', () => {
     ).toBe('USER_DOCUMENT_CONFIRMED')
   })
 
-  it('records both official Gentle Giants source pages', () => {
+  it('keeps only the operational Gentle Giants source', () => {
     expect(
       oceaniaMarina2026TripContent.excursionGuides.find(
         ({ eventId }) => eventId === 'event-husavik-big-whale-safari',
       )?.sourceReferences,
-    ).toHaveLength(2)
+    ).toHaveLength(1)
   })
 
   it('keeps the Isle of Lewis guide modest while its schedule is pending', () => {

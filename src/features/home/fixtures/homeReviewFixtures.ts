@@ -25,6 +25,7 @@ export const homeReviewFixtures: Record<ReviewHomeState, HomeViewModel> = {
       countdown: '27 days to departure',
     },
     milestone: {
+      icon: 'airplane',
       label: 'Next milestone',
       title: 'Leave for Harbor City Airport',
       time: '13:00',
@@ -32,11 +33,13 @@ export const homeReviewFixtures: Record<ReviewHomeState, HomeViewModel> = {
       countdown: 'Departure day · 10 May',
     },
     weather: {
+      icon: 'cloud',
       location: 'Harbor City',
       temperature: '12°C',
       condition: 'Cloudy',
       wind: '18 km/h',
       rain: 'Light rain possible',
+      implication: 'Keep a light rain layer accessible.',
     },
     checklistTitle: 'Before departure',
     checklist: [
@@ -59,6 +62,7 @@ export const homeReviewFixtures: Record<ReviewHomeState, HomeViewModel> = {
       tripDates: 'Friday · 10 May 2030',
     },
     milestone: {
+      icon: 'taxi',
       label: 'Next milestone',
       title: 'Leave home area',
       time: '13:00',
@@ -66,11 +70,13 @@ export const homeReviewFixtures: Record<ReviewHomeState, HomeViewModel> = {
       countdown: 'Flight at 17:45',
     },
     weather: {
+      icon: 'cloud',
       location: 'Harbor City',
       temperature: '11°C',
       condition: 'Mostly cloudy',
       wind: '16 km/h',
       rain: 'Brief showers',
+      implication: 'Keep the rain layer in hand luggage.',
     },
     checklistTitle: 'Before leaving',
     checklist: [
@@ -98,6 +104,7 @@ export const homeReviewFixtures: Record<ReviewHomeState, HomeViewModel> = {
       daysRemaining: 2,
     },
     milestone: {
+      icon: 'walking',
       label: 'Next milestone',
       title: 'Coastal walk',
       time: '09:30',
@@ -107,11 +114,13 @@ export const homeReviewFixtures: Record<ReviewHomeState, HomeViewModel> = {
       tone: 'urgent',
     },
     weather: {
+      icon: 'rain',
       location: 'Harbor City',
       temperature: '14°C',
       condition: 'Light rain',
       wind: 'Windy',
       rain: 'Rain jacket recommended',
+      implication: 'Wear the rain jacket ashore.',
     },
     checklistTitle: 'Take ashore',
     checklist: [
@@ -139,6 +148,7 @@ export const homeReviewFixtures: Record<ReviewHomeState, HomeViewModel> = {
       daysRemaining: 1,
     },
     milestone: {
+      icon: 'dining',
       label: 'Next milestone',
       title: 'Dinner reservation',
       time: '19:00',
@@ -146,11 +156,13 @@ export const homeReviewFixtures: Record<ReviewHomeState, HomeViewModel> = {
       countdown: 'This evening',
     },
     weather: {
+      icon: 'wind',
       location: 'At sea',
       temperature: '11°C',
       condition: 'Strong wind',
       wind: '35 km/h',
       seaCondition: 'Moderate swell',
+      implication: 'Take a warm layer on open decks.',
     },
     checklistTitle: 'Today’s essentials',
     checklist: [
@@ -168,6 +180,7 @@ export const homeReviewFixtures: Record<ReviewHomeState, HomeViewModel> = {
       tripDates: 'Tuesday · 14 May 2030',
     },
     milestone: {
+      icon: 'taxi',
       label: 'Next milestone',
       title: 'Disembark and meet transfer',
       time: '08:30',
@@ -176,10 +189,12 @@ export const homeReviewFixtures: Record<ReviewHomeState, HomeViewModel> = {
       tone: 'urgent',
     },
     weather: {
+      icon: 'cloud',
       location: 'Harbor City',
       temperature: '15°C',
       condition: 'Partly cloudy',
       wind: '12 km/h',
+      implication: 'Keep a light layer accessible.',
     },
     checklistTitle: 'Before disembarking',
     checklist: [

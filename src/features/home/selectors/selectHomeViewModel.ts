@@ -13,6 +13,7 @@ import type {
   TripData,
   TripEvent,
 } from '../../../domain/trip/tripTypes'
+import type { IconName } from '../../../components/AppIcon'
 import {
   CRUISE_DAY_TYPES,
   HOME_PHASES,
@@ -45,7 +46,27 @@ function milestoneFromEvent(
     ? calendarDateInTimeZone(new Date(event.startsAt), eventTimeZone)
     : undefined
   const currentLocalDate = calendarDateInTimeZone(now, eventTimeZone)
+  const transport =
+    event.kind === 'FLIGHT' || event.kind === 'TRANSFER'
+      ? data.transports.find(({ id }) => id === event.transportId)
+      : undefined
+  const icon: IconName =
+    event.kind === 'FLIGHT'
+      ? 'airplane'
+      : event.kind === 'TRANSFER'
+        ? transport?.mode === 'SHIP'
+          ? 'ship'
+          : 'taxi'
+        : event.kind === 'HOTEL_STAY'
+          ? 'hotel'
+          : event.kind === 'MEAL'
+            ? 'dining'
+            : event.kind === 'EMBARKATION' ||
+                event.kind === 'DISEMBARKATION'
+              ? 'ship'
+              : 'walking'
   return {
+    icon,
     label: 'Next milestone',
     title: event.title,
     date:
@@ -128,6 +149,9 @@ function milestoneFromPortCall(
   }
 
   return {
+    icon: next.title.toLowerCase().includes('tender')
+      ? 'tender'
+      : 'ship',
     label: 'Next milestone',
     title: next.title,
     dateTime: next.at,
@@ -137,7 +161,7 @@ function milestoneFromPortCall(
       : undefined,
     allAboardStatusLabel: portCall.allAboardAt
       ? portCall.allAboardVerification === 'ESTIMATED'
-        ? 'Estimated'
+        ? 'Estimate · TBC'
         : 'Confirmed'
       : undefined,
   }
@@ -227,7 +251,11 @@ export function selectHomeViewModel(
         }
       : undefined) ??
     (today.kind === 'SEA_DAY'
-      ? { label: 'Today', title: 'Enjoy a day at sea' }
+      ? {
+          icon: 'ship',
+          label: 'Today',
+          title: 'Enjoy a day at sea',
+        }
       : undefined)
 
   return {

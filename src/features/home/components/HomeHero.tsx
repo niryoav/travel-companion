@@ -10,6 +10,7 @@ interface HomeHeroProps {
   context: HomeContext
   cruiseProgress?: CruiseProgressModel
   greeting: string
+  intro?: string
   portAccessStatus?: PortAccessStatus
 }
 
@@ -17,6 +18,7 @@ export function HomeHero({
   context,
   cruiseProgress,
   greeting,
+  intro,
   portAccessStatus,
 }: HomeHeroProps) {
   return (
@@ -24,6 +26,7 @@ export function HomeHero({
       <div className="home-greeting">
         <p className="home-eyebrow">Home</p>
         <h1>{greeting}</h1>
+        {intro ? <p className="home-intro">{intro}</p> : null}
       </div>
 
       <div className="home-context">

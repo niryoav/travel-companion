@@ -1,3 +1,7 @@
+import type { PortAccessStatus } from '../../domain/trip/tripTypes'
+import type { DocumentActionViewModel } from '../documents/documentTypes'
+import type { IconName } from '../../components/AppIcon'
+
 export const HOME_PHASES = {
   PRE_TRIP: 'PRE_TRIP',
   DEPARTURE_DAY: 'DEPARTURE_DAY',
@@ -27,6 +31,7 @@ export interface HomeContext {
 export type MilestoneTone = 'default' | 'urgent'
 
 export interface Milestone {
+  icon: IconName
   label: string
   title: string
   date?: string
@@ -41,9 +46,11 @@ export interface Milestone {
 }
 
 export interface QuickWeather {
+  icon: Extract<IconName, 'cloud' | 'rain' | 'sun' | 'wind'>
   location: string
   temperature: string
   condition: string
+  implication: string
   wind?: string
   rain?: string
   seaCondition?: string
@@ -57,6 +64,7 @@ export interface QuickChecklistItem {
 export interface HomeAlert {
   title: string
   detail: string
+  documentAction?: DocumentActionViewModel
 }
 
 export interface CruiseProgress {
@@ -70,6 +78,7 @@ export interface HomeViewModel {
   cruiseDayType?: CruiseDayType
   portAccessStatus?: PortAccessStatus
   context: HomeContext
+  intro?: string
   cruiseProgress?: CruiseProgress
   milestone?: Milestone
   weather?: QuickWeather
@@ -77,4 +86,3 @@ export interface HomeViewModel {
   checklist?: QuickChecklistItem[]
   alert?: HomeAlert
 }
-import type { PortAccessStatus } from '../../domain/trip/tripTypes'

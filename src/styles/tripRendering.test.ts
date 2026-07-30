@@ -72,6 +72,22 @@ describe('Trip foreground rendering styles', () => {
     )
   })
 
+  it('keeps the Welcome ship above a bottom-anchored card on portrait screens', () => {
+    const cover = declarationsFor('.welcome-cover')
+    const hero = declarationsFor('.welcome-hero {')
+
+    expect(cover).toContain('align-items: flex-end')
+    expect(cover).toContain('overflow: hidden')
+    expect(hero).toContain('object-fit: cover')
+    expect(hero).toContain('object-position: 50% top')
+    expect(styles).toContain(
+      '@media (orientation: portrait) and (max-height: 44rem)',
+    )
+    expect(styles).toMatch(
+      /\.welcome-cover\s*\{[\s\S]*env\(safe-area-inset-bottom\)/,
+    )
+  })
+
   it('defines horizontal-overflow and safe-area protection', () => {
     expect(declarationsFor('body')).toMatch(/\boverflow-x:\s*(?:hidden|clip)\b/)
     const appShell = declarationsFor('.app-shell')

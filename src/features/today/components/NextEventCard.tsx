@@ -71,12 +71,12 @@ export function NextEventCard({
           <span>{event.leaveBy.detail}</span>
         </div>
       ) : null}
-      {event.timeZoneNote ? (
-        <p className="today-event-detail">{event.timeZoneNote}</p>
-      ) : null}
       {event.transport ? (
         <p className="today-event-detail">{event.transport}</p>
       ) : null}
+      {event.operationalNotes?.map((note) => (
+        <p className="today-event-detail" key={note}>{note}</p>
+      ))}
       {event.localOperationalNote ? (
         <p className="today-event-detail">
           {event.localOperationalNote}
