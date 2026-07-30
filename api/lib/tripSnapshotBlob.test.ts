@@ -12,6 +12,7 @@ import {
   tripSnapshotBlobPathname,
   writeTripSnapshotBlob,
 } from './tripSnapshotBlob.js'
+import type { TripSyncDiagnostics } from './tripSyncDiagnostics.js'
 
 function snapshot() {
   return {
@@ -28,7 +29,7 @@ function snapshot() {
 
 function blobResult(
   value: string,
-  etag = 'etag-1',
+  etag = '"etag-1"',
 ): GetBlobResult {
   return {
     statusCode: 200,
@@ -71,6 +72,36 @@ describe('readTripSnapshotBlob', () => {
     )
   })
 
+  it('accepts a provider-owned weak ETag without changing its SDK value', async () => {
+    const readBlob = vi.fn(async () =>
+      blobResult(
+        JSON.stringify(snapshot()),
+        'W/"etag-1"',
+      ),
+    )
+    const writeBlob = vi.fn<typeof put>()
+
+    const result = await writeTripSnapshotBlob(
+      'oceania-marina-2026',
+      {
+        baseRevision: 1,
+        operationalOverrides: snapshot().operationalOverrides,
+      },
+      'yoav',
+      {
+        readBlob,
+        writeBlob,
+        expectedEtag: 'etag-1',
+        environment: 'production',
+      },
+    )
+
+    expect(result.status).toBe('WRITTEN')
+    expect(writeBlob.mock.calls[0]?.[2]).toMatchObject({
+      ifMatch: 'W/"etag-1"',
+    })
+  })
+
   it('returns not found for a missing Blob or unsupported trip', async () => {
     const readBlob = vi.fn(async () => null)
 
@@ -87,6 +118,14 @@ describe('readTripSnapshotBlob', () => {
       readTripSnapshotBlob(
         'oceania-marina-2026',
         vi.fn(async () => blobResult('{bad json')),
+      ),
+    ).resolves.toEqual({ status: 'INVALID' })
+    await expect(
+      readTripSnapshotBlob(
+        'oceania-marina-2026',
+        vi.fn(async () =>
+          blobResult(JSON.stringify(snapshot()), ''),
+        ),
       ),
     ).resolves.toEqual({ status: 'INVALID' })
     await expect(
@@ -126,11 +165,15 @@ describe('writeTripSnapshotBlob', () => {
     )
   })
 
-  it('conditionally replaces the current Blob and authors metadata', async () => {
+  it('preserves the exact quoted Blob SDK ETag for conditional writes', async () => {
     const readBlob = vi.fn(async () =>
       blobResult(JSON.stringify(snapshot())),
     )
     const writeBlob = vi.fn<typeof put>()
+    const diagnostics = {
+      info: vi.fn(),
+      error: vi.fn(),
+    } satisfies TripSyncDiagnostics
 
     const result = await writeTripSnapshotBlob(
       'oceania-marina-2026',
@@ -145,6 +188,7 @@ describe('writeTripSnapshotBlob', () => {
         now: () => new Date('2026-07-29T14:00:00Z'),
         environment: 'production',
         expectedEtag: 'etag-1',
+        diagnostics,
       },
     )
 
@@ -168,8 +212,19 @@ describe('writeTripSnapshotBlob', () => {
     expect(options).toMatchObject({
       access: 'private',
       allowOverwrite: true,
-      ifMatch: 'etag-1',
+      ifMatch: '"etag-1"',
     })
+    expect(
+      diagnostics.info.mock.calls.map(([stage]) => stage),
+    ).toEqual([
+      'CURRENT_SNAPSHOT_LOADED',
+      'CURRENT_REVISION_DETERMINED',
+      'CURRENT_ETAG_DETERMINED',
+      'REVISION_COMPARED',
+      'ETAG_COMPARED',
+      'BLOB_WRITE_STARTED',
+      'BLOB_WRITE_SUCCEEDED',
+    ])
   })
 
   it('creates revision one from base revision zero without overwrite', async () => {
@@ -239,7 +294,7 @@ describe('writeTripSnapshotBlob', () => {
         'yoav',
         {
           readBlob: vi.fn(async () =>
-            blobResult(JSON.stringify(snapshot()), 'etag-1'),
+            blobResult(JSON.stringify(snapshot()), '"etag-1"'),
           ),
           writeBlob,
           environment: 'production',
@@ -261,7 +316,7 @@ describe('writeTripSnapshotBlob', () => {
       .fn()
       .mockResolvedValueOnce(blobResult(JSON.stringify(snapshot())))
       .mockResolvedValueOnce(
-        blobResult(JSON.stringify(latest), 'etag-2'),
+        blobResult(JSON.stringify(latest), '"etag-2"'),
       )
     const writeBlob = vi
       .fn<typeof put>()

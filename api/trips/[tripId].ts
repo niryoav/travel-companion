@@ -14,6 +14,11 @@ import {
   parseStrongEtag,
 } from '../../src/domain/trip/tripSnapshotEtag.js'
 import { oceaniaMarina2026TripData } from '../../src/trips/oceania-marina-2026/tripData.js'
+import {
+  tripSyncDiagnostics,
+  type TripSyncDiagnosticStage,
+  type TripSyncDiagnostics,
+} from '../lib/tripSyncDiagnostics.js'
 
 type SnapshotReader = (
   tripId: string,
@@ -25,6 +30,7 @@ type SnapshotWriter = (
   expectedEtag?: string,
 ) => Promise<TripSnapshotBlobWriteResult>
 interface TripSnapshotRouteDependencies {
+  diagnostics?: TripSyncDiagnostics
   readSnapshot?: SnapshotReader
   writeSnapshot?: SnapshotWriter
 }
@@ -78,63 +84,109 @@ export async function handleTripSnapshotRequest(
   }
 
   if (request.method === 'PUT') {
-    if (!isSupportedSharedTripId(tripId)) {
-      return jsonResponse({ code: 'TRIP_NOT_FOUND' }, 404)
-    }
-    let body: unknown
-    try {
-      body = await request.json()
-    } catch {
-      return jsonResponse({ code: 'INVALID_REQUEST' }, 400)
-    }
-    const putRequest = parsePutTripSnapshotRequest(
-      body,
-      oceaniaMarina2026TripData,
-    )
-    if (!putRequest) {
-      return jsonResponse({ code: 'INVALID_REQUEST' }, 400)
+    const diagnostics =
+      dependencies.diagnostics ?? tripSyncDiagnostics
+    let stage: TripSyncDiagnosticStage =
+      'REQUEST_BODY_PARSED'
+    let serializingResponse = false
+    const respond = (body: unknown, status: number): Response => {
+      stage = 'RESPONSE_SERIALIZED'
+      serializingResponse = true
+      const response = jsonResponse(body, status)
+      serializingResponse = false
+      diagnostics.info(stage, { status })
+      return response
     }
 
-    const rawIfMatch = request.headers.get('If-Match')
-    const expectedEtag = parseStrongEtag(rawIfMatch)
-    if (rawIfMatch && !expectedEtag) {
-      return jsonResponse({ code: 'INVALID_REQUEST' }, 400)
-    }
-    const result = dependencies.writeSnapshot
-      ? await dependencies.writeSnapshot(
-          tripId,
-          putRequest,
-          'yoav',
-          expectedEtag ?? undefined,
+    try {
+      if (!isSupportedSharedTripId(tripId)) {
+        return respond({ code: 'TRIP_NOT_FOUND' }, 404)
+      }
+      let body: unknown
+      try {
+        body = await request.json()
+        diagnostics.info('REQUEST_BODY_PARSED')
+      } catch (error) {
+        diagnostics.error('REQUEST_BODY_PARSED', error)
+        return respond({ code: 'INVALID_REQUEST' }, 400)
+      }
+      const putRequest = parsePutTripSnapshotRequest(
+        body,
+        oceaniaMarina2026TripData,
+      )
+      if (!putRequest) {
+        return respond({ code: 'INVALID_REQUEST' }, 400)
+      }
+      stage = 'BASE_REVISION_READ'
+      diagnostics.info(stage, {
+        baseRevision: putRequest.baseRevision,
+      })
+
+      stage = 'IF_MATCH_HEADER_READ'
+      const rawIfMatch = request.headers.get('If-Match')
+      diagnostics.info(stage, {
+        headerLength: rawIfMatch?.length ?? 0,
+        headerPresent: Boolean(rawIfMatch),
+      })
+      stage = 'ETAG_NORMALIZED'
+      const expectedEtag = parseStrongEtag(rawIfMatch)
+      diagnostics.info(stage, {
+        etagLength: expectedEtag?.length ?? 0,
+        valid: rawIfMatch ? Boolean(expectedEtag) : true,
+      })
+      if (rawIfMatch && !expectedEtag) {
+        return respond({ code: 'INVALID_REQUEST' }, 400)
+      }
+      stage = 'CURRENT_SNAPSHOT_LOADED'
+      const result = dependencies.writeSnapshot
+        ? await dependencies.writeSnapshot(
+            tripId,
+            putRequest,
+            'yoav',
+            expectedEtag ?? undefined,
+          )
+        : await writeTripSnapshotBlob(
+            tripId,
+            putRequest,
+            'yoav',
+            {
+              diagnostics,
+              expectedEtag: expectedEtag ?? undefined,
+            },
+          )
+
+      switch (result.status) {
+        case 'WRITTEN':
+          return respond(result.snapshot, 200)
+        case 'CONFLICT':
+          return respond(
+            {
+              code: 'REVISION_CONFLICT',
+              currentEtag: result.currentEtag,
+              currentRevision: result.currentRevision,
+              reason: result.reason,
+            },
+            409,
+          )
+        case 'NOT_FOUND':
+          return respond({ code: 'TRIP_NOT_FOUND' }, 404)
+        case 'INVALID':
+          return respond(
+            { code: 'INVALID_STORED_SNAPSHOT' },
+            500,
+          )
+        case 'UNAVAILABLE':
+          return respond({ code: 'STORAGE_UNAVAILABLE' }, 503)
+      }
+    } catch (error) {
+      diagnostics.error(stage, error)
+      if (serializingResponse) {
+        return new Response(
+          JSON.stringify({ code: 'STORAGE_UNAVAILABLE' }),
+          { status: 500, headers: RESPONSE_HEADERS },
         )
-      : await writeTripSnapshotBlob(
-          tripId,
-          putRequest,
-          'yoav',
-          { expectedEtag: expectedEtag ?? undefined },
-        )
-    switch (result.status) {
-      case 'WRITTEN':
-        return jsonResponse(result.snapshot, 200)
-      case 'CONFLICT':
-        return jsonResponse(
-          {
-            code: 'REVISION_CONFLICT',
-            currentEtag: result.currentEtag,
-            currentRevision: result.currentRevision,
-            reason: result.reason,
-          },
-          409,
-        )
-      case 'NOT_FOUND':
-        return jsonResponse({ code: 'TRIP_NOT_FOUND' }, 404)
-      case 'INVALID':
-        return jsonResponse(
-          { code: 'INVALID_STORED_SNAPSHOT' },
-          500,
-        )
-      case 'UNAVAILABLE':
-        return jsonResponse({ code: 'STORAGE_UNAVAILABLE' }, 503)
+      }
+      return respond({ code: 'STORAGE_UNAVAILABLE' }, 500)
     }
   }
 

@@ -59,11 +59,11 @@ conditional-write precondition so concurrent functions cannot overwrite one
 another after reading the same revision. A successful GET returns the strong
 ETag for that exact snapshot in the HTTP `ETag` header. Conflict recovery
 constructs a fresh PUT with both that snapshot's revision and its ETag in
-`If-Match`; the API normalizes the quoted HTTP value back to the opaque Blob
-ETag before applying the conditional write. No realtime synchronization or
-merge engine is added. The server authors `revision`, `updatedAt`, and
-`updatedBy`; the client submits only `baseRevision` and the operational
-override bundle in the JSON body.
+`If-Match`; the API normalizes that HTTP value only for comparison and
+preserves the Blob SDK's exact provider-owned ETag when passing `ifMatch` back
+to the SDK. No realtime synchronization or merge engine is added. The server
+authors `revision`, `updatedAt`, and `updatedBy`; the client submits only
+`baseRevision` and the operational override bundle in the JSON body.
 
 Production uses
 `trips/oceania-marina-2026/operational-snapshot.json`; every non-production
