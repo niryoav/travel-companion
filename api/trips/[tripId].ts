@@ -9,10 +9,6 @@ import {
   parsePutTripSnapshotRequest,
   type PutTripSnapshotRequest,
 } from '../../src/domain/trip/tripSnapshot.js'
-import {
-  formatStrongEtag,
-  parseStrongEtag,
-} from '../../src/domain/trip/tripSnapshotEtag.js'
 import { oceaniaMarina2026TripData } from '../../src/trips/oceania-marina-2026/tripData.js'
 import {
   tripSyncDiagnostics,
@@ -27,7 +23,6 @@ type SnapshotWriter = (
   tripId: string,
   request: PutTripSnapshotRequest,
   updatedBy: 'yoav',
-  expectedEtag?: string,
 ) => Promise<TripSnapshotBlobWriteResult>
 interface TripSnapshotRouteDependencies {
   diagnostics?: TripSyncDiagnostics
@@ -122,37 +117,18 @@ export async function handleTripSnapshotRequest(
         baseRevision: putRequest.baseRevision,
       })
 
-      stage = 'IF_MATCH_HEADER_READ'
-      const rawIfMatch = request.headers.get('If-Match')
-      diagnostics.info(stage, {
-        headerLength: rawIfMatch?.length ?? 0,
-        headerPresent: Boolean(rawIfMatch),
-      })
-      stage = 'ETAG_NORMALIZED'
-      const expectedEtag = parseStrongEtag(rawIfMatch)
-      diagnostics.info(stage, {
-        etagLength: expectedEtag?.length ?? 0,
-        valid: rawIfMatch ? Boolean(expectedEtag) : true,
-      })
-      if (rawIfMatch && !expectedEtag) {
-        return respond({ code: 'INVALID_REQUEST' }, 400)
-      }
       stage = 'CURRENT_SNAPSHOT_LOADED'
       const result = dependencies.writeSnapshot
         ? await dependencies.writeSnapshot(
             tripId,
             putRequest,
             'yoav',
-            expectedEtag ?? undefined,
           )
         : await writeTripSnapshotBlob(
             tripId,
             putRequest,
             'yoav',
-            {
-              diagnostics,
-              expectedEtag: expectedEtag ?? undefined,
-            },
+            { diagnostics },
           )
 
       switch (result.status) {
@@ -162,9 +138,7 @@ export async function handleTripSnapshotRequest(
           return respond(
             {
               code: 'REVISION_CONFLICT',
-              currentEtag: result.currentEtag,
               currentRevision: result.currentRevision,
-              reason: result.reason,
             },
             409,
           )
@@ -194,17 +168,8 @@ export async function handleTripSnapshotRequest(
     dependencies.readSnapshot ?? readTripSnapshotBlob
   const result = await readSnapshot(tripId)
   switch (result.status) {
-    case 'FOUND': {
-      const etag = formatStrongEtag(result.etag)
-      if (!etag) {
-        return jsonResponse({ code: 'STORAGE_UNAVAILABLE' }, 503)
-      }
-      return jsonResponse(
-        result.snapshot,
-        200,
-        { ETag: etag },
-      )
-    }
+    case 'FOUND':
+      return jsonResponse(result.snapshot, 200)
     case 'NOT_FOUND':
       return jsonResponse({ code: 'TRIP_NOT_FOUND' }, 404)
     case 'INVALID':

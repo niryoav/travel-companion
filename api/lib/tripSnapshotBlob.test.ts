@@ -1,8 +1,4 @@
-import {
-  BlobPreconditionFailedError,
-  type GetBlobResult,
-  type put,
-} from '@vercel/blob'
+import type { GetBlobResult, put } from '@vercel/blob'
 import { describe, expect, it, vi } from 'vitest'
 
 import { emptyTripOverrideBundle } from '../../src/domain/trip/tripOverrides.js'
@@ -27,10 +23,7 @@ function snapshot() {
   }
 }
 
-function blobResult(
-  value: string,
-  etag = '"etag-1"',
-): GetBlobResult {
+function blobResult(value: string): GetBlobResult {
   return {
     statusCode: 200,
     stream: new Response(value).body!,
@@ -42,7 +35,7 @@ function blobResult(
       contentType: 'application/json',
       contentDisposition: 'inline',
       cacheControl: 'no-cache',
-      etag,
+      etag: '"etag-1"',
       size: value.length,
       uploadedAt: new Date('2026-07-29T12:00:00Z'),
     },
@@ -64,42 +57,11 @@ describe('readTripSnapshotBlob', () => {
     ).resolves.toEqual({
       status: 'FOUND',
       snapshot: snapshot(),
-      etag: 'etag-1',
     })
     expect(readBlob).toHaveBeenCalledWith(
       'trips/oceania-marina-2026/operational-snapshot.json',
       { access: 'private', useCache: false },
     )
-  })
-
-  it('accepts a provider-owned weak ETag without changing its SDK value', async () => {
-    const readBlob = vi.fn(async () =>
-      blobResult(
-        JSON.stringify(snapshot()),
-        'W/"etag-1"',
-      ),
-    )
-    const writeBlob = vi.fn<typeof put>()
-
-    const result = await writeTripSnapshotBlob(
-      'oceania-marina-2026',
-      {
-        baseRevision: 1,
-        operationalOverrides: snapshot().operationalOverrides,
-      },
-      'yoav',
-      {
-        readBlob,
-        writeBlob,
-        expectedEtag: 'etag-1',
-        environment: 'production',
-      },
-    )
-
-    expect(result.status).toBe('WRITTEN')
-    expect(writeBlob.mock.calls[0]?.[2]).toMatchObject({
-      ifMatch: 'W/"etag-1"',
-    })
   })
 
   it('returns not found for a missing Blob or unsupported trip', async () => {
@@ -118,14 +80,6 @@ describe('readTripSnapshotBlob', () => {
       readTripSnapshotBlob(
         'oceania-marina-2026',
         vi.fn(async () => blobResult('{bad json')),
-      ),
-    ).resolves.toEqual({ status: 'INVALID' })
-    await expect(
-      readTripSnapshotBlob(
-        'oceania-marina-2026',
-        vi.fn(async () =>
-          blobResult(JSON.stringify(snapshot()), ''),
-        ),
       ),
     ).resolves.toEqual({ status: 'INVALID' })
     await expect(
@@ -165,7 +119,7 @@ describe('writeTripSnapshotBlob', () => {
     )
   })
 
-  it('preserves the exact quoted Blob SDK ETag for conditional writes', async () => {
+  it('writes the next revision with allowOverwrite and no Blob precondition', async () => {
     const readBlob = vi.fn(async () =>
       blobResult(JSON.stringify(snapshot())),
     )
@@ -187,7 +141,6 @@ describe('writeTripSnapshotBlob', () => {
         writeBlob,
         now: () => new Date('2026-07-29T14:00:00Z'),
         environment: 'production',
-        expectedEtag: 'etag-1',
         diagnostics,
       },
     )
@@ -209,25 +162,23 @@ describe('writeTripSnapshotBlob', () => {
       updatedAt: '2026-07-29T14:00:00.000Z',
       updatedBy: 'yoav',
     })
-    expect(options).toMatchObject({
+    expect(options).toEqual({
       access: 'private',
+      contentType: 'application/json',
       allowOverwrite: true,
-      ifMatch: '"etag-1"',
     })
     expect(
       diagnostics.info.mock.calls.map(([stage]) => stage),
     ).toEqual([
       'CURRENT_SNAPSHOT_LOADED',
       'CURRENT_REVISION_DETERMINED',
-      'CURRENT_ETAG_DETERMINED',
       'REVISION_COMPARED',
-      'ETAG_COMPARED',
       'BLOB_WRITE_STARTED',
       'BLOB_WRITE_SUCCEEDED',
     ])
   })
 
-  it('creates revision one from base revision zero without overwrite', async () => {
+  it('creates revision one from base revision zero when no snapshot exists', async () => {
     const writeBlob = vi.fn<typeof put>()
     const result = await writeTripSnapshotBlob(
       'oceania-marina-2026',
@@ -251,6 +202,7 @@ describe('writeTripSnapshotBlob', () => {
     expect(writeBlob.mock.calls[0][2]).toEqual({
       access: 'private',
       contentType: 'application/json',
+      allowOverwrite: true,
     })
   })
 
@@ -275,71 +227,7 @@ describe('writeTripSnapshotBlob', () => {
     ).resolves.toEqual({
       status: 'CONFLICT',
       currentRevision: 1,
-      currentEtag: 'etag-1',
-      reason: 'REVISION_MISMATCH',
     })
     expect(writeBlob).not.toHaveBeenCalled()
-  })
-
-  it('does not write when revision and ETag are from different snapshots', async () => {
-    const writeBlob = vi.fn<typeof put>()
-
-    await expect(
-      writeTripSnapshotBlob(
-        'oceania-marina-2026',
-        {
-          baseRevision: 1,
-          operationalOverrides: snapshot().operationalOverrides,
-        },
-        'yoav',
-        {
-          readBlob: vi.fn(async () =>
-            blobResult(JSON.stringify(snapshot()), '"etag-1"'),
-          ),
-          writeBlob,
-          environment: 'production',
-          expectedEtag: 'stale-etag',
-        },
-      ),
-    ).resolves.toEqual({
-      status: 'CONFLICT',
-      currentRevision: 1,
-      currentEtag: 'etag-1',
-      reason: 'ETAG_MISMATCH',
-    })
-    expect(writeBlob).not.toHaveBeenCalled()
-  })
-
-  it('reports an ETag race as a conflict after re-reading', async () => {
-    const latest = { ...snapshot(), revision: 2 }
-    const readBlob = vi
-      .fn()
-      .mockResolvedValueOnce(blobResult(JSON.stringify(snapshot())))
-      .mockResolvedValueOnce(
-        blobResult(JSON.stringify(latest), '"etag-2"'),
-      )
-    const writeBlob = vi
-      .fn<typeof put>()
-      .mockRejectedValue(new BlobPreconditionFailedError())
-
-    await expect(
-      writeTripSnapshotBlob(
-        'oceania-marina-2026',
-        {
-          baseRevision: 1,
-          operationalOverrides: snapshot().operationalOverrides,
-        },
-        'yoav',
-        { readBlob, writeBlob, environment: 'preview' },
-      ),
-    ).resolves.toEqual({
-      status: 'CONFLICT',
-      currentRevision: 2,
-      currentEtag: 'etag-2',
-      reason: 'BLOB_PRECONDITION',
-    })
-    expect(writeBlob.mock.calls[0][0]).toBe(
-      'preview/trips/oceania-marina-2026/operational-snapshot.json',
-    )
   })
 })

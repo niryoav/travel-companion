@@ -5,12 +5,27 @@ Date: 2026-07-29
 
 Amended: 2026-07-30
 
+Amended: 2026-07-31
+
 The shared snapshot transport remains accepted, but its client behavior is now
 role-based. Yoav is the sole editor and his local override bundle is the
 working master until confirmed by the server. Isabel is a read-only follower
 whose cache is replaced automatically from the shared snapshot. Revision
 conflicts are an internal write safeguard and are retried automatically with
 Yoav's complete current payload; they are no longer a user-facing state.
+
+Blob-level ETag conditional writes have been removed. This product has one
+editor and one device performing writes; the server's integer revision
+comparison, combined with client-side single-flight and coalescing on Yoav's
+device, is sufficient to prevent lost updates without a second, redundant
+precondition. In production the ETag layer was not protecting against real
+concurrent writes — it caused three consecutive production failures
+(2026-07-29 through 2026-07-30) from ETag representation handling (weak vs.
+strong values, provider-owned formatting, normalization mismatches between
+the Blob SDK and the HTTP `If-Match` header) rather than from any genuine
+concurrent-write conflict. Removing it eliminates that failure class
+entirely while keeping the same conflict guarantee the product actually
+needs.
 
 ## Context
 
@@ -54,16 +69,13 @@ security boundary. This version does not introduce a master PIN, OAuth, user
 accounts, or roles, and PUT does not require credentials.
 
 Writes include the revision on which the candidate is based. The server
-rejects a mismatched revision and also uses the Blob ETag as a
-conditional-write precondition so concurrent functions cannot overwrite one
-another after reading the same revision. A successful GET returns the strong
-ETag for that exact snapshot in the HTTP `ETag` header. Conflict recovery
-constructs a fresh PUT with both that snapshot's revision and its ETag in
-`If-Match`; the API normalizes that HTTP value only for comparison and
-preserves the Blob SDK's exact provider-owned ETag when passing `ifMatch` back
-to the SDK. No realtime synchronization or merge engine is added. The server
-authors `revision`, `updatedAt`, and `updatedBy`; the client submits only
-`baseRevision` and the operational override bundle in the JSON body.
+rejects a mismatched revision with a 409 conflict carrying the current
+revision; it writes with `allowOverwrite: true` and does not read, compare,
+or forward any Blob ETag. Conflict recovery constructs one fresh PUT with the
+current revision from one bounded GET. No realtime synchronization or merge
+engine is added. The server authors `revision`, `updatedAt`, and
+`updatedBy`; the client submits only `baseRevision` and the operational
+override bundle in the JSON body.
 
 Production uses
 `trips/oceania-marina-2026/operational-snapshot.json`; every non-production
@@ -79,11 +91,15 @@ remote read.
 Local override storage carries `baseRevision`, `lastModified`,
 `lastSuccessfulSyncAt`, and a `synced` or `unsynced` state. Legacy `conflict`
 state migrates to `unsynced`. Every operational Save persists locally first and
-starts an automatic whole-payload upload. Network failures remain `unsynced`
-and retry on normal lifecycle triggers and a modest in-memory timer. A
-revision conflict causes one bounded GET and automatic PUT retry against the
-observed revision. No manual trip-sync control or durable background queue is
-used.
+starts an automatic whole-payload upload. Only one PUT is ever in flight from
+Yoav's device; an edit made while a PUT is outstanding does not start a second
+concurrent request, and the settled request immediately triggers one more
+upload of the current latest payload if it no longer matches what was sent.
+The status only becomes Synced once the payload the server accepted still
+matches the latest local payload. Network failures remain `unsynced` and
+retry on normal lifecycle triggers and a modest in-memory timer. A revision
+conflict causes one bounded GET and automatic PUT retry against the observed
+revision. No manual trip-sync control or durable background queue is used.
 
 ## Alternatives considered
 
@@ -106,7 +122,9 @@ used.
   intact.
 - Offline startup and editing can remain available through bundled fallback,
   an accepted IndexedDB cache, and one pending candidate.
-- Revision comparison plus an ETag precondition prevents silent lost updates.
+- Revision comparison, combined with client-side single-flight and
+  coalescing on Yoav's device, prevents silent lost updates without a
+  Blob-level conditional-write precondition.
 - Revision conflicts are retried automatically with Yoav's complete local
   master; no merge is attempted.
 - The Vercel API and environment configuration become part of the operational

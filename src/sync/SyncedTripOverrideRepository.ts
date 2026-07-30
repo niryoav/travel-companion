@@ -199,14 +199,12 @@ implements TripOverrideRepository {
 
     let baseRevision =
       this.localRepository.getMetadata().baseRevision
-    let baseEtag: string | undefined
     if (baseRevision === null) {
       const observed =
         await this.dependencies.apiClient.getTripSnapshot(
           this.dependencies.tripId,
         )
       baseRevision = observed?.snapshot.revision ?? 0
-      baseEtag = observed?.etag
     }
 
     try {
@@ -214,7 +212,6 @@ implements TripOverrideRepository {
         this.dependencies.tripId,
         baseRevision,
         operationalOverrides,
-        baseEtag,
       )
     } catch (error) {
       if (
@@ -236,7 +233,6 @@ implements TripOverrideRepository {
         this.dependencies.tripId,
         retryBaseRevision,
         operationalOverrides,
-        latest?.etag,
       )
     }
   }

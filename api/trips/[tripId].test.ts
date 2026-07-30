@@ -21,14 +21,10 @@ function request(
   tripId = 'oceania-marina-2026',
   method = 'GET',
   body?: unknown,
-  ifMatch?: string,
 ): Request {
   const headers = new Headers()
   if (body !== undefined) {
     headers.set('Content-Type', 'application/json')
-  }
-  if (ifMatch) {
-    headers.set('If-Match', ifMatch)
   }
   return new Request(`https://example.test/api/trips/${tripId}`, {
     method,
@@ -45,7 +41,6 @@ describe('GET /api/trips/[tripId]', () => {
         readSnapshot: vi.fn(async () => ({
           status: 'FOUND' as const,
           snapshot,
-          etag: 'etag-1',
         })),
       },
     )
@@ -55,7 +50,6 @@ describe('GET /api/trips/[tripId]', () => {
     expect(response.headers.get('Content-Type')).toContain(
       'application/json',
     )
-    expect(response.headers.get('ETag')).toBe('"etag-1"')
     const responseText = await response.clone().text()
     expect(await response.json()).toEqual(snapshot)
     expect(responseText).not.toContain('blob.vercel')
@@ -139,7 +133,6 @@ describe('PUT /api/trips/[tripId]', () => {
       'oceania-marina-2026',
       putBody,
       'yoav',
-      undefined,
     )
   })
 
@@ -149,9 +142,7 @@ describe('PUT /api/trips/[tripId]', () => {
       {
         writeSnapshot: vi.fn(async () => ({
           status: 'CONFLICT' as const,
-          currentEtag: 'etag-4',
           currentRevision: 4,
-          reason: 'REVISION_MISMATCH' as const,
         })),
       },
     )
@@ -159,39 +150,8 @@ describe('PUT /api/trips/[tripId]', () => {
     expect(response.status).toBe(409)
     expect(await response.json()).toEqual({
       code: 'REVISION_CONFLICT',
-      currentEtag: 'etag-4',
       currentRevision: 4,
-      reason: 'REVISION_MISMATCH',
     })
-  })
-
-  it('passes a normalized GET ETag to the matching retry write', async () => {
-    const accepted = {
-      ...snapshot,
-      revision: 2,
-      updatedAt: '2026-07-29T13:00:00Z',
-    }
-    const writeSnapshot = vi.fn(async () => ({
-      status: 'WRITTEN' as const,
-      snapshot: accepted,
-    }))
-    const response = await handleTripSnapshotRequest(
-      request(
-        'oceania-marina-2026',
-        'PUT',
-        putBody,
-        '"etag-1"',
-      ),
-      { writeSnapshot },
-    )
-
-    expect(response.status).toBe(200)
-    expect(writeSnapshot).toHaveBeenCalledWith(
-      'oceania-marina-2026',
-      putBody,
-      'yoav',
-      'etag-1',
-    )
   })
 
   it('logs safe request and response stages without payload data', async () => {
@@ -200,12 +160,7 @@ describe('PUT /api/trips/[tripId]', () => {
       error: vi.fn(),
     } satisfies TripSyncDiagnostics
     const response = await handleTripSnapshotRequest(
-      request(
-        'oceania-marina-2026',
-        'PUT',
-        putBody,
-        '"etag-1"',
-      ),
+      request('oceania-marina-2026', 'PUT', putBody),
       {
         diagnostics,
         writeSnapshot: vi.fn(async () => ({
@@ -221,45 +176,11 @@ describe('PUT /api/trips/[tripId]', () => {
     ).toEqual([
       'REQUEST_BODY_PARSED',
       'BASE_REVISION_READ',
-      'IF_MATCH_HEADER_READ',
-      'ETAG_NORMALIZED',
       'RESPONSE_SERIALIZED',
     ])
     expect(JSON.stringify(diagnostics.info.mock.calls)).not.toContain(
       'operationalOverrides',
     )
-  })
-
-  it('rejects a weak If-Match value before writing', async () => {
-    const writeSnapshot = vi.fn()
-    const response = await handleTripSnapshotRequest(
-      request(
-        'oceania-marina-2026',
-        'PUT',
-        putBody,
-        'W/"etag-1"',
-      ),
-      { writeSnapshot },
-    )
-
-    expect(response.status).toBe(400)
-    expect(writeSnapshot).not.toHaveBeenCalled()
-  })
-
-  it('rejects a malformed quoted If-Match before writing', async () => {
-    const writeSnapshot = vi.fn()
-    const response = await handleTripSnapshotRequest(
-      request(
-        'oceania-marina-2026',
-        'PUT',
-        putBody,
-        '"unterminated',
-      ),
-      { writeSnapshot },
-    )
-
-    expect(response.status).toBe(400)
-    expect(writeSnapshot).not.toHaveBeenCalled()
   })
 
   it('reports response serialization failures at the safe stage', async () => {
