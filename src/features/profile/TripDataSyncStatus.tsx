@@ -1,10 +1,12 @@
 import { useSyncExternalStore } from 'react'
 
 import { SurfaceCard } from '../../components/SurfaceCard'
+import type { TravelerId } from '../../domain/trip/tripTypes'
 import type { TripOverrideRepository } from '../../storage/TripOverrideRepository'
 
 interface TripDataSyncStatusProps {
   repository: TripOverrideRepository
+  travelerId: TravelerId
 }
 
 function formatLastSynced(value: string | undefined): string {
@@ -19,6 +21,7 @@ function formatLastSynced(value: string | undefined): string {
 
 export function TripDataSyncStatus({
   repository,
+  travelerId,
 }: TripDataSyncStatusProps) {
   useSyncExternalStore(
     repository.subscribe,
@@ -26,17 +29,26 @@ export function TripDataSyncStatus({
     repository.getSnapshot,
   )
   const metadata = repository.getSyncMetadata?.()
+  const isEditor = travelerId === 'traveler-yoav'
 
   return (
     <SurfaceCard className="trip-data-status">
       <p className="card-eyebrow">Trip data</p>
-      <h2>Up to date</h2>
-      <p>
-        Last synced:{' '}
-        <time dateTime={metadata?.lastSuccessfulSyncAt}>
-          {formatLastSynced(metadata?.lastSuccessfulSyncAt)}
-        </time>
-      </p>
+      <h2>
+        {isEditor
+          ? metadata?.syncState === 'synced'
+            ? 'Synced'
+            : 'Saved'
+          : 'Up to date'}
+      </h2>
+      {!isEditor ? (
+        <p>
+          Last synced:{' '}
+          <time dateTime={metadata?.lastSuccessfulSyncAt}>
+            {formatLastSynced(metadata?.lastSuccessfulSyncAt)}
+          </time>
+        </p>
+      ) : null}
     </SurfaceCard>
   )
 }

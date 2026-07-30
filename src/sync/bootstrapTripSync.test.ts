@@ -77,7 +77,14 @@ class FakeCache implements TripSnapshotCache {
 
 function client(remote: TripSnapshot | null): TripSnapshotApiClient {
   return {
-    getTripSnapshot: vi.fn(async () => remote),
+    getTripSnapshot: vi.fn(async () =>
+      remote
+        ? {
+            etag: `etag-${remote.revision}`,
+            snapshot: remote,
+          }
+        : null,
+    ),
     putTripSnapshot: vi.fn(
       async (
         _tripId: string,
@@ -139,6 +146,7 @@ describe('bootstrapTripSync role-based startup', () => {
           }),
         }),
       }),
+      undefined,
     )
   })
 

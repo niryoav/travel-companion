@@ -5,8 +5,10 @@ import {
   type TripOverrideBundle,
 } from '../domain/trip/tripOverrides'
 import type { TripSnapshot } from '../domain/trip/tripSnapshot'
-import type { TravelerId } from '../domain/trip/tripTypes'
+import type { TravelerId, TripData } from '../domain/trip/tripTypes'
 import {
+  HttpTripSnapshotApiClient,
+  TRIP_SNAPSHOT_REQUEST_TIMEOUT_MS,
   TripSnapshotApiError,
   type TripSnapshotApiClient,
 } from '../services/TripSnapshotApiClient'
@@ -56,6 +58,80 @@ function deferred<T>() {
     reject = onReject
   })
   return { promise, reject, resolve }
+}
+
+const productionTrip: TripData = {
+  ...tripFixture,
+  trip: {
+    ...tripFixture.trip,
+    id: 'trip-oceania-marina-2026',
+  },
+}
+
+function productionBundle(note: string): TripOverrideBundle {
+  return {
+    ...emptyTripOverrideBundle(productionTrip.trip.id),
+    dayOverrides: {
+      'day-2030-05-11': {
+        dayId: 'day-2030-05-11',
+        note,
+        updatedAt: '2030-05-10T12:00:00Z',
+      },
+    },
+  }
+}
+
+function productionSnapshot(
+  revision: number,
+  operationalOverrides: TripOverrideBundle,
+): TripSnapshot {
+  return {
+    tripId: productionTrip.trip.id,
+    schemaVersion: 1,
+    revision,
+    updatedAt: `2030-05-10T12:0${revision}:00Z`,
+    updatedBy: 'yoav',
+    operationalOverrides,
+  }
+}
+
+function createHttpRepository(
+  fetchRequest: typeof fetch,
+  baseRevision: number | null,
+) {
+  const initial = productionBundle('Saved on device')
+  const local = new LocalTripOverrideRepository(
+    window.localStorage,
+    productionTrip,
+    () => new Date('2030-05-10T13:00:00Z'),
+    initial,
+    {
+      baseRevision,
+      lastModified: '2030-05-10T12:00:00Z',
+      syncState: 'unsynced',
+    },
+  )
+  const repository = new SyncedTripOverrideRepository(
+    local,
+    local.getSnapshot(),
+    {
+      apiClient: new HttpTripSnapshotApiClient(
+        productionTrip,
+        fetchRequest,
+      ),
+      cache: {
+        getAcceptedSnapshot: vi.fn(async () => null),
+        saveAcceptedSnapshot: vi.fn(async () => {}),
+        getPendingSnapshot: vi.fn(async () => null),
+        savePendingSnapshot: vi.fn(async () => {}),
+        deletePendingSnapshot: vi.fn(async () => {}),
+      },
+      getTravelerId: () => 'traveler-yoav',
+      retryDelayMs: 1_000,
+      tripId: productionTrip.trip.id,
+    },
+  )
+  return { local, repository }
 }
 
 function createRepository({
@@ -244,6 +320,187 @@ describe('SyncedTripOverrideRepository role-based sync', () => {
     expect(putTripSnapshot).toHaveBeenCalledTimes(2)
   })
 
+  it('releases a timed-out initial GET and succeeds on the automatic retry', async () => {
+    vi.useFakeTimers()
+    let getCount = 0
+    const context: { local?: LocalTripOverrideRepository } = {}
+    const fetchRequest = vi.fn<typeof fetch>(
+      async (_input, init) => {
+        if (init?.method === 'GET') {
+          getCount += 1
+          if (getCount === 1) {
+            return new Promise<Response>((_resolve, reject) => {
+              init.signal?.addEventListener('abort', () => {
+                reject(new DOMException('Aborted', 'AbortError'))
+              })
+            })
+          }
+          return Response.json(
+            { code: 'TRIP_NOT_FOUND' },
+            { status: 404 },
+          )
+        }
+        return Response.json(
+          productionSnapshot(
+            1,
+            context.local?.getSnapshot() ??
+              productionBundle('Saved on device'),
+          ),
+        )
+      },
+    )
+    const created = createHttpRepository(fetchRequest, null)
+    context.local = created.local
+
+    const firstAttempt =
+      created.repository.synchronizeForCurrentRole()
+    await vi.advanceTimersByTimeAsync(
+      TRIP_SNAPSHOT_REQUEST_TIMEOUT_MS,
+    )
+    await firstAttempt
+
+    expect(created.local.getMetadata().syncState).toBe('unsynced')
+    expect(fetchRequest).toHaveBeenCalledTimes(1)
+    expect(vi.getTimerCount()).toBe(1)
+
+    await vi.advanceTimersByTimeAsync(1_000)
+    await created.repository.synchronizeForCurrentRole()
+
+    expect(fetchRequest).toHaveBeenCalledTimes(3)
+    expect(created.local.getMetadata()).toMatchObject({
+      baseRevision: 1,
+      syncState: 'synced',
+    })
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
+  it('recovers after a 409 recovery GET times out on the first attempt', async () => {
+    vi.useFakeTimers()
+    let getCount = 0
+    let putCount = 0
+    const context: { local?: LocalTripOverrideRepository } = {}
+    const fetchRequest = vi.fn<typeof fetch>(
+      async (_input, init) => {
+        if (init?.method === 'GET') {
+          getCount += 1
+          if (getCount === 1) {
+            return new Promise<Response>((_resolve, reject) => {
+              init.signal?.addEventListener('abort', () => {
+                reject(new DOMException('Aborted', 'AbortError'))
+              })
+            })
+          }
+          return Response.json(
+            productionSnapshot(2, productionBundle('Remote')),
+            { headers: { ETag: '"etag-2"' } },
+          )
+        }
+
+        putCount += 1
+        if (putCount < 3) {
+          return Response.json(
+            {
+              code: 'REVISION_CONFLICT',
+              currentRevision: 2,
+            },
+            { status: 409 },
+          )
+        }
+        return Response.json(
+          productionSnapshot(
+            3,
+            context.local?.getSnapshot() ??
+              productionBundle('Saved on device'),
+          ),
+        )
+      },
+    )
+    const created = createHttpRepository(fetchRequest, 1)
+    context.local = created.local
+
+    const firstAttempt =
+      created.repository.synchronizeForCurrentRole()
+    await vi.advanceTimersByTimeAsync(
+      TRIP_SNAPSHOT_REQUEST_TIMEOUT_MS,
+    )
+    await firstAttempt
+
+    expect({ getCount, putCount }).toEqual({
+      getCount: 1,
+      putCount: 1,
+    })
+    expect(created.local.getMetadata().syncState).toBe('unsynced')
+    expect(vi.getTimerCount()).toBe(1)
+
+    await vi.advanceTimersByTimeAsync(1_000)
+    await created.repository.synchronizeForCurrentRole()
+
+    expect({ getCount, putCount }).toEqual({
+      getCount: 2,
+      putCount: 3,
+    })
+    expect(created.local.getMetadata()).toMatchObject({
+      baseRevision: 3,
+      syncState: 'synced',
+    })
+    expect(
+      created.local.getSnapshot().dayOverrides['day-2030-05-11']?.note,
+    ).toBe('Saved on device')
+    expect(vi.getTimerCount()).toBe(0)
+  })
+
+  it('rebuilds a 409 retry from one GET revision and ETag pair', async () => {
+    const context: { local?: LocalTripOverrideRepository } = {}
+    const fetchRequest = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        Response.json(
+          {
+            code: 'REVISION_CONFLICT',
+            currentRevision: 7,
+            reason: 'REVISION_MISMATCH',
+          },
+          { status: 409 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        Response.json(
+          productionSnapshot(7, productionBundle('Remote')),
+          { headers: { ETag: '"etag-7"' } },
+        ),
+      )
+      .mockImplementationOnce(async () =>
+        Response.json(
+          productionSnapshot(
+            8,
+            context.local?.getSnapshot() ??
+              productionBundle('Saved on device'),
+          ),
+        ),
+      )
+    const created = createHttpRepository(fetchRequest, 2)
+    context.local = created.local
+
+    await created.repository.synchronizeForCurrentRole()
+
+    expect(
+      fetchRequest.mock.calls.map(([, init]) => init?.method),
+    ).toEqual(['PUT', 'GET', 'PUT'])
+    const initialPut = fetchRequest.mock.calls[0]?.[1]
+    const retryPut = fetchRequest.mock.calls[2]?.[1]
+    expect(JSON.parse(String(initialPut?.body)).baseRevision).toBe(2)
+    expect(initialPut?.headers).not.toHaveProperty('If-Match')
+    expect(JSON.parse(String(retryPut?.body)).baseRevision).toBe(7)
+    expect(retryPut?.headers).toMatchObject({
+      'If-Match': '"etag-7"',
+    })
+    expect(retryPut).not.toBe(initialPut)
+    expect(created.local.getMetadata()).toMatchObject({
+      baseRevision: 8,
+      syncState: 'synced',
+    })
+  })
+
   it('automatically retries one revision conflict with Yoav’s full payload', async () => {
     const latestRemote = snapshot(4, bundle('Remote'))
     const putTripSnapshot = vi
@@ -252,7 +509,10 @@ describe('SyncedTripOverrideRepository role-based sync', () => {
         new TripSnapshotApiError('REVISION_CONFLICT', 4),
       )
       .mockResolvedValueOnce(snapshot(5, bundle('Yoav master')))
-    const getTripSnapshot = vi.fn(async () => latestRemote)
+    const getTripSnapshot = vi.fn(async () => ({
+      etag: 'etag-4',
+      snapshot: latestRemote,
+    }))
     const { local, repository } = createRepository({
       apiClient: { getTripSnapshot, putTripSnapshot },
     })
@@ -267,6 +527,7 @@ describe('SyncedTripOverrideRepository role-based sync', () => {
     expect(getTripSnapshot).toHaveBeenCalledOnce()
     expect(putTripSnapshot).toHaveBeenCalledTimes(2)
     expect(putTripSnapshot.mock.calls[1]?.[1]).toBe(4)
+    expect(putTripSnapshot.mock.calls[1]?.[3]).toBe('etag-4')
     expect(
       putTripSnapshot.mock.calls[1]?.[2].dayOverrides[
         'day-2030-05-11'
@@ -296,11 +557,19 @@ describe('SyncedTripOverrideRepository role-based sync', () => {
   })
 
   it('uses remote only as a revision safeguard for Yoav', async () => {
-    const getTripSnapshot = vi.fn(async () =>
-      snapshot(4, bundle('Remote must not replace local')),
-    )
-    const putTripSnapshot = vi.fn(async (_tripId, baseRevision, value) =>
-      snapshot(baseRevision + 1, value),
+    const getTripSnapshot = vi.fn(async () => ({
+      etag: 'etag-4',
+      snapshot: snapshot(
+        4,
+        bundle('Remote must not replace local'),
+      ),
+    }))
+    const putTripSnapshot = vi.fn(
+      async (
+        ...args: Parameters<
+          TripSnapshotApiClient['putTripSnapshot']
+        >
+      ) => snapshot(args[1] + 1, args[2]),
     )
     const { repository } = createRepository({
       apiClient: { getTripSnapshot, putTripSnapshot },
@@ -315,6 +584,7 @@ describe('SyncedTripOverrideRepository role-based sync', () => {
       repository.getSnapshot().dayOverrides['day-2030-05-11']?.note,
     ).toBe('Yoav local master')
     expect(putTripSnapshot.mock.calls[0]?.[1]).toBe(4)
+    expect(putTripSnapshot.mock.calls[0]?.[3]).toBe('etag-4')
   })
 
   it('downloads for Isabel and never uploads', async () => {
@@ -322,7 +592,10 @@ describe('SyncedTripOverrideRepository role-based sync', () => {
     const putTripSnapshot = vi.fn()
     const { cache, local, repository } = createRepository({
       apiClient: {
-        getTripSnapshot: vi.fn(async () => remote),
+        getTripSnapshot: vi.fn(async () => ({
+          etag: 'etag-3',
+          snapshot: remote,
+        })),
         putTripSnapshot,
       },
       initial: bundle('Cached shared'),

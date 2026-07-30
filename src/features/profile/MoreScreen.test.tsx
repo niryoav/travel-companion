@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { PwaUpdateManager } from '../../pwa/PwaUpdateManager'
@@ -77,6 +77,10 @@ describe('MoreScreen role-based trip status', () => {
   it('renders build-injected information without requesting the Vercel API', () => {
     const fetchSpy = vi.fn()
     vi.stubGlobal('fetch', fetchSpy)
+    const repository = new LocalTripOverrideRepository(
+      window.localStorage,
+      tripFixture,
+    )
 
     render(
       <MoreScreen
@@ -89,9 +93,7 @@ describe('MoreScreen role-based trip status', () => {
         pwaUpdateManager={new PwaUpdateManager(false)}
         travelers={oceaniaMarina2026TripData.travelers}
         tripDataVersion="test-data"
-        tripOverrideRepository={
-          new LocalTripOverrideRepository(window.localStorage, tripFixture)
-        }
+        tripOverrideRepository={repository}
         tripStateRepository={
           {
             getTravelerId: () => 'traveler-yoav',
@@ -104,6 +106,26 @@ describe('MoreScreen role-based trip status', () => {
     expect(screen.getByRole('heading', { name: 'App version' }))
       .toBeInTheDocument()
     expect(screen.getByText('abc1234')).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Saved' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /sync|retry|trip update/i }),
+    ).not.toBeInTheDocument()
+
+    act(() => {
+      repository.acceptSyncedSnapshot({
+        tripId: tripFixture.trip.id,
+        schemaVersion: 1,
+        revision: 1,
+        updatedAt: '2030-05-10T13:00:00Z',
+        updatedBy: 'yoav',
+        operationalOverrides: repository.getSnapshot(),
+      })
+    })
+    expect(
+      screen.getByRole('heading', { name: 'Synced' }),
+    ).toBeInTheDocument()
     expect(fetchSpy).not.toHaveBeenCalled()
   })
 })

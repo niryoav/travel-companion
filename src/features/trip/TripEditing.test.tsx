@@ -9,6 +9,7 @@ import {
   vi,
 } from 'vitest'
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -212,7 +213,7 @@ describe('Trip operational editing', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('shows Saved without legacy share or retry controls', () => {
+  it('does not show a persistent status or retry controls for saved local changes', () => {
     const baseline = editableFixture()
     const local = new LocalTripOverrideRepository(
       window.localStorage,
@@ -253,9 +254,8 @@ describe('Trip operational editing', () => {
     expect(
       screen.queryByRole('button', { name: 'Share saved changes' }),
     ).not.toBeInTheDocument()
-    expect(
-      screen.getByRole('status'),
-    ).toHaveTextContent('Saved')
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    expect(screen.queryByText('Saved')).not.toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: 'Try sharing again' }),
     ).not.toBeInTheDocument()
@@ -264,7 +264,7 @@ describe('Trip operational editing', () => {
     )
   })
 
-  it('shows only Synced after server confirmation', () => {
+  it('does not show a persistent status for previously synced changes', () => {
     const baseline = editableFixture()
     const repository = new LocalTripOverrideRepository(
       window.localStorage,
@@ -296,8 +296,114 @@ describe('Trip operational editing', () => {
       />,
     )
 
-    expect(screen.getByRole('status')).toHaveTextContent('Synced')
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    expect(screen.queryByText('Synced')).not.toBeInTheDocument()
     expect(screen.queryByText('Saved')).not.toBeInTheDocument()
+  })
+
+  it('shows Saved after an edit, changes it to Synced, then dismisses it', async () => {
+    vi.useFakeTimers()
+    try {
+      const baseline = editableFixture()
+      const repository = new LocalTripOverrideRepository(
+        window.localStorage,
+        baseline,
+      )
+      render(
+        <TripEditingHarness
+          baseline={baseline}
+          repository={repository}
+        />,
+      )
+      const todayCard = screen.getByText('Today').closest('details')
+      if (!todayCard) {
+        throw new Error('Today card missing')
+      }
+      fireEvent.click(
+        within(todayCard).getByRole('button', { name: 'Edit' }),
+      )
+      fireEvent.change(
+        screen.getAllByLabelText('Short operational note')[0],
+        { target: { value: 'Temporary confirmation' } },
+      )
+      fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+      expect(screen.getByRole('status')).toHaveTextContent('Saved')
+      expect(screen.getByRole('status')).toHaveClass(
+        'trip-sync-confirmation',
+      )
+
+      await act(async () => {
+        repository.acceptSyncedSnapshot({
+          tripId: baseline.trip.id,
+          schemaVersion: 1,
+          revision: 2,
+          updatedAt: '2030-05-10T13:00:00Z',
+          updatedBy: 'yoav',
+          operationalOverrides: repository.getSnapshot(),
+        })
+      })
+      expect(screen.getByRole('status')).toHaveTextContent('Synced')
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2_500)
+      })
+      expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('dismisses the Saved confirmation when synchronization stays pending', async () => {
+    vi.useFakeTimers()
+    try {
+      const baseline = editableFixture()
+      const repository = new LocalTripOverrideRepository(
+        window.localStorage,
+        baseline,
+      )
+      render(
+        <TripEditingHarness
+          baseline={baseline}
+          repository={repository}
+        />,
+      )
+      const todayCard = screen.getByText('Today').closest('details')
+      if (!todayCard) {
+        throw new Error('Today card missing')
+      }
+      fireEvent.click(
+        within(todayCard).getByRole('button', { name: 'Edit' }),
+      )
+      fireEvent.change(
+        screen.getAllByLabelText('Short operational note')[0],
+        { target: { value: 'Still saved locally' } },
+      )
+      fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+      expect(screen.getByRole('status')).toHaveTextContent('Saved')
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(5_000)
+      })
+      expect(screen.queryByRole('status')).not.toBeInTheDocument()
+      expect(repository.getSyncMetadata?.()?.syncState).toBe(
+        'unsynced',
+      )
+
+      await act(async () => {
+        repository.acceptSyncedSnapshot({
+          tripId: baseline.trip.id,
+          schemaVersion: 1,
+          revision: 2,
+          updatedAt: '2030-05-10T13:00:00Z',
+          updatedBy: 'yoav',
+          operationalOverrides: repository.getSnapshot(),
+        })
+      })
+      expect(screen.getByRole('status')).toHaveTextContent('Synced')
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('saves immediately from the existing Save action', async () => {

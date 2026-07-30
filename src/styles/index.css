@@ -1583,16 +1583,20 @@ a:focus-visible {
   color: var(--text);
 }
 
-.trip-sync-status {
-  justify-self: start;
+.trip-sync-confirmation {
+  position: fixed;
+  z-index: 30;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: calc(5.25rem + env(safe-area-inset-bottom));
   margin: 0;
-  border: 1px solid var(--champagne);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  background: var(--ocean-800);
+  box-shadow: 0 0.45rem 1.4rem rgb(0 15 32 / 30%);
   color: var(--champagne);
-  padding: 0.35rem 0.7rem;
+  padding: 0.45rem 0.75rem;
   font-size: 0.78rem;
   font-weight: 800;
+  pointer-events: none;
 }
 
 .trip-edit-backdrop {

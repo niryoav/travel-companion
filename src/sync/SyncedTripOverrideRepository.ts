@@ -199,12 +199,14 @@ implements TripOverrideRepository {
 
     let baseRevision =
       this.localRepository.getMetadata().baseRevision
+    let baseEtag: string | undefined
     if (baseRevision === null) {
       const observed =
         await this.dependencies.apiClient.getTripSnapshot(
           this.dependencies.tripId,
         )
-      baseRevision = observed?.revision ?? 0
+      baseRevision = observed?.snapshot.revision ?? 0
+      baseEtag = observed?.etag
     }
 
     try {
@@ -212,6 +214,7 @@ implements TripOverrideRepository {
         this.dependencies.tripId,
         baseRevision,
         operationalOverrides,
+        baseEtag,
       )
     } catch (error) {
       if (
@@ -228,11 +231,12 @@ implements TripOverrideRepository {
           this.dependencies.tripId,
         )
       const retryBaseRevision =
-        latest?.revision ?? error.currentRevision ?? 0
+        latest?.snapshot.revision ?? error.currentRevision ?? 0
       return this.dependencies.apiClient.putTripSnapshot(
         this.dependencies.tripId,
         retryBaseRevision,
         operationalOverrides,
+        latest?.etag,
       )
     }
   }
@@ -249,26 +253,27 @@ implements TripOverrideRepository {
       if (!remote) {
         return
       }
+      const { snapshot } = remote
 
       const metadata = this.localRepository.getMetadata()
       if (
         metadata.syncState === 'synced' &&
         metadata.baseRevision !== null &&
-        remote.revision < metadata.baseRevision
+        snapshot.revision < metadata.baseRevision
       ) {
         return
       }
       if (
         metadata.syncState === 'synced' &&
-        remote.revision === metadata.baseRevision &&
+        snapshot.revision === metadata.baseRevision &&
         metadata.lastSuccessfulSyncAt
       ) {
         return
       }
 
-      this.acceptSnapshot(remote)
+      this.acceptSnapshot(snapshot)
       try {
-        await this.dependencies.cache.saveAcceptedSnapshot(remote)
+        await this.dependencies.cache.saveAcceptedSnapshot(snapshot)
       } catch {
         // The accepted follower snapshot is already safe in localStorage.
       }

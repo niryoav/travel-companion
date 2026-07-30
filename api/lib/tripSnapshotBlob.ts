@@ -12,6 +12,7 @@ import {
   type TripSnapshot,
 } from '../../src/domain/trip/tripSnapshot.js'
 import type { TripData } from '../../src/domain/trip/tripTypes.js'
+import { parseStrongEtag } from '../../src/domain/trip/tripSnapshotEtag.js'
 import { oceaniaMarina2026TripData } from '../../src/trips/oceania-marina-2026/tripData.js'
 
 const TRIP_SNAPSHOT_PATHS = {
@@ -22,14 +23,19 @@ const TRIP_SNAPSHOT_PATHS = {
 export type SupportedSharedTripRouteId = keyof typeof TRIP_SNAPSHOT_PATHS
 
 export type TripSnapshotBlobReadResult =
-  | { status: 'FOUND'; snapshot: TripSnapshot }
+  | { status: 'FOUND'; snapshot: TripSnapshot; etag: string }
   | { status: 'NOT_FOUND' }
   | { status: 'INVALID' }
   | { status: 'UNAVAILABLE' }
 
 export type TripSnapshotBlobWriteResult =
   | { status: 'WRITTEN'; snapshot: TripSnapshot }
-  | { status: 'CONFLICT'; currentRevision: number }
+  | {
+      status: 'CONFLICT'
+      currentRevision: number
+      currentEtag?: string
+      reason: 'REVISION_MISMATCH' | 'ETAG_MISMATCH' | 'BLOB_PRECONDITION'
+    }
   | { status: 'NOT_FOUND' }
   | { status: 'INVALID' }
   | { status: 'UNAVAILABLE' }
@@ -104,8 +110,9 @@ async function readTripSnapshotBlobRecord(
 
     const value = await parseBlobJson(result)
     const snapshot = parseTripSnapshot(value, tripDataFor(tripId))
-    return snapshot
-      ? { status: 'FOUND', snapshot, etag: result.blob.etag }
+    const etag = parseStrongEtag(result.blob.etag)
+    return snapshot && etag
+      ? { status: 'FOUND', snapshot, etag }
       : { status: 'INVALID' }
   } catch (error) {
     if (error instanceof BlobNotFoundError) {
@@ -129,7 +136,11 @@ export async function readTripSnapshotBlob(
     environment,
   )
   if (result.status === 'FOUND') {
-    return { status: 'FOUND', snapshot: result.snapshot }
+    return {
+      status: 'FOUND',
+      snapshot: result.snapshot,
+      etag: result.etag,
+    }
   }
   return result
 }
@@ -143,6 +154,7 @@ export async function writeTripSnapshotBlob(
     writeBlob?: PrivateBlobWriter
     now?: () => Date
     environment?: SharedSnapshotEnvironment
+    expectedEtag?: string
   } = {},
 ): Promise<TripSnapshotBlobWriteResult> {
   if (!isSupportedSharedTripId(tripId)) {
@@ -164,7 +176,28 @@ export async function writeTripSnapshotBlob(
   const currentRevision =
     current.status === 'FOUND' ? current.snapshot.revision : 0
   if (request.baseRevision !== currentRevision) {
-    return { status: 'CONFLICT', currentRevision }
+    return {
+      status: 'CONFLICT',
+      currentRevision,
+      currentEtag:
+        current.status === 'FOUND' ? current.etag : undefined,
+      reason: 'REVISION_MISMATCH',
+    }
+  }
+  if (
+    dependencies.expectedEtag &&
+    (
+      current.status !== 'FOUND' ||
+      dependencies.expectedEtag !== current.etag
+    )
+  ) {
+    return {
+      status: 'CONFLICT',
+      currentRevision,
+      currentEtag:
+        current.status === 'FOUND' ? current.etag : undefined,
+      reason: 'ETAG_MISMATCH',
+    }
   }
 
   const snapshot: TripSnapshot = {
@@ -184,7 +217,7 @@ export async function writeTripSnapshotBlob(
       ...(current.status === 'FOUND'
         ? {
             allowOverwrite: true,
-            ifMatch: current.etag,
+            ifMatch: dependencies.expectedEtag ?? current.etag,
           }
         : {}),
     })
@@ -202,6 +235,9 @@ export async function writeTripSnapshotBlob(
           latest.status === 'FOUND'
             ? latest.snapshot.revision
             : currentRevision,
+        currentEtag:
+          latest.status === 'FOUND' ? latest.etag : undefined,
+        reason: 'BLOB_PRECONDITION',
       }
     }
     return { status: 'UNAVAILABLE' }

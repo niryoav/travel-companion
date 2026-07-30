@@ -5,13 +5,25 @@ import {
 } from '../domain/trip/tripSnapshot'
 import type { TripOverrideBundle } from '../domain/trip/tripOverrides'
 import type { TripData, TripId } from '../domain/trip/tripTypes'
+import {
+  formatStrongEtag,
+  parseStrongEtag,
+} from '../domain/trip/tripSnapshotEtag'
+
+export interface TripSnapshotReadResult {
+  etag: string
+  snapshot: TripSnapshot
+}
 
 export interface TripSnapshotApiClient {
-  getTripSnapshot(tripId: TripId): Promise<TripSnapshot | null>
+  getTripSnapshot(
+    tripId: TripId,
+  ): Promise<TripSnapshotReadResult | null>
   putTripSnapshot(
     tripId: TripId,
     baseRevision: number,
     operationalOverrides: TripOverrideBundle,
+    baseEtag?: string,
   ): Promise<TripSnapshot>
 }
 
@@ -32,7 +44,29 @@ export class TripSnapshotApiError extends Error {
 }
 
 type Fetch = typeof fetch
-export const TRIP_SNAPSHOT_PUT_TIMEOUT_MS = 12_000
+export const TRIP_SNAPSHOT_REQUEST_TIMEOUT_MS = 12_000
+
+async function fetchWithTimeout(
+  fetchRequest: Fetch,
+  input: Parameters<Fetch>[0],
+  init: RequestInit,
+): Promise<Response> {
+  const controller = new AbortController()
+  const timeoutId = globalThis.setTimeout(
+    () => controller.abort(),
+    TRIP_SNAPSHOT_REQUEST_TIMEOUT_MS,
+  )
+  try {
+    return await fetchRequest.call(globalThis, input, {
+      ...init,
+      signal: controller.signal,
+    })
+  } catch {
+    throw new TripSnapshotApiError('NETWORK_FAILURE')
+  } finally {
+    globalThis.clearTimeout(timeoutId)
+  }
+}
 
 function routeIdFor(tripId: TripId): string | null {
   return tripId === 'trip-oceania-marina-2026'
@@ -57,26 +91,21 @@ implements TripSnapshotApiClient {
 
   async getTripSnapshot(
     tripId: TripId,
-  ): Promise<TripSnapshot | null> {
+  ): Promise<TripSnapshotReadResult | null> {
     const routeId = routeIdFor(tripId)
     if (!routeId || tripId !== this.tripData.trip.id) {
       throw new TripSnapshotApiError('UNEXPECTED_STATUS')
     }
 
-    let response: Response
-    try {
-      response = await this.fetchRequest.call(
-        globalThis,
-        `/api/trips/${encodeURIComponent(routeId)}`,
-        {
-          method: 'GET',
-          cache: 'no-store',
-          headers: { Accept: 'application/json' },
-        },
-      )
-    } catch {
-      throw new TripSnapshotApiError('NETWORK_FAILURE')
-    }
+    const response = await fetchWithTimeout(
+      this.fetchRequest,
+      `/api/trips/${encodeURIComponent(routeId)}`,
+      {
+        method: 'GET',
+        cache: 'no-store',
+        headers: { Accept: 'application/json' },
+      },
+    )
 
     if (response.status === 404) {
       const body = await readJson(response)
@@ -101,13 +130,18 @@ implements TripSnapshotApiClient {
     if (!snapshot) {
       throw new TripSnapshotApiError('INVALID_RESPONSE')
     }
-    return snapshot
+    const etag = parseStrongEtag(response.headers.get('ETag'))
+    if (!etag) {
+      throw new TripSnapshotApiError('INVALID_RESPONSE')
+    }
+    return { etag, snapshot }
   }
 
   async putTripSnapshot(
     tripId: TripId,
     baseRevision: number,
     operationalOverrides: TripOverrideBundle,
+    baseEtag?: string,
   ): Promise<TripSnapshot> {
     const routeId = routeIdFor(tripId)
     if (!routeId || tripId !== this.tripData.trip.id) {
@@ -117,24 +151,26 @@ implements TripSnapshotApiClient {
       baseRevision,
       operationalOverrides,
     }
+    const ifMatch = baseEtag
+      ? formatStrongEtag(baseEtag)
+      : null
+    if (baseEtag && !ifMatch) {
+      throw new TripSnapshotApiError('INVALID_RESPONSE')
+    }
 
-    const controller = new AbortController()
-    const timeoutId = globalThis.setTimeout(
-      () => controller.abort(),
-      TRIP_SNAPSHOT_PUT_TIMEOUT_MS,
-    )
     try {
-      const response = await this.fetchRequest.call(
-        globalThis,
+      const response = await fetchWithTimeout(
+        this.fetchRequest,
         `/api/trips/${encodeURIComponent(routeId)}`,
         {
           method: 'PUT',
+          cache: 'no-store',
           headers: {
             Accept: 'application/json',
             'Content-Type': 'application/json',
+            ...(ifMatch ? { 'If-Match': ifMatch } : {}),
           },
           body: JSON.stringify(body),
-          signal: controller.signal,
         },
       )
 
@@ -172,8 +208,6 @@ implements TripSnapshotApiClient {
         throw error
       }
       throw new TripSnapshotApiError('NETWORK_FAILURE')
-    } finally {
-      globalThis.clearTimeout(timeoutId)
     }
   }
 }

@@ -4,7 +4,7 @@ import { emptyTripOverrideBundle } from '../domain/trip/tripOverrides'
 import { tripFixture } from '../test/fixtures/tripFixture'
 import {
   HttpTripSnapshotApiClient,
-  TRIP_SNAPSHOT_PUT_TIMEOUT_MS,
+  TRIP_SNAPSHOT_REQUEST_TIMEOUT_MS,
   TripSnapshotApiError,
 } from './TripSnapshotApiClient'
 
@@ -29,11 +29,20 @@ function snapshot() {
   }
 }
 
+function snapshotResponse(
+  value = snapshot(),
+  etag = 'etag-1',
+): Response {
+  return Response.json(value, {
+    headers: { ETag: `"${etag}"` },
+  })
+}
+
 describe('HttpTripSnapshotApiClient', () => {
   it('returns a validated snapshot without Authorization', async () => {
     const fetchRequest = vi
       .fn<typeof fetch>()
-      .mockResolvedValue(Response.json(snapshot()))
+      .mockResolvedValue(snapshotResponse())
     const client = new HttpTripSnapshotApiClient(
       productionTrip,
       fetchRequest,
@@ -41,14 +50,18 @@ describe('HttpTripSnapshotApiClient', () => {
 
     await expect(
       client.getTripSnapshot(productionTrip.trip.id),
-    ).resolves.toEqual(snapshot())
+    ).resolves.toEqual({
+      etag: 'etag-1',
+      snapshot: snapshot(),
+    })
     expect(fetchRequest).toHaveBeenCalledWith(
       '/api/trips/oceania-marina-2026',
-      {
+      expect.objectContaining({
         method: 'GET',
         cache: 'no-store',
         headers: { Accept: 'application/json' },
-      },
+        signal: expect.any(AbortSignal),
+      }),
     )
     expect(JSON.stringify(fetchRequest.mock.calls[0])).not.toContain(
       'Authorization',
@@ -96,16 +109,88 @@ describe('HttpTripSnapshotApiClient', () => {
   })
 
   it('rejects network failure safely', async () => {
-    const client = new HttpTripSnapshotApiClient(
-      productionTrip,
-      vi.fn(async () => {
-        throw new Error('offline')
-      }),
-    )
+    vi.useFakeTimers()
+    try {
+      const client = new HttpTripSnapshotApiClient(
+        productionTrip,
+        vi.fn(async () => {
+          throw new Error('offline')
+        }),
+      )
 
-    await expect(
-      client.getTripSnapshot(productionTrip.trip.id),
-    ).rejects.toMatchObject({ code: 'NETWORK_FAILURE' })
+      await expect(
+        client.getTripSnapshot(productionTrip.trip.id),
+      ).rejects.toMatchObject({ code: 'NETWORK_FAILURE' })
+      expect(vi.getTimerCount()).toBe(0)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('aborts a stalled GET and maps the timeout to a network failure', async () => {
+    vi.useFakeTimers()
+    try {
+      let requestSignal: AbortSignal | undefined
+      const fetchRequest = vi.fn<typeof fetch>(
+        async (_input, init) =>
+          new Promise<Response>((_resolve, reject) => {
+            requestSignal = init?.signal ?? undefined
+            requestSignal?.addEventListener('abort', () => {
+              reject(new DOMException('Aborted', 'AbortError'))
+            })
+          }),
+      )
+      const client = new HttpTripSnapshotApiClient(
+        productionTrip,
+        fetchRequest,
+      )
+      const read = client.getTripSnapshot(productionTrip.trip.id)
+      const timedOut = expect(read).rejects.toMatchObject({
+        code: 'NETWORK_FAILURE',
+      })
+
+      await vi.advanceTimersByTimeAsync(
+        TRIP_SNAPSHOT_REQUEST_TIMEOUT_MS,
+      )
+
+      await timedOut
+      expect(requestSignal?.aborted).toBe(true)
+      expect(vi.getTimerCount()).toBe(0)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('clears the GET timeout after a successful response', async () => {
+    vi.useFakeTimers()
+    try {
+      let requestSignal: AbortSignal | undefined
+      const fetchRequest = vi.fn<typeof fetch>(
+        async (_input, init) => {
+          requestSignal = init?.signal ?? undefined
+          return snapshotResponse()
+        },
+      )
+      const client = new HttpTripSnapshotApiClient(
+        productionTrip,
+        fetchRequest,
+      )
+
+      await expect(
+        client.getTripSnapshot(productionTrip.trip.id),
+      ).resolves.toEqual({
+        etag: 'etag-1',
+        snapshot: snapshot(),
+      })
+
+      expect(vi.getTimerCount()).toBe(0)
+      await vi.advanceTimersByTimeAsync(
+        TRIP_SNAPSHOT_REQUEST_TIMEOUT_MS,
+      )
+      expect(requestSignal?.aborted).toBe(false)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('writes overrides without credentials and includes the base revision', async () => {
@@ -129,6 +214,7 @@ describe('HttpTripSnapshotApiClient', () => {
     const [, init] = fetchRequest.mock.calls[0]
     expect(init).toMatchObject({
       method: 'PUT',
+      cache: 'no-store',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -138,6 +224,70 @@ describe('HttpTripSnapshotApiClient', () => {
       baseRevision: 2,
       operationalOverrides: snapshot().operationalOverrides,
     })
+  })
+
+  it('rebuilds a conflict retry with the GET revision and ETag', async () => {
+    const latest = { ...snapshot(), revision: 7 }
+    const accepted = { ...snapshot(), revision: 8 }
+    const fetchRequest = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        Response.json(
+          {
+            code: 'REVISION_CONFLICT',
+            currentRevision: 7,
+            reason: 'REVISION_MISMATCH',
+          },
+          { status: 409 },
+        ),
+      )
+      .mockResolvedValueOnce(snapshotResponse(latest, 'etag-7'))
+      .mockResolvedValueOnce(Response.json(accepted))
+    const client = new HttpTripSnapshotApiClient(
+      productionTrip,
+      fetchRequest,
+    )
+
+    await expect(
+      client.putTripSnapshot(
+        productionTrip.trip.id,
+        2,
+        snapshot().operationalOverrides,
+      ),
+    ).rejects.toMatchObject({
+      code: 'REVISION_CONFLICT',
+      currentRevision: 7,
+    })
+
+    const observed = await client.getTripSnapshot(
+      productionTrip.trip.id,
+    )
+    if (!observed) {
+      throw new Error('Expected the current shared snapshot')
+    }
+    await expect(
+      client.putTripSnapshot(
+        productionTrip.trip.id,
+        observed.snapshot.revision,
+        snapshot().operationalOverrides,
+        observed.etag,
+      ),
+    ).resolves.toEqual(accepted)
+
+    const initialPut = fetchRequest.mock.calls[0]?.[1]
+    const retryPut = fetchRequest.mock.calls[2]?.[1]
+    expect(JSON.parse(String(initialPut?.body))).toMatchObject({
+      baseRevision: 2,
+    })
+    expect(initialPut?.headers).not.toHaveProperty('If-Match')
+    expect(JSON.parse(String(retryPut?.body))).toMatchObject({
+      baseRevision: 7,
+    })
+    expect(retryPut?.headers).toMatchObject({
+      'If-Match': '"etag-7"',
+    })
+    expect(retryPut).not.toBe(initialPut)
+    expect(retryPut?.body).not.toBe(initialPut?.body)
   })
 
   it.each([
@@ -207,7 +357,7 @@ describe('HttpTripSnapshotApiClient', () => {
       })
 
       await vi.advanceTimersByTimeAsync(
-        TRIP_SNAPSHOT_PUT_TIMEOUT_MS,
+        TRIP_SNAPSHOT_REQUEST_TIMEOUT_MS,
       )
 
       await timedOut
@@ -243,11 +393,22 @@ describe('HttpTripSnapshotApiClient', () => {
 
       expect(vi.getTimerCount()).toBe(0)
       await vi.advanceTimersByTimeAsync(
-        TRIP_SNAPSHOT_PUT_TIMEOUT_MS,
+        TRIP_SNAPSHOT_REQUEST_TIMEOUT_MS,
       )
       expect(requestSignal?.aborted).toBe(false)
     } finally {
       vi.useRealTimers()
     }
+  })
+
+  it('rejects a successful GET without a strong ETag', async () => {
+    const client = new HttpTripSnapshotApiClient(
+      productionTrip,
+      vi.fn(async () => Response.json(snapshot())),
+    )
+
+    await expect(
+      client.getTripSnapshot(productionTrip.trip.id),
+    ).rejects.toMatchObject({ code: 'INVALID_RESPONSE' })
   })
 })
