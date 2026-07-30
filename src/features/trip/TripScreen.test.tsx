@@ -56,7 +56,7 @@ describe('TripScreen', () => {
       within(currentDay as HTMLElement).getByText(
         (_, element) =>
           element?.tagName === 'STRONG' &&
-          element.textContent === '15:30 · Estimated',
+          element.textContent === '15:30 · Planning estimate · TBC',
       ),
     ).toBeInTheDocument()
   })
@@ -464,7 +464,7 @@ describe('TripScreen', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('shows the confirmed Stornoway excursion without inventing its schedule', () => {
+  it('shows the Stornoway working time and keeps exact details TBC', () => {
     const { container } = render(
       <MemoryRouter initialEntries={['/trip']}>
         <TripScreen
@@ -483,9 +483,24 @@ describe('TripScreen', () => {
       within(event).getByText('Independent excursion · Confirmed'),
     ).toBeInTheDocument()
     expect(
-      within(event).getByText('Departure and return time to be confirmed.'),
+      within(event).getByText(
+        '08:30 is a TBC working assumption agreed with Hugh.',
+      ),
     ).toBeInTheDocument()
     expect(within(event).getByText('Time to be confirmed')).toBeInTheDocument()
+    expect(
+      within(event).getByText('Exact pickup point TBC'),
+    ).toBeInTheDocument()
+    expect(
+      within(event).getByText(
+        'Hugh verbally guaranteed return before ship departure.',
+      ),
+    ).toBeInTheDocument()
+    expect(
+      within(event).getByText(
+        'Exact return time remains to be confirmed.',
+      ),
+    ).toBeInTheDocument()
     expect(
       within(event).getByRole('link', {
         name: 'Open excursion confirmation',
@@ -494,7 +509,7 @@ describe('TripScreen', () => {
       'href',
       '/documents/travel/stornoway-isle-of-lewis-confirmation.pdf',
     )
-    expect(event.querySelector('time')).toBeNull()
+    expect(within(event).getByText('08:30').tagName).toBe('TIME')
     expect(experience.closest('details')).not.toHaveAttribute('open')
     expect(container).not.toHaveTextContent('Portree')
   })

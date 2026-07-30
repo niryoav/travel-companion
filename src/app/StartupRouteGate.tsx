@@ -19,7 +19,11 @@ function isExplicitReviewRoute(pathname: string, search: string): boolean {
   }
 
   const params = new URLSearchParams(search)
-  return params.has('state') || params.has('phase')
+  return (
+    params.has('state') ||
+    params.has('phase') ||
+    params.has('simulation')
+  )
 }
 
 export function StartupRouteGate({

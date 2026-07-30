@@ -18,5 +18,28 @@ describe('BottomNavigation', () => {
       'page',
     )
     expect(screen.getAllByRole('link')).toHaveLength(5)
+    expect(screen.queryByRole('link', { name: 'Ship' })).not.toBeInTheDocument()
+  })
+
+  it('preserves a shared simulation selection without changing destinations', () => {
+    render(
+      <MemoryRouter initialEntries={['/home?simulation=sea-day']}>
+        <BottomNavigation
+          items={primaryNavigation}
+          preservedSearch="?simulation=sea-day"
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute(
+      'href',
+      '/home?simulation=sea-day',
+    )
+    expect(screen.getByRole('link', { name: 'Today' })).toHaveAttribute(
+      'href',
+      '/today?simulation=sea-day',
+    )
+    expect(screen.getAllByRole('link')).toHaveLength(5)
+    expect(screen.queryByRole('link', { name: 'Ship' })).not.toBeInTheDocument()
   })
 })

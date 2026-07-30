@@ -1,3 +1,4 @@
+import { DocumentActionLink } from '../../documents/components/DocumentActionLink'
 import type { HomeAlert as HomeAlertModel } from '../homeTypes'
 
 interface HomeAlertProps {
@@ -8,13 +9,20 @@ export function HomeAlert({ alert }: HomeAlertProps) {
   return (
     <section className="home-alert" aria-labelledby="home-alert-title">
       <span className="home-alert-marker" aria-hidden="true">
-        !
+        <AppIcon name="warning" />
       </span>
       <div>
         <p className="home-card-label">Action needed</p>
         <h2 id="home-alert-title">{alert.title}</h2>
         <p>{alert.detail}</p>
+        {alert.documentAction ? (
+          <DocumentActionLink
+            action={alert.documentAction}
+            className="today-event-document-link"
+          />
+        ) : null}
       </div>
     </section>
   )
 }
+import { AppIcon } from '../../../components/AppIcon'

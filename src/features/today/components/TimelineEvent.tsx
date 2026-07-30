@@ -37,6 +37,9 @@ export function TimelineEvent({ event }: TimelineEventProps) {
         {event.location ? <p>{event.location}</p> : null}
         {event.meetingPointLabel ? <p>{event.meetingPointLabel}</p> : null}
         {event.transport ? <p>{event.transport}</p> : null}
+        {event.operationalNotes?.map((note) => (
+          <p key={note}>{note}</p>
+        ))}
         {event.localOperationalNote ? (
           <p>{event.localOperationalNote}</p>
         ) : null}

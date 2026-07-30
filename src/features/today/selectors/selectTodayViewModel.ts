@@ -292,11 +292,13 @@ function eventViewModel(
         : 'Time unavailable'
       : undefined,
     timingConfidenceLabel:
-      event.startsAt &&
-      (event.timingVerification === 'ESTIMATED' ||
-        event.operationalStatus === 'ESTIMATED')
-        ? 'Estimated time'
-        : undefined,
+      event.startsAt && event.scheduleStatus === 'TO_BE_CONFIRMED'
+        ? 'TBC working assumption'
+        : event.startsAt &&
+            (event.timingVerification === 'ESTIMATED' ||
+              event.operationalStatus === 'ESTIMATED')
+          ? 'Estimated time'
+          : undefined,
     meetingTime: event.meetingAt
       ? formatLocalTime(event.meetingAt, timeZone.timeZone)
       : event.checkInAt
@@ -324,6 +326,7 @@ function eventViewModel(
           ? event.operationalStatus.charAt(0) +
             event.operationalStatus.slice(1).toLowerCase()
           : undefined,
+    operationalNotes: event.operationalNotes,
     localOperationalNote: event.localOperationalNote,
     isCancelled: event.operationalStatus === 'CANCELLED',
     leaveBy,
@@ -343,6 +346,14 @@ function operationalStatusLabel(
     case 'TO_BE_CONFIRMED':
       return 'To be confirmed'
   }
+}
+
+function allAboardStatusLabel(
+  status: OperationalEntryStatus,
+): string {
+  return status === 'ESTIMATED'
+    ? 'Estimate · TBC'
+    : operationalStatusLabel(status)
 }
 
 function operationalTimeViewModel(
@@ -545,7 +556,7 @@ function operationalStatusViewModel(
     return undefined
   }
   const timeStatusLabel = status.allAboardVerification
-    ? operationalStatusLabel(status.allAboardVerification)
+    ? allAboardStatusLabel(status.allAboardVerification)
     : undefined
 
   switch (status.state) {
@@ -589,7 +600,7 @@ function operationalStatusViewModel(
         title: status.location ?? 'Port day',
         detail:
           status.allAboardVerification === 'ESTIMATED'
-            ? 'Estimated All Aboard planning time'
+            ? 'All Aboard planning estimate · confirm onboard'
             : 'Confirmed All Aboard time',
         time: status.allAboardTime,
         dateTime: status.allAboardAt,
@@ -793,7 +804,7 @@ function tomorrowViewModel(
                 `All Aboard ${formatLocalTime(
                   tomorrowPortCall.allAboardAt,
                   tomorrowPortCall.timeZone,
-                )} · ${operationalStatusLabel(
+                )} · ${allAboardStatusLabel(
                   tomorrowPortCall.allAboardVerification ?? 'CONFIRMED',
                 )}`,
               ]
@@ -838,7 +849,7 @@ function tomorrowViewModel(
         ? `All Aboard ${formatLocalTime(
             tomorrowPortCall.allAboardAt,
             tomorrowPortCall.timeZone,
-          )} · ${operationalStatusLabel(
+          )} · ${allAboardStatusLabel(
             tomorrowPortCall.allAboardVerification ?? 'CONFIRMED',
           )}`
         : undefined,
@@ -940,7 +951,6 @@ function preTripViewModel(data: TripData, now: Date): TodayViewModel {
       summary: data.trip.title,
       date: `Departure: ${formatCalendarDate(data.trip.startDate)}`,
       dateTime: data.trip.startDate,
-      timeZoneLabel: data.trip.homeTimeZone,
     },
     nextEvent: nextEvent && nextEventDay
       ? eventViewModel(data, nextEventDay, nextEvent, 'NEXT')
@@ -1038,7 +1048,6 @@ export function selectTodayViewModel(
       summary: today.summary,
       date: formatCalendarDate(today.localDate),
       dateTime: today.localDate,
-      timeZoneLabel: today.timeZone,
     },
     criticalInfo: criticalInfo(events),
     operationalStatus,

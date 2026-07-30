@@ -247,7 +247,7 @@ function isEventOverride(
   }
   const event = data.events.find(({ id }) => id === eventId)
   if (
-    event?.kind !== 'EXCURSION' ||
+    !event ||
     value.eventId !== eventId ||
     typeof value.updatedAt !== 'string' ||
     !isValidInstant(value.updatedAt)
@@ -256,7 +256,8 @@ function isEventOverride(
   }
   if (
     value.status !== undefined &&
-    (typeof value.status !== 'string' ||
+    (event.kind !== 'EXCURSION' ||
+      typeof value.status !== 'string' ||
       !EXCURSION_STATUSES.has(
         value.status as ExcursionOperationalStatus,
       ))

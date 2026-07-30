@@ -110,6 +110,9 @@ function TripEventDetail({ event }: { event: TripEventViewModel }) {
         {event.timingConfidenceLabel ? (
           <p>{event.timingConfidenceLabel}</p>
         ) : null}
+        {event.scheduleStatusLabel ? (
+          <p>{event.scheduleStatusLabel}</p>
+        ) : null}
         {event.operationalStatusLabel ? (
           <p>{event.operationalStatusLabel}</p>
         ) : null}
@@ -174,7 +177,6 @@ function TripEventDetail({ event }: { event: TripEventViewModel }) {
             {event.leaveBy.detail}
           </p>
         ) : null}
-        {event.timeZoneNote ? <p>{event.timeZoneNote}</p> : null}
         {event.operationalNotes?.map((note) => (
           <p className="trip-event-note" key={note}>{note}</p>
         ))}
@@ -235,8 +237,6 @@ export function TripDayDetails({ day }: TripDayDetailsProps) {
 
   return (
     <div className="trip-day-details">
-      <p className="trip-time-zone">Local time · {day.timeZoneLabel}</p>
-
       {day.port ? (
         <section aria-labelledby={`${day.id}-port-title`}>
           <p className="trip-card-label">Port context</p>

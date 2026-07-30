@@ -173,6 +173,7 @@ export function validateTripData(data: TripData): string[] {
     }
     if (
       event.scheduleStatus === 'TO_BE_CONFIRMED' &&
+      event.timingVerification !== 'ESTIMATED' &&
       (event.startsAt || event.endsAt)
     ) {
       errors.push(`Pending event schedule contains timing: ${event.id}`)

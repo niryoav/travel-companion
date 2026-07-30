@@ -1,21 +1,36 @@
 export type IconName =
+  | 'airplane'
   | 'calendar'
+  | 'cloud'
   | 'compass'
+  | 'dining'
   | 'dock'
   | 'document'
   | 'home'
+  | 'hotel'
   | 'information'
   | 'map'
   | 'more'
   | 'moon'
+  | 'rain'
+  | 'ship'
   | 'sun'
+  | 'taxi'
   | 'tender'
+  | 'walking'
+  | 'warning'
+  | 'wind'
 
 interface AppIconProps {
   name: IconName
 }
 
 const paths: Record<IconName, React.ReactNode> = {
+  airplane: (
+    <>
+      <path d="m3 14 7.5-2.5L16 4l2 1-3 7 5 2v2l-6-.5-3 4.5-1.5-.5 1-4.5L3 16Z" />
+    </>
+  ),
   calendar: (
     <>
       <path d="M7 3v3M17 3v3M4 9h16" />
@@ -33,6 +48,17 @@ const paths: Record<IconName, React.ReactNode> = {
     <>
       <circle cx="12" cy="12" r="9" />
       <path d="m15.5 8.5-2.1 4.9-4.9 2.1 2.1-4.9Z" />
+    </>
+  ),
+  cloud: (
+    <>
+      <path d="M6 18h11a4 4 0 0 0 .7-7.94A6 6 0 0 0 6.3 9.2 4.4 4.4 0 0 0 6 18Z" />
+    </>
+  ),
+  dining: (
+    <>
+      <path d="M7 3v8M4 3v5a3 3 0 0 0 6 0V3M7 11v10" />
+      <path d="M16 3v18M16 3c3 1.4 4 4.6 4 8h-4" />
     </>
   ),
   dock: (
@@ -53,6 +79,11 @@ const paths: Record<IconName, React.ReactNode> = {
       <path d="M5 10v11h14V10M9 21v-7h6v7" />
     </>
   ),
+  hotel: (
+    <>
+      <path d="M4 21V5h16v16M8 9h2M14 9h2M8 13h2M14 13h2M10 21v-4h4v4" />
+    </>
+  ),
   information: (
     <>
       <circle cx="12" cy="12" r="9" />
@@ -67,16 +98,52 @@ const paths: Record<IconName, React.ReactNode> = {
     </>
   ),
   moon: <path d="M20 15.5A9 9 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z" />,
+  rain: (
+    <>
+      <path d="M6 14h11a4 4 0 0 0 .7-7.94A6 6 0 0 0 6.3 5.2 4.4 4.4 0 0 0 6 14Z" />
+      <path d="m8 17-1 3M13 17l-1 3M18 17l-1 3" />
+    </>
+  ),
+  ship: (
+    <>
+      <path d="M4 13h16l-3 5H7Z" />
+      <path d="M8 13V7h8v6M10 7V4h4v3" />
+      <path d="M3 21c1.5-1 3-1 4.5 0s3 1 4.5 0 3-1 4.5 0 3 1 4.5 0" />
+    </>
+  ),
   sun: (
     <>
       <circle cx="12" cy="12" r="4" />
       <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41" />
     </>
   ),
+  taxi: (
+    <>
+      <path d="m5 11 2-5h10l2 5M4 11h16v7H4Z" />
+      <path d="M8 6V4h8v2M7 18v2M17 18v2M7 14h.01M17 14h.01" />
+    </>
+  ),
   tender: (
     <>
       <path d="M4 13h16l-3 5H7Z" />
       <path d="M8 13V9h7l2 4M3 21c1.5-1 3-1 4.5 0s3 1 4.5 0 3-1 4.5 0 3 1 4.5 0" />
+    </>
+  ),
+  walking: (
+    <>
+      <circle cx="13" cy="4" r="2" />
+      <path d="m10 21 2-7-3-3 3-4 4 3 3 1M12 14l4 3 1 4M9 11l-4 4" />
+    </>
+  ),
+  warning: (
+    <>
+      <path d="M12 3 2.5 20h19Z" />
+      <path d="M12 9v5M12 17h.01" />
+    </>
+  ),
+  wind: (
+    <>
+      <path d="M3 8h10a3 3 0 1 0-3-3M3 12h15a3 3 0 1 1-3 3M3 16h7" />
     </>
   ),
 }

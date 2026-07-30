@@ -29,14 +29,15 @@ describe('selectTodayViewModel', () => {
 
     expect(today.operationalStatus).toMatchObject({
       time: '15:30',
-      timeStatusLabel: 'Estimated',
+      timeStatusLabel: 'Estimate · TBC',
     })
-    expect(today.returnGuidance?.detail).toContain(
-      'Based on estimated All Aboard.',
-    )
+    expect(today.returnGuidance).toMatchObject({
+      state: 'CANNOT_CALCULATE',
+      detail: 'Excursion return time is not configured.',
+    })
     expect(previousDay.tomorrow?.allAboardNote).toBeUndefined()
     expect(previousDay.tomorrow?.tenderPlan).toContain(
-      'All Aboard 15:30 · Estimated',
+      'All Aboard 15:30 · Estimate · TBC',
     )
   })
 
@@ -592,7 +593,15 @@ describe('selectTodayViewModel', () => {
         'All Aboard time unavailable. Ship departure is shown separately.',
     })
     expect(result.nextEvent).toMatchObject({
-      title: 'GG2 Big Whale Safari & Puffins',
+      title: 'Boarding and put on overalls',
+      time: '09:05',
+      leaveBy: undefined,
+    })
+    expect(
+      result.timeline.find(
+        ({ id }) => id === 'event-husavik-big-whale-safari',
+      ),
+    ).toMatchObject({
       meetingTime: '08:50',
       leaveBy: {
         state: 'PENDING',
@@ -602,8 +611,7 @@ describe('selectTodayViewModel', () => {
     })
     expect(result.returnGuidance).toMatchObject({
       state: 'CANNOT_CALCULATE',
-      detail:
-        'All Aboard time is not verified, so no buffer is calculated.',
+      detail: 'Excursion return time is not configured.',
     })
   })
 

@@ -26,6 +26,7 @@ import {
   buildTripDayOverrides,
   createTripDayEditDraft,
   type ExcursionEditDraft,
+  type ScheduledEventEditDraft,
   type TenderTimeDraft,
   type TripDayEditDraft,
 } from '../editing/tripEditModel'
@@ -266,6 +267,7 @@ function OperationalTimeField({
   onChange,
   onUseOriginal,
   pickerDefault,
+  estimatedStatusLabel = 'Estimated',
 }: {
   id: string
   label: string
@@ -276,6 +278,7 @@ function OperationalTimeField({
   onChange: (value: TenderTimeDraft) => void
   onUseOriginal: () => void
   pickerDefault?: string
+  estimatedStatusLabel?: string
 }) {
   const currentLabel = `${value.time || 'Not set'} · ${value.verification}`
   const originalLabel =
@@ -285,8 +288,10 @@ function OperationalTimeField({
     const status =
       verification === 'TO_BE_CONFIRMED'
         ? 'To be confirmed'
-        : verification.charAt(0) +
-          verification.slice(1).toLowerCase()
+        : verification === 'ESTIMATED'
+          ? estimatedStatusLabel
+          : verification.charAt(0) +
+            verification.slice(1).toLowerCase()
     return `${time} · ${status}`
   }
   return (
@@ -330,7 +335,7 @@ function OperationalTimeField({
           }
         >
           <option value="CONFIRMED">Confirmed</option>
-          <option value="ESTIMATED">Estimated</option>
+          <option value="ESTIMATED">{estimatedStatusLabel}</option>
           <option value="TO_BE_CONFIRMED">To be confirmed</option>
         </SelectField>
       </div>
@@ -548,6 +553,99 @@ function ExcursionFields({
   )
 }
 
+function ScheduledEventFields({
+  event,
+  original,
+  onChange,
+  onReset,
+  hasPersistedOverride,
+}: {
+  event: ScheduledEventEditDraft
+  original: ScheduledEventEditDraft
+  onChange: (value: ScheduledEventEditDraft) => void
+  onReset: () => void
+  hasPersistedOverride: boolean
+}) {
+  const update = (
+    key: keyof ScheduledEventEditDraft,
+    value: ScheduledEventEditDraft[keyof ScheduledEventEditDraft],
+  ) => onChange({ ...event, [key]: value })
+  const prefix = `trip-edit-${event.id}`
+
+  return (
+    <fieldset className="trip-edit-section">
+      <legend>{event.title}</legend>
+      <p className="trip-edit-context">
+        {event.status === 'ESTIMATED'
+          ? 'Estimated timing'
+          : 'Timing to be confirmed'}
+      </p>
+
+      {([
+        ['startTime', 'Start / pickup time'],
+        ['endTime', 'End / arrival time'],
+      ] as const).map(([key, label]) => (
+        <Field
+          current={event[key]}
+          key={key}
+          label={`${event.title} ${label}`}
+          original={original[key]}
+          onUseOriginal={() => update(key, original[key])}
+        >
+          <TextInput
+            id={`${prefix}-${key}`}
+            label={label}
+            type="time"
+            value={event[key]}
+            onChange={(value) => update(key, value)}
+          />
+        </Field>
+      ))}
+
+      <Field
+        current={event.meetingPoint}
+        label={`${event.title} meeting point`}
+        original={original.meetingPoint}
+        onUseOriginal={() =>
+          update('meetingPoint', original.meetingPoint)
+        }
+      >
+        <TextInput
+          id={`${prefix}-meeting-point`}
+          label="Pickup / meeting point"
+          maxLength={160}
+          value={event.meetingPoint}
+          onChange={(value) => update('meetingPoint', value)}
+        />
+      </Field>
+
+      <Field
+        current={event.note}
+        label={`${event.title} note`}
+        original={original.note}
+        onUseOriginal={() => update('note', original.note)}
+      >
+        <TextArea
+          id={`${prefix}-note`}
+          label="Short operational note"
+          value={event.note}
+          onChange={(value) => update('note', value)}
+        />
+      </Field>
+
+      {hasPersistedOverride ? (
+        <button
+          className="trip-edit-reset"
+          type="button"
+          onClick={onReset}
+        >
+          Reset this timing
+        </button>
+      ) : null}
+    </fieldset>
+  )
+}
+
 export function TripEditSheet({
   baselineTripData,
   dayId,
@@ -580,7 +678,12 @@ export function TripEditSheet({
     JSON.stringify(draft) !== JSON.stringify(initialDraft)
   const dirtyRef = useRef(dirty)
   const onCloseRef = useRef(onClose)
-  const eventIds = draft?.excursions.map(({ id }) => id) ?? []
+  const eventIds = draft
+    ? [
+        ...draft.excursions.map(({ id }) => id),
+        ...draft.scheduledEvents.map(({ id }) => id),
+      ]
+    : []
   const hasPersistedChanges = Boolean(
     overrides.dayOverrides[dayId] ||
     eventIds.some((eventId) => overrides.eventOverrides[eventId]),
@@ -673,6 +776,13 @@ export function TripEditSheet({
         excursion.id === value.id ? value : excursion,
       ),
     )
+  const updateScheduledEvent = (value: ScheduledEventEditDraft) =>
+    updateDraft(
+      'scheduledEvents',
+      draft.scheduledEvents.map((event) =>
+        event.id === value.id ? value : event,
+      ),
+    )
 
   const issuesFor = (field: OperationalEditField) =>
     validation.issues.filter(
@@ -749,7 +859,6 @@ export function TripEditSheet({
             <div>
               <p className="trip-card-label">Edit trip detail</p>
               <h2 id="trip-edit-title">{draft.title}</h2>
-              <p>Local time · {draft.timeZone}</p>
             </div>
             <button
               aria-label="Close trip editor"
@@ -872,6 +981,7 @@ export function TripEditSheet({
                     />
                   </Field>
                   <OperationalTimeField
+                    estimatedStatusLabel="Planning estimate · TBC"
                     id="trip-edit-all-aboard"
                     issues={issuesFor('allAboardTime')}
                     label="All Aboard"
@@ -1077,6 +1187,7 @@ export function TripEditSheet({
                   }
                 />
                 <OperationalTimeField
+                  estimatedStatusLabel="Planning estimate · TBC"
                   id="trip-edit-all-aboard"
                   issues={issuesFor('allAboardTime')}
                   label="All Aboard"
@@ -1173,6 +1284,29 @@ export function TripEditSheet({
                     confirmReset(
                       `Reset local changes for ${excursion.title}?`,
                       () => repository.resetEvent(excursion.id),
+                    )
+                  }
+                />
+              ) : null
+            })}
+
+            {draft.scheduledEvents.map((event) => {
+              const original = originalDraft.scheduledEvents.find(
+                ({ id }) => id === event.id,
+              )
+              return original ? (
+                <ScheduledEventFields
+                  event={event}
+                  hasPersistedOverride={Boolean(
+                    overrides.eventOverrides[event.id],
+                  )}
+                  key={event.id}
+                  original={original}
+                  onChange={updateScheduledEvent}
+                  onReset={() =>
+                    confirmReset(
+                      `Reset local changes for ${event.title}?`,
+                      () => repository.resetEvent(event.id),
                     )
                   }
                 />

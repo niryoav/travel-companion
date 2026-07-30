@@ -8,6 +8,12 @@ describe('canonical active trip data', () => {
     expect(validateTripData(oceaniaMarina2026TripData)).toEqual([])
   })
 
+  it('uses the approved local portrait Welcome asset', () => {
+    expect(oceaniaMarina2026TripData.trip.welcomeHeroImage).toBe(
+      '/images/oceania-marina-welcome-hero-portrait.jpg',
+    )
+  })
+
   it('covers every configured date from departure through the final travel day', () => {
     expect(oceaniaMarina2026TripData.days).toHaveLength(14)
     expect(oceaniaMarina2026TripData.days.at(0)?.localDate).toBe(
@@ -108,29 +114,55 @@ describe('canonical active trip data', () => {
       ],
       [
         'day-2026-08-23',
-        ['event-hotel-ship-transfer', 'event-embarkation'],
+        [
+          'event-hotel-ship-transfer',
+          'event-embarkation',
+          'event-embarkation-lunch',
+        ],
       ],
       ['day-2026-08-24', ['event-isafjordur-whale-nature']],
       [
         'day-2026-08-25',
         [
+          'event-husavik-outbound-tender-report',
+          'event-husavik-outbound-tender-departure',
+          'event-husavik-shore-arrival',
           'event-husavik-big-whale-safari',
+          'event-husavik-whale-boarding',
           'event-husavik-geosea-baths',
+          'event-husavik-return-tender-boarding',
+          'event-husavik-return-tender-departure',
+          'event-husavik-back-onboard',
+          'event-husavik-last-tender',
+          'event-toscana-dinner',
         ],
       ],
       ['day-2026-08-26', ['event-djupivogur-glacier-lagoon']],
       ['day-2026-08-27', ['event-torshavn-vestmanna']],
+      ['day-2026-08-28', ['event-red-ginger-dinner']],
       ['day-2026-08-29', ['event-stornoway-isle-of-lewis']],
       ['day-2026-08-30', ['event-greenock-loch-lomond']],
-      ['day-2026-08-31', ['event-dublin-river-cruise']],
+      [
+        'day-2026-08-31',
+        ['event-dublin-river-cruise', 'event-polo-grill-dinner'],
+      ],
       ['day-2026-09-01', ['event-holyhead-penrhyn-castle']],
       ['day-2026-09-02', ['event-cork-jameson']],
-      ['day-2026-09-03', ['event-falmouth-st-ives']],
+      [
+        'day-2026-09-03',
+        ['event-falmouth-st-ives', 'event-jacques-dinner'],
+      ],
       [
         'day-2026-09-04',
         [
+          'event-disembarkation-breakfast',
+          'event-disembarkation-cabin-vacate',
+          'event-disembarkation-group',
           'event-disembarkation',
           'event-southampton-heathrow-transfer',
+          'event-heathrow-arrival-estimate',
+          'event-heathrow-bag-drop',
+          'event-heathrow-security',
           'event-return-flight',
         ],
       ],
@@ -156,10 +188,11 @@ describe('canonical active trip data', () => {
 
     expect(husavik).toMatchObject({
       startsAt: '2026-08-25T09:30:00Z',
-      endsAt: '2026-08-25T12:30:00Z',
       checkInAt: '2026-08-25T08:50:00Z',
+      meetingContext: 'Gentle Giants Ticket Center, Húsavík',
       organizer: 'Gentle Giants',
     })
+    expect(husavik?.endsAt).toBeUndefined()
     expect(djupivogur).toMatchObject({
       startsAt: '2026-08-26T08:00:00Z',
       organizer: 'Arctic Shorex',
@@ -174,9 +207,10 @@ describe('canonical active trip data', () => {
       bookingType: 'INDEPENDENT',
       bookingStatus: 'CONFIRMED',
       scheduleStatus: 'TO_BE_CONFIRMED',
-      operationalNotes: ['Departure and return time to be confirmed.'],
+      timingVerification: 'ESTIMATED',
+      startsAt: '2026-08-29T08:30:00+01:00',
+      meetingContext: 'Exact pickup point TBC',
     })
-    expect(stornoway?.startsAt).toBeUndefined()
     expect(stornoway?.endsAt).toBeUndefined()
     expect(JSON.stringify(stornoway)).not.toMatch(
       /order|payment|deposit|price|total|billing|phone|email|https?:\/\//i,
@@ -303,10 +337,11 @@ describe('canonical active trip data', () => {
     )
 
     expect(transfer).toMatchObject({
-      scheduleStatus: 'TO_BE_CONFIRMED',
       transportId: 'transport-hotel-ship',
+      startsAt: '2026-08-23T12:00:00Z',
+      endsAt: '2026-08-23T12:30:00Z',
+      timingVerification: 'ESTIMATED',
     })
-    expect(transfer?.startsAt).toBeUndefined()
     expect(transfer?.leaveByAt).toBeUndefined()
     expect(embarkation).toMatchObject({
       startsAt: '2026-08-23T13:00:00Z',
@@ -317,6 +352,45 @@ describe('canonical active trip data', () => {
         'Latest permitted boarding time is not yet confirmed.',
       ]),
     )
+  })
+
+  it('records only the four confirmed dining reservations', () => {
+    expect(
+      oceaniaMarina2026TripData.events
+        .filter(({ kind }) => kind === 'MEAL')
+        .filter(({ bookingStatus }) => bookingStatus === 'CONFIRMED')
+        .map(({ dayId, title, startsAt, meetingContext }) => [
+          dayId,
+          title,
+          startsAt,
+          meetingContext,
+        ]),
+    ).toEqual([
+      [
+        'day-2026-08-25',
+        'Toscana',
+        '2026-08-25T20:00:00Z',
+        'Shared table',
+      ],
+      [
+        'day-2026-08-28',
+        'Red Ginger',
+        '2026-08-28T20:00:00+01:00',
+        'Shared table',
+      ],
+      [
+        'day-2026-08-31',
+        'Polo Grill',
+        '2026-08-31T19:30:00+01:00',
+        'Shared table',
+      ],
+      [
+        'day-2026-09-03',
+        'Jacques',
+        '2026-09-03T19:30:00+01:00',
+        'Shared table',
+      ],
+    ])
   })
 
   it('records the verified return journey without inventing clearance or home transport', () => {

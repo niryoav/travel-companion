@@ -41,6 +41,17 @@ export interface ExcursionEditDraft {
   timeZone: string
 }
 
+export interface ScheduledEventEditDraft {
+  id: string
+  title: string
+  status: 'ESTIMATED' | 'TO_BE_CONFIRMED'
+  startTime: string
+  endTime: string
+  meetingPoint: string
+  note: string
+  timeZone: string
+}
+
 export interface TripDayEditDraft {
   dayId: string
   localDate: string
@@ -61,6 +72,7 @@ export interface TripDayEditDraft {
   lastTender: TenderTimeDraft
   tenderNote: string
   excursions: ExcursionEditDraft[]
+  scheduledEvents: ScheduledEventEditDraft[]
 }
 
 export interface BuiltTripDayOverrides {
@@ -143,6 +155,33 @@ export function createTripDayEditDraft(
         timeZone,
       }
     })
+  const scheduledEvents = day.eventIds
+    .map((eventId) => data.events.find(({ id }) => id === eventId))
+    .filter(
+      (event): event is TripEvent =>
+        Boolean(event) &&
+        event?.kind !== 'EXCURSION' &&
+        (
+          event?.timingVerification === 'ESTIMATED' ||
+          event?.scheduleStatus === 'TO_BE_CONFIRMED'
+        ),
+    )
+    .map((event): ScheduledEventEditDraft => {
+      const timeZone = event.timeZone ?? day.timeZone
+      return {
+        id: event.id,
+        title: event.title,
+        status:
+          event.timingVerification === 'ESTIMATED'
+            ? 'ESTIMATED'
+            : 'TO_BE_CONFIRMED',
+        startTime: timeInputValue(event.startsAt, timeZone),
+        endTime: timeInputValue(event.endsAt, timeZone),
+        meetingPoint: event.meetingContext ?? '',
+        note: event.localOperationalNote ?? '',
+        timeZone,
+      }
+    })
 
   return {
     dayId,
@@ -188,6 +227,7 @@ export function createTripDayEditDraft(
     ),
     tenderNote: tender?.note ?? '',
     excursions,
+    scheduledEvents,
   }
 }
 
@@ -570,6 +610,60 @@ export function buildTripDayOverrides(
       ),
     )
 
+    eventOverrides[event.id] =
+      Object.keys(eventOverride).length > 0 ? eventOverride : null
+  }
+
+  for (const scheduledDraft of draft.scheduledEvents) {
+    const event = baseline.events.find(
+      ({ id }) => id === scheduledDraft.id,
+    )
+    if (
+      !event ||
+      event.kind === 'EXCURSION' ||
+      event.dayId !== day.id
+    ) {
+      errors.push(
+        `Scheduled event is no longer available: ${scheduledDraft.title}.`,
+      )
+      continue
+    }
+    const timeZone = event.timeZone ?? day.timeZone
+    const eventOverride: EventOperationalOverrideInput = {}
+    setWhenDefined(
+      eventOverride,
+      'startsAt',
+      timeChange(
+        event.startsAt,
+        scheduledDraft.startTime,
+        day.localDate,
+        timeZone,
+        `${event.title} start`,
+        errors,
+      ),
+    )
+    setWhenDefined(
+      eventOverride,
+      'endsAt',
+      timeChange(
+        event.endsAt,
+        scheduledDraft.endTime,
+        day.localDate,
+        timeZone,
+        `${event.title} end`,
+        errors,
+      ),
+    )
+    setWhenDefined(
+      eventOverride,
+      'meetingPoint',
+      textChange(event.meetingContext, scheduledDraft.meetingPoint),
+    )
+    setWhenDefined(
+      eventOverride,
+      'note',
+      textChange(event.localOperationalNote, scheduledDraft.note),
+    )
     eventOverrides[event.id] =
       Object.keys(eventOverride).length > 0 ? eventOverride : null
   }

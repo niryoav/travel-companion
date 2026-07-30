@@ -25,7 +25,7 @@ describe('selectTripViewModel', () => {
 
     expect(day).toMatchObject({
       summaryAllAboardTime: '15:30',
-      summaryAllAboardStatusLabel: 'Estimated',
+      summaryAllAboardStatusLabel: 'Planning estimate · TBC',
     })
     expect(day?.port?.allAboardTime).toBeUndefined()
   })
@@ -105,8 +105,14 @@ describe('selectTripViewModel', () => {
         bookingTypeLabel: 'Independent excursion',
         bookingStatusLabel: 'Confirmed',
         scheduleStatusLabel: 'Time to be confirmed',
-        operationalNotes: ['Departure and return time to be confirmed.'],
-        time: undefined,
+        timingConfidenceLabel: 'Estimated time',
+        operationalNotes: [
+          '08:30 is a TBC working assumption agreed with Hugh.',
+          'Exact pickup point remains to be confirmed.',
+          'Hugh verbally guaranteed return before ship departure.',
+          'Exact return time remains to be confirmed.',
+        ],
+        time: '08:30',
         endTime: undefined,
       }),
     ])

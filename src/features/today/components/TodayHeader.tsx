@@ -12,14 +12,9 @@ export function TodayHeader({ header }: TodayHeaderProps) {
       {header.summary ? (
         <p className="today-header-summary">{header.summary}</p>
       ) : null}
-      {header.date || header.timeZoneLabel ? (
+      {header.date ? (
         <div className="today-date-context">
-          {header.date ? (
-            <time dateTime={header.dateTime}>{header.date}</time>
-          ) : null}
-          {header.timeZoneLabel ? (
-            <span>Local time · {header.timeZoneLabel}</span>
-          ) : null}
+          <time dateTime={header.dateTime}>{header.date}</time>
         </div>
       ) : null}
     </header>

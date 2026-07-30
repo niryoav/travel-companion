@@ -1,4 +1,5 @@
 import type { DailyLoveMessageViewModel } from '../../domain/content/dailyLoveMessage'
+import type { ReactNode } from 'react'
 import { DailyLoveMessage } from '../../components/DailyLoveMessage'
 import type { HomeViewModel } from './homeTypes'
 import { HomeAlert } from './components/HomeAlert'
@@ -10,12 +11,14 @@ import { QuickWeatherCard } from './components/QuickWeatherCard'
 interface HomePhaseViewProps {
   greeting: string
   loveMessage?: DailyLoveMessageViewModel | null
+  reviewControl?: ReactNode
   viewModel: HomeViewModel
 }
 
 export function HomePhaseView({
   greeting,
   loveMessage,
+  reviewControl,
   viewModel,
 }: HomePhaseViewProps) {
   return (
@@ -24,8 +27,11 @@ export function HomePhaseView({
         context={viewModel.context}
         cruiseProgress={viewModel.cruiseProgress}
         greeting={greeting}
+        intro={viewModel.intro}
         portAccessStatus={viewModel.portAccessStatus}
       />
+
+      {reviewControl}
 
       {loveMessage ? (
         <DailyLoveMessage message={loveMessage} variant="home" />
