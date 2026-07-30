@@ -527,7 +527,7 @@ describe('App', () => {
     fireEvent.click(await screen.findByRole('link', { name: 'More' }))
 
     expect(
-      await screen.findByRole('heading', { name: 'Travel Companion' }),
+      await screen.findByRole('heading', { name: 'App version' }),
     ).toBeInTheDocument()
     expect(screen.getByText('fixture-1')).toBeInTheDocument()
     expect(screen.getByRole('status')).toHaveTextContent(
@@ -983,7 +983,6 @@ describe('App', () => {
     const syncedRepository = new SyncedTripOverrideRepository(
       localRepository,
       localRepository.getSnapshot(),
-      false,
     )
     window.history.replaceState({}, '', '/home')
     renderApp(
@@ -994,7 +993,7 @@ describe('App', () => {
     )
 
     act(() => {
-      syncedRepository.acceptRemoteSnapshot({
+      localRepository.acceptSyncedSnapshot({
         tripId: tripFixture.trip.id,
         schemaVersion: 1,
         revision: 2,

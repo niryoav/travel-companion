@@ -39,7 +39,7 @@ function latestOverrideTimestamp(bundle: TripOverrideBundle): string | null {
   return timestamps.sort().at(-1) ?? null
 }
 
-function validMetadata(value: unknown): value is LocalTripOverrideMetadata {
+function validMetadata(value: unknown): boolean {
   if (typeof value !== 'object' || value === null) {
     return false
   }
@@ -58,6 +58,13 @@ function validMetadata(value: unknown): value is LocalTripOverrideMetadata {
       metadata.syncState === 'synced' ||
       metadata.syncState === 'unsynced' ||
       metadata.syncState === 'conflict'
+    ) &&
+    (
+      metadata.lastSuccessfulSyncAt === undefined ||
+      (
+        typeof metadata.lastSuccessfulSyncAt === 'string' &&
+        isValidInstant(metadata.lastSuccessfulSyncAt)
+      )
     )
   )
 }
@@ -89,14 +96,25 @@ export function readLocalTripOverrideState(
         JSON.stringify(parsed.operationalOverrides),
         tripData,
       )
-      return operationalOverrides
-        ? {
-            storageVersion: 1,
-            tripId: tripData.trip.id,
-            operationalOverrides,
-            metadata: parsed.metadata,
-          }
-        : null
+      if (!operationalOverrides) {
+        return null
+      }
+      const metadata = parsed.metadata as
+        Omit<LocalTripOverrideMetadata, 'syncState'> & {
+          syncState: LocalTripOverrideSyncState | 'conflict'
+        }
+      return {
+        storageVersion: 1,
+        tripId: tripData.trip.id,
+        operationalOverrides,
+        metadata: {
+          ...metadata,
+          syncState:
+            metadata.syncState === 'conflict'
+              ? 'unsynced'
+              : metadata.syncState,
+        },
+      }
     }
 
     const legacyOverrides = parseTripOverrideBundle(rawValue, tripData)
@@ -164,6 +182,8 @@ implements TripOverrideRepository {
 
   getMetadata = (): LocalTripOverrideMetadata => this.metadata
 
+  getSyncMetadata = (): LocalTripOverrideMetadata => this.metadata
+
   subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener)
     return () => this.listeners.delete(listener)
@@ -191,6 +211,7 @@ implements TripOverrideRepository {
   acceptSyncedSnapshot(snapshot: TripSnapshot): void {
     this.write(snapshot.operationalOverrides, {
       baseRevision: snapshot.revision,
+      lastSuccessfulSyncAt: snapshot.updatedAt,
       lastModified: snapshot.updatedAt,
       syncState: 'synced',
     })

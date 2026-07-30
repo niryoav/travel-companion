@@ -5,17 +5,22 @@ import { createAppBuildInfo } from './buildInfo'
 describe('app build information', () => {
   it('formats a valid privacy-safe production build', () => {
     const result = createAppBuildInfo({
-      version: '1.2.3',
+      version: '97b35d2abcdef0123456789',
       builtAt: '2030-05-01T12:00:00Z',
       development: false,
     })
 
-    expect(result).toEqual({
-      version: '1.2.3',
+    expect(result).toMatchObject({
+      version: '97b35d2',
       builtAt: '2030-05-01T12:00:00Z',
-      buildLabel: '1 May 2030',
       environmentLabel: 'Production',
     })
+    expect(result.buildLabel).toBe(
+      new Intl.DateTimeFormat(undefined, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }).format(new Date('2030-05-01T12:00:00Z')),
+    )
     expect(JSON.stringify(result)).not.toMatch(
       /(?:github|Users\/|booking|token|password)/i,
     )
@@ -29,9 +34,9 @@ describe('app build information', () => {
         development: true,
       }),
     ).toEqual({
-      version: 'Development',
+      version: 'local',
       builtAt: '',
-      buildLabel: 'Development session',
+      buildLabel: 'Local build',
       environmentLabel: 'Development',
     })
   })

@@ -1,5 +1,11 @@
 # Shared startup synchronization review
 
+> Historical regression review. The user-facing conflict and manual retry
+> behavior described in the original implementation was retired by
+> `docs/reviews/role-based-sync.md`. The revision-precedence regression remains
+> relevant to cache validation, while current behavior is explicitly Yoav
+> local-master and Isabel remote-follower.
+
 ## Confirmed root cause
 
 Safari could retain two valid copies of the accepted operational trip
@@ -37,11 +43,9 @@ accepted snapshot is persisted to localStorage.
 
 ## Local-edit protection and successful sharing
 
-Any local state whose sync status is not `synced` is protected before a remote
-request is made. A refresh also checks protection again after its GET, so an
-edit that begins while the request is in flight cannot be overwritten.
-Conflicts, offline saves, and even unsynced deletions represented by an empty
-override bundle remain local until the existing manual share action succeeds.
+Yoav local state whose sync status is not `synced` remains the working master
+and cannot be overwritten by a remote read. Isabel has no editable local
+changes to protect and follows the accepted shared snapshot automatically.
 
 After a successful PUT, the exact revision returned by the server becomes the
 in-memory and localStorage `baseRevision`, the state becomes `synced`, and the
@@ -130,7 +134,7 @@ repository-level two-context test verifies that an independently bootstrapped
 reader accepts the shared revision without altering the editor's local state.
 
 Safari back-forward cache restoration is not a guaranteed network boundary.
-The refresh listens for focus and visibility changes, which cover normal tab
+The role-based sync listens for focus, visibility, and online events, which cover normal tab
 switching and foregrounding, but Safari may restore a page from the
 back-forward cache without delivering either event in an edge case. Reloading
 the page remains the fallback for that case. No polling, `pageshow` refresh,

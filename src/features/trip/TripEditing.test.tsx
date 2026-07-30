@@ -212,7 +212,7 @@ describe('Trip operational editing', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('removes the legacy share action and keeps manual retry visible near the top', () => {
+  it('shows Saved without legacy share or retry controls', () => {
     const baseline = editableFixture()
     const local = new LocalTripOverrideRepository(
       window.localStorage,
@@ -242,7 +242,6 @@ describe('Trip operational editing', () => {
         lastModified: '2030-05-10T12:00:00Z',
         syncState: 'unsynced',
       }),
-      retryShare: vi.fn(async () => 'shared' as const),
     }
     render(
       <TripEditingHarness
@@ -254,17 +253,20 @@ describe('Trip operational editing', () => {
     expect(
       screen.queryByRole('button', { name: 'Share saved changes' }),
     ).not.toBeInTheDocument()
-    const retry = screen.getByRole('button', {
-      name: 'Try sharing again',
-    })
     expect(
-      retry.closest('.trip-sync-actions')?.nextElementSibling,
-    ).toBe(screen.getByRole('main'))
+      screen.getByRole('status'),
+    ).toHaveTextContent('Saved')
+    expect(
+      screen.queryByRole('button', { name: 'Try sharing again' }),
+    ).not.toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent(
+      /Shared version changed|local edit is preserved/i,
+    )
   })
 
-  it('offers one manual retry for known-base unsynced edits', async () => {
+  it('shows only Synced after server confirmation', () => {
     const baseline = editableFixture()
-    const local = new LocalTripOverrideRepository(
+    const repository = new LocalTripOverrideRepository(
       window.localStorage,
       baseline,
       undefined,
@@ -274,27 +276,19 @@ describe('Trip operational editing', () => {
         dayOverrides: {
           'day-2030-05-11': {
             dayId: 'day-2030-05-11',
-            note: 'Offline local',
+            note: 'Confirmed',
             updatedAt: '2030-05-10T12:00:00Z',
           },
         },
         eventOverrides: {},
       },
-    )
-    const retryShare = vi.fn(async () => 'shared' as const)
-    const repository: TripOverrideRepository = {
-      getSnapshot: local.getSnapshot,
-      subscribe: local.subscribe,
-      saveDayEdits: local.saveDayEdits.bind(local),
-      resetEvent: local.resetEvent.bind(local),
-      resetDay: local.resetDay.bind(local),
-      getSyncMetadata: () => ({
+      {
         baseRevision: 3,
         lastModified: '2030-05-10T12:00:00Z',
-        syncState: 'unsynced',
-      }),
-      retryShare,
-    }
+        lastSuccessfulSyncAt: '2030-05-10T12:00:00Z',
+        syncState: 'synced',
+      },
+    )
     render(
       <TripEditingHarness
         baseline={baseline}
@@ -302,26 +296,19 @@ describe('Trip operational editing', () => {
       />,
     )
 
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Try sharing again' }),
-    )
-    await waitFor(() => expect(retryShare).toHaveBeenCalledOnce())
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'Opgeslagen en gedeeld',
-    )
+    expect(screen.getByRole('status')).toHaveTextContent('Synced')
+    expect(screen.queryByText('Saved')).not.toBeInTheDocument()
   })
 
-  it('reports a successful shared save from the existing Save action', async () => {
+  it('saves immediately from the existing Save action', async () => {
     const baseline = editableFixture()
     const local = new LocalTripOverrideRepository(
       window.localStorage,
       baseline,
     )
     const saveDayEdits = vi.fn(
-      async (...args: Parameters<TripOverrideRepository['saveDayEdits']>) => {
-        local.saveDayEdits(...args)
-        return 'shared' as const
-      },
+      (...args: Parameters<TripOverrideRepository['saveDayEdits']>) =>
+        local.saveDayEdits(...args),
     )
     const repository: TripOverrideRepository = {
       getSnapshot: local.getSnapshot,
@@ -348,12 +335,7 @@ describe('Trip operational editing', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
 
-    await waitFor(() =>
-      expect(screen.getByRole('status')).toHaveTextContent(
-        'Opgeslagen en gedeeld',
-      ),
-    )
-    expect(saveDayEdits).toHaveBeenCalledOnce()
+    await waitFor(() => expect(saveDayEdits).toHaveBeenCalledOnce())
     expect(
       local.getSnapshot().dayOverrides['day-2030-05-11']?.note,
     ).toBe('Shared note')
@@ -426,8 +408,8 @@ describe('Trip operational editing', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
 
     await waitFor(() =>
-      expect(screen.getByRole('status')).toHaveTextContent(
-        'Opgeslagen op dit apparaat — nog niet gedeeld',
+      expect(repository.getSyncMetadata?.()?.syncState).toBe(
+        'unsynced',
       ),
     )
     expect(screen.getAllByText('Tender required').length).toBeGreaterThan(0)
@@ -435,7 +417,7 @@ describe('Trip operational editing', () => {
     expect(screen.getAllByText('17:10').length).toBeGreaterThan(0)
     expect(
       screen.getAllByText(
-        /Updated locally on .* — not yet shared/,
+        /Updated on /,
       ).length,
     ).toBeGreaterThan(0)
     expect(

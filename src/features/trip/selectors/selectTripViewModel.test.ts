@@ -390,7 +390,7 @@ describe('selectTripViewModel', () => {
     })
   })
 
-  it('uses sync-aware wording for operational updates', () => {
+  it('keeps operational update wording neutral from sync state', () => {
     const overrides = emptyTripOverrideBundle(tripFixture.trip.id)
     overrides.dayOverrides['day-2030-05-11'] = {
       dayId: 'day-2030-05-11',
@@ -413,11 +413,9 @@ describe('selectTripViewModel', () => {
       'unsynced',
     ).days[1]
 
-    expect(syncedDay.operationalUpdateLabel).toMatch(
-      /^Updated and shared on /,
-    )
-    expect(unsyncedDay.operationalUpdateLabel).toMatch(
-      /^Updated locally on .* — not yet shared$/,
+    expect(syncedDay.operationalUpdateLabel).toMatch(/^Updated on /)
+    expect(unsyncedDay.operationalUpdateLabel).toBe(
+      syncedDay.operationalUpdateLabel,
     )
   })
 

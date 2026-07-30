@@ -18,16 +18,20 @@ export function createAppBuildInfo({
 }: BuildInfoInput): AppBuildInfo {
   const validBuildDate =
     builtAt && !Number.isNaN(Date.parse(builtAt)) ? builtAt : ''
+  const normalizedVersion = version?.trim() || 'local'
+  const shortVersion = /^[a-f0-9]{8,}$/i.test(normalizedVersion)
+    ? normalizedVersion.slice(0, 7)
+    : normalizedVersion
 
   return {
-    version: version?.trim() || 'Development',
+    version: shortVersion,
     builtAt: validBuildDate,
     buildLabel: validBuildDate
-      ? new Intl.DateTimeFormat('en-GB', {
+      ? new Intl.DateTimeFormat(undefined, {
           dateStyle: 'medium',
-          timeZone: 'UTC',
+          timeStyle: 'short',
         }).format(new Date(validBuildDate))
-      : 'Development session',
+      : 'Local build',
     environmentLabel: development ? 'Development' : 'Production',
   }
 }

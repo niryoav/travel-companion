@@ -2,25 +2,15 @@ import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vitest/config'
-import { readFileSync } from 'node:fs'
 
-const packageMetadata = JSON.parse(
-  readFileSync(new URL('./package.json', import.meta.url), 'utf8'),
-) as { version?: unknown }
+import { resolveDeploymentBuildValues } from './build/deploymentBuildInfo'
 
-if (typeof packageMetadata.version !== 'string') {
-  throw new Error('package.json must define a string version')
-}
-
-const sourceDateEpoch = process.env.SOURCE_DATE_EPOCH
-const buildDate = sourceDateEpoch
-  ? new Date(Number(sourceDateEpoch) * 1000).toISOString()
-  : new Date().toISOString()
+const deploymentBuild = resolveDeploymentBuildValues(process.env)
 
 export default defineConfig({
   define: {
-    __APP_VERSION__: JSON.stringify(packageMetadata.version),
-    __APP_BUILD_DATE__: JSON.stringify(buildDate),
+    __APP_VERSION__: JSON.stringify(deploymentBuild.version),
+    __APP_BUILD_DATE__: JSON.stringify(deploymentBuild.builtAt),
   },
   plugins: [
     react(),

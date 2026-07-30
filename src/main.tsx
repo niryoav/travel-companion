@@ -15,10 +15,7 @@ import { PwaUpdateManager } from './pwa/PwaUpdateManager'
 import { registerPwaUpdates } from './pwa/registerPwa'
 import { HttpTripSnapshotApiClient } from './services/TripSnapshotApiClient'
 import { bootstrapTripSync } from './sync/bootstrapTripSync'
-import {
-  hasActiveTripEditSession,
-  TripSyncRefreshController,
-} from './sync/TripSyncRefreshController'
+import { TripSyncRefreshController } from './sync/TripSyncRefreshController'
 import './styles/index.css'
 
 const tripRepository = new BundledTripRepository(
@@ -49,13 +46,11 @@ const applicationRootElement = rootElement
 async function startApplication(): Promise<void> {
   const cache = new IndexedDbTripSnapshotCache(tripData)
   const apiClient = new HttpTripSnapshotApiClient(tripData)
-  const {
-    tripOverrideRepository,
-    refreshFromRemote,
-  } = await bootstrapTripSync({
+  const { tripOverrideRepository } = await bootstrapTripSync({
     tripData,
     cache,
     apiClient,
+    getTravelerId: () => tripStateRepository.getTravelerId(),
     localStorage: window.localStorage,
   })
 
@@ -76,10 +71,8 @@ async function startApplication(): Promise<void> {
   )
 
   const refreshController = new TripSyncRefreshController({
-    refreshFromRemote,
-    canRefresh: () =>
-      tripOverrideRepository.canAcceptRemoteSnapshot() &&
-      !hasActiveTripEditSession(),
+    synchronize: () =>
+      tripOverrideRepository.synchronizeForCurrentRole(),
   })
   refreshController.start()
   void refreshController.requestRefresh()

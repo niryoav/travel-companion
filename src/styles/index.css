@@ -1583,46 +1583,16 @@ a:focus-visible {
   color: var(--text);
 }
 
-.trip-save-confirmation {
+.trip-sync-status {
+  justify-self: start;
   margin: 0;
-  border: 1px solid color-mix(in srgb, var(--positive) 45%, transparent);
-  border-radius: 0.9rem;
-  background: var(--positive-soft);
-  color: var(--text);
-  padding: 0.75rem 0.9rem;
-  font-size: 0.88rem;
-  font-weight: 750;
-}
-
-.trip-sync-actions {
-  display: grid;
-  gap: 0.65rem;
-  border: 1px solid var(--border);
-  border-radius: 0.9rem;
-  background: var(--surface);
-  padding: 0.85rem;
-}
-
-.trip-sync-actions p {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 0.88rem;
-}
-
-.trip-sync-actions button {
-  min-height: 2.75rem;
   border: 1px solid var(--champagne);
-  border-radius: 0.7rem;
-  background: transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
   color: var(--champagne);
-  font: inherit;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.78rem;
   font-weight: 800;
-  cursor: pointer;
-}
-
-.trip-sync-actions button:focus-visible {
-  outline: 3px solid var(--champagne);
-  outline-offset: 2px;
 }
 
 .trip-edit-backdrop {
@@ -2895,6 +2865,7 @@ a:focus-visible {
 }
 
 .app-status-card,
+.trip-data-status,
 .app-information-card {
   max-width: 38rem;
   margin-top: 1rem;
@@ -2902,17 +2873,31 @@ a:focus-visible {
 }
 
 .app-status-card h2,
+.trip-data-status h2,
 .app-information-card h2 {
   margin: 0.45rem 0 0;
   font-size: clamp(1.25rem, 5vw, 1.55rem);
 }
 
 .app-status-card p,
+.trip-data-status p,
 .app-information-card p {
   margin: 0.55rem 0 0;
   overflow-wrap: anywhere;
   color: var(--text-muted);
   line-height: 1.55;
+}
+
+.app-information-card .app-deployment-version {
+  margin-top: 0.35rem;
+  color: var(--text);
+  font-size: clamp(1.55rem, 7vw, 2rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.app-information-card .app-deployment-time {
+  margin-top: 0.2rem;
 }
 
 .app-status-card .app-offline-status-ready {

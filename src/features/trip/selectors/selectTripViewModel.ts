@@ -315,7 +315,6 @@ function eventViewModel(
     operationalUpdateLabel: overrides.eventOverrides[event.id]
       ? formatOperationalUpdate(
           overrides.eventOverrides[event.id].updatedAt,
-          syncState,
         )
       : undefined,
     experience: guide
@@ -468,11 +467,8 @@ function formatLocalUpdate(instant: string): string {
 
 function formatOperationalUpdate(
   instant: string,
-  syncState: LocalTripOverrideSyncState,
 ): string {
-  return syncState === 'synced'
-    ? `Updated and shared on ${formatLocalUpdate(instant)}`
-    : `Updated locally on ${formatLocalUpdate(instant)} — not yet shared`
+  return `Updated on ${formatLocalUpdate(instant)}`
 }
 
 function progressViewModel(
@@ -611,7 +607,7 @@ function dayViewModel(
     operationalUpdateLabel:
       hasDayOperationalChanges(overrides, day.id, day.eventIds) &&
       latestUpdate
-        ? formatOperationalUpdate(latestUpdate, syncState)
+        ? formatOperationalUpdate(latestUpdate)
         : undefined,
     relatedDocumentCount: documentCount,
     documentActions: dayDocuments.map(selectDocumentAction),
