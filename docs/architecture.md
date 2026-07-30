@@ -240,18 +240,228 @@ remain unsynced without losing local data. Later startup, focus, visibility,
 online, save, and in-memory timer triggers can start a fresh attempt because
 single-flight state is always released when an attempt settles.
 
-Blob-level ETag preconditions were removed from this write path: with a
-single editor and single-flight client behavior, the revision comparison
-alone already provides the concurrency guarantee this product needs, and the
-ETag layer was the direct cause of three consecutive production failures
-from ETag representation handling rather than from any genuine concurrent
-write. See ADR-004.
+Blob-level ETag preconditions were removed from this write path: with a single
+editor and single-flight client behavior, the revision comparison alone already
+provides the concurrency guarantee this product needs. The general lesson is
+that a mechanism intended for hypothetical concurrency can add failure modes
+without protecting a real workflow; production evidence should trigger a
+reconsideration of that mechanism rather than another compensating layer. See
+ADR-004.
 
 The Trip screen shows Saved and then Synced only as a small temporary
 confirmation after an edit; it has no persistent synchronization banner.
 Persistent role-appropriate trip-data status lives under More, without manual
 retry controls. There is no retry queue, realtime synchronization, merge
 engine, or user-facing conflict state. See ADR-004.
+
+## Engineering Decision Guardrails
+
+This is the canonical detailed guidance for architecture and cross-cutting
+engineering decisions. It applies to coding agents, reviewers, implementers,
+and human contributors. `AGENTS.md` contains the concise mandatory entry point;
+this section owns the detailed rules and templates so they are not duplicated
+across project documents.
+
+### Canonical decision sequence
+
+1. Real workflow first.
+2. Smallest architecture second.
+3. Production evidence third.
+4. Implementation last.
+
+When production reality conflicts with tests or architecture assumptions,
+production evidence wins and the design must be reconsidered. When a
+contributor cannot directly access production logs, deployment dashboards,
+device inspection, or network traces, obtaining the relevant evidence from the
+product owner comes before implementation, not after.
+
+### Real workflow first
+
+Before proposing or implementing architecture, write down:
+
+- who can edit;
+- who is read-only;
+- which devices and usage contexts actually matter;
+- expected data size, update frequency, and number of users;
+- which upload, download, startup, and recovery actions must be automatic;
+- what failure recovery is acceptable, including whether restarting or
+  repeating one simple action is sufficient;
+- which scenarios are explicitly outside the current product scope.
+
+Label assumptions as one of:
+
+- **Real product workflow:** confirmed behavior the product must support.
+- **Testing simulation:** an environment used to verify behavior, not evidence
+  of a production requirement.
+- **Hypothetical scenario:** a possible future need that is not a current
+  requirement.
+
+Several test browsers or test devices do not by themselves establish a need for
+multi-editor, multi-master, or enterprise-scale behavior.
+
+### Smallest sufficient architecture
+
+Choose the smallest design that satisfies confirmed product requirements.
+
+> Design for two trusted users. If restarting the app or repeating one simple
+> action is acceptable, prefer that over extra complexity.
+
+The default complexity budget for this private two-user travel application is
+low. Do not add or preserve these mechanisms unless a concrete current
+requirement demonstrably needs them:
+
+- multi-editor conflict resolution or merge engines;
+- CRDTs or realtime infrastructure;
+- durable background queues or background workers;
+- distributed locks;
+- ETag-based conditional writes;
+- multiple competing sources of truth;
+- authentication beyond the confirmed trust model;
+- duplicate persistence layers;
+- retry orchestration more complex than the accepted recovery behavior.
+
+Before approving any such mechanism, explain:
+
+1. the specific product requirement or observed failure it addresses;
+2. why the simpler design is insufficient;
+3. the new complexity, states, and failure modes it introduces;
+4. how it will be exercised in the real environment.
+
+Prefer deleting unnecessary complexity over adding a compatibility, recovery,
+or abstraction layer around it.
+
+For an architectural or cross-cutting change, scale the plan and final report
+to the decision's size and record:
+
+- assumptions made;
+- complexity added;
+- complexity removed;
+- new states or branches introduced;
+- new persistence or network mechanisms introduced;
+- parts that exist only for hypothetical scenarios;
+- whether the result can be simplified further.
+
+A one-line configuration correction does not need a full complexity-budget
+report; a change to a sync, storage, persistence, deployment, or other
+cross-cutting boundary does. If this reporting becomes boilerplate rather than
+something reviewers use to make decisions, raise that with the product owner
+instead of silently preserving the process.
+
+### Production evidence before speculation
+
+For a deployed failure, use this order:
+
+1. Confirm the deployment version actually running.
+2. Reproduce the smallest real workflow.
+3. Inspect production logs, status codes, and request sequence.
+4. Identify the exact failing boundary.
+5. Review the relevant code.
+6. Check official primary-source documentation for the platform or SDK.
+7. Propose the smallest fix consistent with the evidence.
+
+Do not start with broad speculation when logs or request traces are available.
+If a contributor cannot access the required production evidence, they must say
+so explicitly and ask the product owner to gather and share it before
+implementation. They must not silently skip the step or imply that the evidence
+was reviewed.
+
+Reports and proposals must distinguish:
+
+- **Confirmed root cause:** demonstrated by production evidence.
+- **Likely hypothesis:** consistent with the evidence but not yet confirmed.
+- **Unproven code weakness:** a real defect or risk not shown to explain the
+  observed production failure.
+
+A plausible hypothesis must never be presented as a confirmed production cause.
+
+### Test a real vertical slice early
+
+Changes involving synchronization, storage, offline behavior, PWA lifecycle,
+Vercel APIs, deployment, authentication, or external SDKs require an early
+real-environment acceptance test before elaborate recovery behavior is built.
+Use the smallest representative slice, such as:
+
+- one real edit followed by one real PUT;
+- one real GET from the read-only follower;
+- one offline save followed by reconnect;
+- one installed-PWA reopen;
+- inspection of the matching production logs and request sequence.
+
+Automated tests remain mandatory. Mocked tests prove application behavior under
+their model; they do not prove platform-specific production behavior.
+
+### Stop after two failed production fixes
+
+Two consecutive fixes belong to the same recurring subsystem when both touch
+the same read/write, synchronization, storage, or persistence boundary, even if
+the visible failure modes differ. For example, parsing and validation failures
+at one API/storage boundary count together.
+
+When two such fixes fail in production or introduce new failures:
+
+1. stop narrow symptom-level patches;
+2. do not immediately propose a third narrow fix;
+3. obtain an independent end-to-end architecture review;
+4. restate the real workflow, constraints, and out-of-scope scenarios;
+5. review official primary-source platform or SDK documentation;
+6. identify existing mechanisms that can be removed;
+7. only then propose the next implementation.
+
+A passing automated test suite does not override repeated production evidence.
+
+### Review and implementation roles
+
+Use three distinct perspectives for substantial architecture work:
+
+1. **Independent reviewer**
+   - restates the product workflow;
+   - challenges assumptions rather than merely confirming internal
+     consistency;
+   - checks official documentation;
+   - proposes the smallest sufficient architecture;
+   - identifies unnecessary mechanisms.
+2. **Implementer**
+   - implements the approved architecture without expanding scope;
+   - runs the required automated and real-environment verification.
+3. **Final reviewer**
+   - checks whether the implementation remains simpler than the problem;
+   - confirms no hypothetical requirements were introduced;
+   - compares the result with the real acceptance workflow.
+
+These may be separate people or independently performed review passes, subject
+to the project's review governance. Do not impose this workflow on a small,
+contained fix; that would violate the smallest-sufficient principle.
+
+### Required implementation report
+
+For meaningful architecture or infrastructure work, report:
+
+1. Real user workflow implemented
+2. Assumptions confirmed
+3. Assumptions rejected
+4. Source of truth
+5. States visible to users
+6. Complexity added
+7. Complexity removed
+8. Failure and retry behavior
+9. Official documentation consulted
+10. Automated verification
+11. Real-environment verification performed
+12. Real-environment verification still pending
+13. Known limitations
+14. Simplification opportunities remaining
+
+Scale the depth of each item to the change. Small contained changes may use a
+short report, while changes at architectural, infrastructure, synchronization,
+storage, or persistence boundaries require the full analysis. If
+real-environment verification could not be performed, include item 12
+explicitly with the missing evidence and the reason; do not omit it or imply a
+production claim was verified.
+
+Any lesson learned in architecture documentation must describe the reusable
+pattern, not the incident's sensitive specifics. Do not reproduce data values,
+identifiers, credentials, tokens, private file contents, personal information,
+or similar details, even as examples.
 
 ## Guidance
 
