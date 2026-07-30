@@ -5,13 +5,8 @@ import {
 } from '../domain/trip/tripSnapshot'
 import type { TripOverrideBundle } from '../domain/trip/tripOverrides'
 import type { TripData, TripId } from '../domain/trip/tripTypes'
-import {
-  formatStrongEtag,
-  parseStrongEtag,
-} from '../domain/trip/tripSnapshotEtag'
 
 export interface TripSnapshotReadResult {
-  etag: string
   snapshot: TripSnapshot
 }
 
@@ -23,7 +18,6 @@ export interface TripSnapshotApiClient {
     tripId: TripId,
     baseRevision: number,
     operationalOverrides: TripOverrideBundle,
-    baseEtag?: string,
   ): Promise<TripSnapshot>
 }
 
@@ -130,18 +124,13 @@ implements TripSnapshotApiClient {
     if (!snapshot) {
       throw new TripSnapshotApiError('INVALID_RESPONSE')
     }
-    const etag = parseStrongEtag(response.headers.get('ETag'))
-    if (!etag) {
-      throw new TripSnapshotApiError('INVALID_RESPONSE')
-    }
-    return { etag, snapshot }
+    return { snapshot }
   }
 
   async putTripSnapshot(
     tripId: TripId,
     baseRevision: number,
     operationalOverrides: TripOverrideBundle,
-    baseEtag?: string,
   ): Promise<TripSnapshot> {
     const routeId = routeIdFor(tripId)
     if (!routeId || tripId !== this.tripData.trip.id) {
@@ -150,12 +139,6 @@ implements TripSnapshotApiClient {
     const body: PutTripSnapshotRequest = {
       baseRevision,
       operationalOverrides,
-    }
-    const ifMatch = baseEtag
-      ? formatStrongEtag(baseEtag)
-      : null
-    if (baseEtag && !ifMatch) {
-      throw new TripSnapshotApiError('INVALID_RESPONSE')
     }
 
     try {
@@ -168,7 +151,6 @@ implements TripSnapshotApiClient {
           headers: {
             Accept: 'application/json',
             'Content-Type': 'application/json',
-            ...(ifMatch ? { 'If-Match': ifMatch } : {}),
           },
           body: JSON.stringify(body),
         },

@@ -215,23 +215,37 @@ snapshot may be cached but cannot replace those local edits. When no local
 changes exist, the accepted cache is the startup state and a newer validated
 remote revision replaces it in memory. No fields are merged.
 
-Every write names its base revision. The server rejects stale revisions and
-uses the current Blob ETag as a conditional-write precondition. The server,
-not the browser, creates the next revision, timestamp, and `updatedBy` value.
-Local override state records its base revision, last modification time, and
-sync state. A local edit is always persisted before one immediate sharing
-attempt. A known base revision goes directly to PUT. An unknown base performs
-one GET, uses the observed revision or revision zero when the shared snapshot
-is missing, and then performs one PUT with the complete local operational
-override bundle. Every client GET and PUT is bounded by the same request
-timeout. Success updates the accepted cache. A 409 performs one bounded GET
-and one automatic PUT retry with Yoav's complete local bundle. The GET returns
-one matched revision and strong ETag pair; the retry is reconstructed with
-that revision in its new body and that ETag in a new `If-Match` header. The
-server rejects a revision or ETag mismatch before writing. Other failures
+Every write names its base revision. The server rejects a stale revision with
+a 409 conflict carrying the current revision and writes with
+`allowOverwrite: true`; it never reads, compares, or forwards a Blob ETag.
+Concurrency protection comes entirely from that integer revision comparison
+plus client-side single-flight and coalescing on Yoav's device, not from a
+Blob-level conditional-write precondition. The server, not the browser,
+creates the next revision, timestamp, and `updatedBy` value. Local override
+state records its base revision, last modification time, and sync state. A
+local edit is always persisted before one immediate sharing attempt. A known
+base revision goes directly to PUT. An unknown base performs one GET, uses
+the observed revision or revision zero when the shared snapshot is missing,
+and then performs one PUT with the complete local operational override
+bundle. Only one PUT is ever in flight; an edit made while a PUT is
+outstanding does not start a second concurrent request, and the settled
+request immediately triggers one more upload of the current latest payload
+if it no longer matches what was sent, until the local and last-synced
+payloads agree. The status only becomes Synced once the accepted payload
+still matches the latest local payload. Every client GET and PUT is bounded
+by the same request timeout. Success updates the accepted cache. A 409
+performs one bounded GET and one automatic PUT retry against the observed
+revision; it is not looped further within that attempt. Other failures
 remain unsynced without losing local data. Later startup, focus, visibility,
 online, save, and in-memory timer triggers can start a fresh attempt because
 single-flight state is always released when an attempt settles.
+
+Blob-level ETag preconditions were removed from this write path: with a
+single editor and single-flight client behavior, the revision comparison
+alone already provides the concurrency guarantee this product needs, and the
+ETag layer was the direct cause of three consecutive production failures
+from ETag representation handling rather than from any genuine concurrent
+write. See ADR-004.
 
 The Trip screen shows Saved and then Synced only as a small temporary
 confirmation after an edit; it has no persistent synchronization banner.

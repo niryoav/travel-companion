@@ -80,7 +80,6 @@ function client(remote: TripSnapshot | null): TripSnapshotApiClient {
     getTripSnapshot: vi.fn(async () =>
       remote
         ? {
-            etag: `etag-${remote.revision}`,
             snapshot: remote,
           }
         : null,
@@ -146,8 +145,69 @@ describe('bootstrapTripSync role-based startup', () => {
           }),
         }),
       }),
-      undefined,
     )
+  })
+
+  it('migrates a pre-change unsynced local edit and syncs it through the revision-only PUT path', async () => {
+    // Simulates local storage written by a build that still tracked ETag
+    // metadata over the wire; the persisted schema itself never stored an
+    // ETag, so no field-level migration is required, only successful reuse
+    // of the existing baseRevision/syncState envelope.
+    storeLocal('Pre-change offline edit', 3, 'unsynced')
+    const putTripSnapshot = vi.fn(
+      async (
+        _tripId: string,
+        baseRevision: number,
+        overrides: TripOverrideBundle,
+      ): Promise<TripSnapshot> => ({
+        tripId: tripFixture.trip.id,
+        schemaVersion: 1,
+        revision: baseRevision + 1,
+        updatedAt: '2030-05-10T13:00:00Z',
+        updatedBy: 'yoav',
+        operationalOverrides: overrides,
+      }),
+    )
+    const apiClient: TripSnapshotApiClient = {
+      getTripSnapshot: vi.fn(async () => null),
+      putTripSnapshot,
+    }
+
+    const result = await bootstrap(
+      'traveler-yoav',
+      new FakeCache(),
+      apiClient,
+    )
+
+    expect(
+      result.tripOverrideRepository.getSnapshot().dayOverrides[
+        'day-2030-05-11'
+      ]?.note,
+    ).toBe('Pre-change offline edit')
+    expect(result.tripOverrideRepository.getSyncMetadata()).toMatchObject({
+      baseRevision: 3,
+      syncState: 'unsynced',
+    })
+
+    await result.tripOverrideRepository.synchronizeForCurrentRole()
+
+    expect(putTripSnapshot).toHaveBeenCalledWith(
+      tripFixture.trip.id,
+      3,
+      expect.objectContaining({
+        dayOverrides: expect.objectContaining({
+          'day-2030-05-11': expect.objectContaining({
+            note: 'Pre-change offline edit',
+          }),
+        }),
+      }),
+    )
+    expect(
+      result.tripOverrideRepository.getSyncMetadata(),
+    ).toMatchObject({
+      baseRevision: 4,
+      syncState: 'synced',
+    })
   })
 
   it('never replaces Yoav local state with a newer accepted cache', async () => {

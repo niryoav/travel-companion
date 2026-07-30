@@ -29,13 +29,8 @@ function snapshot() {
   }
 }
 
-function snapshotResponse(
-  value = snapshot(),
-  etag = 'etag-1',
-): Response {
-  return Response.json(value, {
-    headers: { ETag: `"${etag}"` },
-  })
+function snapshotResponse(value = snapshot()): Response {
+  return Response.json(value)
 }
 
 describe('HttpTripSnapshotApiClient', () => {
@@ -51,7 +46,6 @@ describe('HttpTripSnapshotApiClient', () => {
     await expect(
       client.getTripSnapshot(productionTrip.trip.id),
     ).resolves.toEqual({
-      etag: 'etag-1',
       snapshot: snapshot(),
     })
     expect(fetchRequest).toHaveBeenCalledWith(
@@ -179,7 +173,6 @@ describe('HttpTripSnapshotApiClient', () => {
       await expect(
         client.getTripSnapshot(productionTrip.trip.id),
       ).resolves.toEqual({
-        etag: 'etag-1',
         snapshot: snapshot(),
       })
 
@@ -219,6 +212,7 @@ describe('HttpTripSnapshotApiClient', () => {
         'Content-Type': 'application/json',
       },
     })
+    expect(init?.headers).not.toHaveProperty('If-Match')
     expect(JSON.stringify(init?.headers)).not.toContain('Authorization')
     expect(JSON.parse(String(init?.body))).toEqual({
       baseRevision: 2,
@@ -226,7 +220,7 @@ describe('HttpTripSnapshotApiClient', () => {
     })
   })
 
-  it('rebuilds a conflict retry with the GET revision and ETag', async () => {
+  it('rebuilds a conflict retry with the GET revision', async () => {
     const latest = { ...snapshot(), revision: 7 }
     const accepted = { ...snapshot(), revision: 8 }
     const fetchRequest = vi
@@ -236,12 +230,11 @@ describe('HttpTripSnapshotApiClient', () => {
           {
             code: 'REVISION_CONFLICT',
             currentRevision: 7,
-            reason: 'REVISION_MISMATCH',
           },
           { status: 409 },
         ),
       )
-      .mockResolvedValueOnce(snapshotResponse(latest, 'etag-7'))
+      .mockResolvedValueOnce(snapshotResponse(latest))
       .mockResolvedValueOnce(Response.json(accepted))
     const client = new HttpTripSnapshotApiClient(
       productionTrip,
@@ -270,7 +263,6 @@ describe('HttpTripSnapshotApiClient', () => {
         productionTrip.trip.id,
         observed.snapshot.revision,
         snapshot().operationalOverrides,
-        observed.etag,
       ),
     ).resolves.toEqual(accepted)
 
@@ -279,12 +271,8 @@ describe('HttpTripSnapshotApiClient', () => {
     expect(JSON.parse(String(initialPut?.body))).toMatchObject({
       baseRevision: 2,
     })
-    expect(initialPut?.headers).not.toHaveProperty('If-Match')
     expect(JSON.parse(String(retryPut?.body))).toMatchObject({
       baseRevision: 7,
-    })
-    expect(retryPut?.headers).toMatchObject({
-      'If-Match': '"etag-7"',
     })
     expect(retryPut).not.toBe(initialPut)
     expect(retryPut?.body).not.toBe(initialPut?.body)
@@ -399,16 +387,5 @@ describe('HttpTripSnapshotApiClient', () => {
     } finally {
       vi.useRealTimers()
     }
-  })
-
-  it('rejects a successful GET without a strong ETag', async () => {
-    const client = new HttpTripSnapshotApiClient(
-      productionTrip,
-      vi.fn(async () => Response.json(snapshot())),
-    )
-
-    await expect(
-      client.getTripSnapshot(productionTrip.trip.id),
-    ).rejects.toMatchObject({ code: 'INVALID_RESPONSE' })
   })
 })

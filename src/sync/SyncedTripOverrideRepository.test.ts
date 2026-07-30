@@ -247,7 +247,7 @@ describe('SyncedTripOverrideRepository role-based sync', () => {
     })
   })
 
-  it('coalesces an edit made during upload into the latest full payload', async () => {
+  it('does not start a second concurrent PUT and coalesces a stale-in-flight edit into one more upload', async () => {
     const first = deferred<TripSnapshot>()
     const second = deferred<TripSnapshot>()
     const putTripSnapshot = vi
@@ -261,20 +261,33 @@ describe('SyncedTripOverrideRepository role-based sync', () => {
       },
     })
 
+    // First edit starts an upload.
     repository.saveDayEdits(
       'day-2030-05-11',
       { note: 'First' },
       {},
     )
+    expect(putTripSnapshot).toHaveBeenCalledOnce()
+
+    // A second edit happens before the first upload's response arrives.
+    // Only one PUT may be in flight at a time.
     repository.saveDayEdits(
       'day-2030-05-11',
       { note: 'Latest' },
       {},
     )
+    expect(putTripSnapshot).toHaveBeenCalledOnce()
+
+    // The first, now-stale upload succeeds.
     first.resolve(snapshot(2, bundle('First')))
     await vi.waitFor(() =>
       expect(putTripSnapshot).toHaveBeenCalledTimes(2),
     )
+
+    // The stale success must not mark the newer edit as synced.
+    expect(local.getMetadata().syncState).toBe('unsynced')
+
+    // The second PUT carries the newer payload with the accepted revision.
     expect(putTripSnapshot.mock.calls[1]?.[1]).toBe(2)
     expect(
       putTripSnapshot.mock.calls[1]?.[2].dayOverrides[
@@ -288,6 +301,7 @@ describe('SyncedTripOverrideRepository role-based sync', () => {
       baseRevision: 3,
       syncState: 'synced',
     })
+    expect(putTripSnapshot).toHaveBeenCalledTimes(2)
   })
 
   it('keeps Yoav data saved and retries automatically after failure', async () => {
@@ -392,7 +406,6 @@ describe('SyncedTripOverrideRepository role-based sync', () => {
           }
           return Response.json(
             productionSnapshot(2, productionBundle('Remote')),
-            { headers: { ETag: '"etag-2"' } },
           )
         }
 
@@ -449,7 +462,7 @@ describe('SyncedTripOverrideRepository role-based sync', () => {
     expect(vi.getTimerCount()).toBe(0)
   })
 
-  it('rebuilds a 409 retry from one GET revision and ETag pair', async () => {
+  it('rebuilds a 409 retry from one bounded GET revision', async () => {
     const context: { local?: LocalTripOverrideRepository } = {}
     const fetchRequest = vi
       .fn<typeof fetch>()
@@ -458,7 +471,6 @@ describe('SyncedTripOverrideRepository role-based sync', () => {
           {
             code: 'REVISION_CONFLICT',
             currentRevision: 7,
-            reason: 'REVISION_MISMATCH',
           },
           { status: 409 },
         ),
@@ -466,7 +478,6 @@ describe('SyncedTripOverrideRepository role-based sync', () => {
       .mockResolvedValueOnce(
         Response.json(
           productionSnapshot(7, productionBundle('Remote')),
-          { headers: { ETag: '"etag-7"' } },
         ),
       )
       .mockImplementationOnce(async () =>
@@ -489,11 +500,7 @@ describe('SyncedTripOverrideRepository role-based sync', () => {
     const initialPut = fetchRequest.mock.calls[0]?.[1]
     const retryPut = fetchRequest.mock.calls[2]?.[1]
     expect(JSON.parse(String(initialPut?.body)).baseRevision).toBe(2)
-    expect(initialPut?.headers).not.toHaveProperty('If-Match')
     expect(JSON.parse(String(retryPut?.body)).baseRevision).toBe(7)
-    expect(retryPut?.headers).toMatchObject({
-      'If-Match': '"etag-7"',
-    })
     expect(retryPut).not.toBe(initialPut)
     expect(created.local.getMetadata()).toMatchObject({
       baseRevision: 8,
@@ -510,7 +517,6 @@ describe('SyncedTripOverrideRepository role-based sync', () => {
       )
       .mockResolvedValueOnce(snapshot(5, bundle('Yoav master')))
     const getTripSnapshot = vi.fn(async () => ({
-      etag: 'etag-4',
       snapshot: latestRemote,
     }))
     const { local, repository } = createRepository({
@@ -527,7 +533,6 @@ describe('SyncedTripOverrideRepository role-based sync', () => {
     expect(getTripSnapshot).toHaveBeenCalledOnce()
     expect(putTripSnapshot).toHaveBeenCalledTimes(2)
     expect(putTripSnapshot.mock.calls[1]?.[1]).toBe(4)
-    expect(putTripSnapshot.mock.calls[1]?.[3]).toBe('etag-4')
     expect(
       putTripSnapshot.mock.calls[1]?.[2].dayOverrides[
         'day-2030-05-11'
@@ -558,7 +563,6 @@ describe('SyncedTripOverrideRepository role-based sync', () => {
 
   it('uses remote only as a revision safeguard for Yoav', async () => {
     const getTripSnapshot = vi.fn(async () => ({
-      etag: 'etag-4',
       snapshot: snapshot(
         4,
         bundle('Remote must not replace local'),
@@ -584,7 +588,6 @@ describe('SyncedTripOverrideRepository role-based sync', () => {
       repository.getSnapshot().dayOverrides['day-2030-05-11']?.note,
     ).toBe('Yoav local master')
     expect(putTripSnapshot.mock.calls[0]?.[1]).toBe(4)
-    expect(putTripSnapshot.mock.calls[0]?.[3]).toBe('etag-4')
   })
 
   it('downloads for Isabel and never uploads', async () => {
@@ -593,7 +596,6 @@ describe('SyncedTripOverrideRepository role-based sync', () => {
     const { cache, local, repository } = createRepository({
       apiClient: {
         getTripSnapshot: vi.fn(async () => ({
-          etag: 'etag-3',
           snapshot: remote,
         })),
         putTripSnapshot,

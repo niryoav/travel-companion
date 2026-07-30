@@ -26,9 +26,14 @@ the confirmation is present, and dismisses itself. Opening or returning to
 Trip does not show a synchronization banner. More retains the persistent
 **Trip data: Saved** or **Trip data: Synced** state for Yoav.
 
-Saving starts an automatic upload. One request may be active at a time. If
-another edit is saved during that request, the current request finishes and
-the latest complete payload is uploaded next. Successful PUT metadata,
+Saving starts an automatic upload. Only one PUT is ever in flight at a time.
+If another edit is saved while a PUT is outstanding, no second concurrent PUT
+starts; the newer local payload is recorded, and when the in-flight request
+settles the current latest payload is uploaded next if it still differs from
+what was just sent, repeating until the local and last-synced payloads match.
+The status only advances to Synced once the payload the server actually
+accepted is still the latest local payload — a stale, now-superseded success
+response never marks a newer edit as synced. Successful PUT metadata,
 including the exact server revision and timestamp, is stored in localStorage,
 memory, and the accepted IndexedDB cache.
 
@@ -38,11 +43,11 @@ delay while the app remains active. GET and PUT requests share a 12-second
 client timeout so a stalled request releases the single-flight controller and
 allows those later triggers to proceed. The timer is not a durable queue.
 
-Revision and ETag protection remain internal. A revision conflict performs one
-GET for the latest server revision and one automatic PUT retry with Yoav's
-complete current local payload. The GET revision and strong ETag are returned
-as one version pair, and the retry is reconstructed with that revision and an
-`If-Match` header carrying that ETag. A second failure waits for the next
+Revision protection remains internal, and is the only write safeguard — there
+is no Blob-level ETag precondition. A revision conflict performs one GET for
+the latest server revision and one automatic PUT retry with Yoav's complete
+current local payload and that observed revision; this bounded retry is not
+looped further within one attempt. A second failure waits for the next
 standard trigger. No merge or version choice is offered.
 
 ## Isabel: remote follower
