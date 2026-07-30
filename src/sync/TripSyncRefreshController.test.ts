@@ -78,6 +78,27 @@ describe('TripSyncRefreshController', () => {
     controller.dispose()
   })
 
+  it('releases a failed refresh so a later trigger can start again', async () => {
+    let now = 10_000
+    const synchronize = vi
+      .fn<() => Promise<void>>()
+      .mockRejectedValueOnce(new Error('network'))
+      .mockResolvedValueOnce()
+    const controller = new TripSyncRefreshController({
+      now: () => now,
+      synchronize,
+      throttleMs: 5_000,
+    })
+
+    await expect(controller.requestRefresh()).rejects.toThrow(
+      'network',
+    )
+    now += 5_000
+    await expect(controller.requestRefresh()).resolves.toBeUndefined()
+
+    expect(synchronize).toHaveBeenCalledTimes(2)
+  })
+
   it('throttles repeated foreground triggers', async () => {
     let now = 10_000
     const synchronize = vi.fn(async () => {})

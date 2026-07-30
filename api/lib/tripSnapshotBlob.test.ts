@@ -26,7 +26,10 @@ function snapshot() {
   }
 }
 
-function blobResult(value: string): GetBlobResult {
+function blobResult(
+  value: string,
+  etag = 'etag-1',
+): GetBlobResult {
   return {
     statusCode: 200,
     stream: new Response(value).body!,
@@ -38,7 +41,7 @@ function blobResult(value: string): GetBlobResult {
       contentType: 'application/json',
       contentDisposition: 'inline',
       cacheControl: 'no-cache',
-      etag: 'etag-1',
+      etag,
       size: value.length,
       uploadedAt: new Date('2026-07-29T12:00:00Z'),
     },
@@ -57,7 +60,11 @@ describe('readTripSnapshotBlob', () => {
         readBlob,
         'production',
       ),
-    ).resolves.toEqual({ status: 'FOUND', snapshot: snapshot() })
+    ).resolves.toEqual({
+      status: 'FOUND',
+      snapshot: snapshot(),
+      etag: 'etag-1',
+    })
     expect(readBlob).toHaveBeenCalledWith(
       'trips/oceania-marina-2026/operational-snapshot.json',
       { access: 'private', useCache: false },
@@ -137,6 +144,7 @@ describe('writeTripSnapshotBlob', () => {
         writeBlob,
         now: () => new Date('2026-07-29T14:00:00Z'),
         environment: 'production',
+        expectedEtag: 'etag-1',
       },
     )
 
@@ -209,7 +217,41 @@ describe('writeTripSnapshotBlob', () => {
           environment: 'production',
         },
       ),
-    ).resolves.toEqual({ status: 'CONFLICT', currentRevision: 1 })
+    ).resolves.toEqual({
+      status: 'CONFLICT',
+      currentRevision: 1,
+      currentEtag: 'etag-1',
+      reason: 'REVISION_MISMATCH',
+    })
+    expect(writeBlob).not.toHaveBeenCalled()
+  })
+
+  it('does not write when revision and ETag are from different snapshots', async () => {
+    const writeBlob = vi.fn<typeof put>()
+
+    await expect(
+      writeTripSnapshotBlob(
+        'oceania-marina-2026',
+        {
+          baseRevision: 1,
+          operationalOverrides: snapshot().operationalOverrides,
+        },
+        'yoav',
+        {
+          readBlob: vi.fn(async () =>
+            blobResult(JSON.stringify(snapshot()), 'etag-1'),
+          ),
+          writeBlob,
+          environment: 'production',
+          expectedEtag: 'stale-etag',
+        },
+      ),
+    ).resolves.toEqual({
+      status: 'CONFLICT',
+      currentRevision: 1,
+      currentEtag: 'etag-1',
+      reason: 'ETAG_MISMATCH',
+    })
     expect(writeBlob).not.toHaveBeenCalled()
   })
 
@@ -218,7 +260,9 @@ describe('writeTripSnapshotBlob', () => {
     const readBlob = vi
       .fn()
       .mockResolvedValueOnce(blobResult(JSON.stringify(snapshot())))
-      .mockResolvedValueOnce(blobResult(JSON.stringify(latest)))
+      .mockResolvedValueOnce(
+        blobResult(JSON.stringify(latest), 'etag-2'),
+      )
     const writeBlob = vi
       .fn<typeof put>()
       .mockRejectedValue(new BlobPreconditionFailedError())
@@ -233,7 +277,12 @@ describe('writeTripSnapshotBlob', () => {
         'yoav',
         { readBlob, writeBlob, environment: 'preview' },
       ),
-    ).resolves.toEqual({ status: 'CONFLICT', currentRevision: 2 })
+    ).resolves.toEqual({
+      status: 'CONFLICT',
+      currentRevision: 2,
+      currentEtag: 'etag-2',
+      reason: 'BLOB_PRECONDITION',
+    })
     expect(writeBlob.mock.calls[0][0]).toBe(
       'preview/trips/oceania-marina-2026/operational-snapshot.json',
     )

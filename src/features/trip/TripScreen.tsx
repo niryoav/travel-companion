@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router'
 
 import type { TripData } from '../../domain/trip/tripTypes'
@@ -25,6 +25,9 @@ interface TripScreenProps {
   tripOverrides?: TripOverrideBundle
 }
 
+const SAVED_CONFIRMATION_DURATION_MS = 5_000
+const SYNCED_CONFIRMATION_DURATION_MS = 2_500
+
 export function TripScreen({
   baselineTripData,
   now,
@@ -39,17 +42,14 @@ export function TripScreen({
   const baseline = baselineTripData ?? tripData
   const { search } = useLocation()
   const [editingDayId, setEditingDayId] = useState<string | null>(null)
+  const [savedConfirmationVisible, setSavedConfirmationVisible] =
+    useState(false)
+  const [awaitingSyncConfirmation, setAwaitingSyncConfirmation] =
+    useState(false)
   const canEdit =
     !tripStateRepository ||
     tripStateRepository.getTravelerId() === 'traveler-yoav'
   const syncMetadata = tripOverrideRepository?.getSyncMetadata?.()
-  const hasLocalChanges = Boolean(
-    tripOverrides &&
-    (
-      Object.keys(tripOverrides.dayOverrides).length > 0 ||
-      Object.keys(tripOverrides.eventOverrides).length > 0
-    ),
-  )
   const reviewState = reviewStateFromSearch(search)
   const viewModel = reviewState
     ? tripReviewFixtures[reviewState]
@@ -60,12 +60,42 @@ export function TripScreen({
         tripOverrides,
         syncMetadata?.syncState,
       )
+  const syncConfirmation =
+    awaitingSyncConfirmation &&
+    syncMetadata?.syncState === 'synced'
+      ? 'Synced'
+      : savedConfirmationVisible
+        ? 'Saved'
+        : null
+
+  useEffect(() => {
+    if (!syncConfirmation) {
+      return
+    }
+    const timeoutId = globalThis.setTimeout(
+      () => {
+        setSavedConfirmationVisible(false)
+        if (syncConfirmation === 'Synced') {
+          setAwaitingSyncConfirmation(false)
+        }
+      },
+      syncConfirmation === 'Synced'
+        ? SYNCED_CONFIRMATION_DURATION_MS
+        : SAVED_CONFIRMATION_DURATION_MS,
+    )
+    return () => globalThis.clearTimeout(timeoutId)
+  }, [syncConfirmation])
 
   return (
     <>
-      {canEdit && hasLocalChanges && syncMetadata ? (
-        <p className="trip-sync-status" role="status">
-          {syncMetadata.syncState === 'synced' ? 'Synced' : 'Saved'}
+      {syncConfirmation ? (
+        <p
+          aria-atomic="true"
+          aria-live="polite"
+          className="trip-sync-confirmation"
+          role="status"
+        >
+          {syncConfirmation}
         </p>
       ) : null}
       <TripView
@@ -85,7 +115,10 @@ export function TripScreen({
           effectiveTripData={tripData}
           key={editingDayId}
           onClose={() => setEditingDayId(null)}
-          onSaved={() => {}}
+          onSaved={() => {
+            setSavedConfirmationVisible(true)
+            setAwaitingSyncConfirmation(true)
+          }}
           overrides={tripOverrides}
           repository={tripOverrideRepository}
         />

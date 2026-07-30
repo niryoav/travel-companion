@@ -21,7 +21,12 @@ export interface PutTripSnapshotRequest {
 
 export interface TripSnapshotConflictResponse {
   code: 'REVISION_CONFLICT'
+  currentEtag?: string
   currentRevision: number
+  reason:
+    | 'REVISION_MISMATCH'
+    | 'ETAG_MISMATCH'
+    | 'BLOB_PRECONDITION'
 }
 
 export type TripSnapshotApiErrorCode =

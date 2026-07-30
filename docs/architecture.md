@@ -223,12 +223,21 @@ sync state. A local edit is always persisted before one immediate sharing
 attempt. A known base revision goes directly to PUT. An unknown base performs
 one GET, uses the observed revision or revision zero when the shared snapshot
 is missing, and then performs one PUT with the complete local operational
-override bundle. Success updates the accepted cache, whereas 409 marks
-conflict and other failures remain unsynced without losing the local data.
+override bundle. Every client GET and PUT is bounded by the same request
+timeout. Success updates the accepted cache. A 409 performs one bounded GET
+and one automatic PUT retry with Yoav's complete local bundle. The GET returns
+one matched revision and strong ETag pair; the retry is reconstructed with
+that revision in its new body and that ETag in a new `If-Match` header. The
+server rejects a revision or ETag mismatch before writing. Other failures
+remain unsynced without losing local data. Later startup, focus, visibility,
+online, save, and in-memory timer triggers can start a fresh attempt because
+single-flight state is always released when an attempt settles.
 
-A failed one-shot upload exposes a manual retry. There is no retry queue,
-realtime synchronization, automatic conflict resolution, or merge engine.
-See ADR-004.
+The Trip screen shows Saved and then Synced only as a small temporary
+confirmation after an edit; it has no persistent synchronization banner.
+Persistent role-appropriate trip-data status lives under More, without manual
+retry controls. There is no retry queue, realtime synchronization, merge
+engine, or user-facing conflict state. See ADR-004.
 
 ## Guidance
 

@@ -20,6 +20,12 @@ network activity. The only visible states are:
 - **Saved** — safely stored locally but not yet server-confirmed.
 - **Synced** — the server confirmed the current local bundle.
 
+On Trip these states appear only in one small temporary confirmation after a
+save. It first shows Saved, updates to Synced if the request succeeds while
+the confirmation is present, and dismisses itself. Opening or returning to
+Trip does not show a synchronization banner. More retains the persistent
+**Trip data: Saved** or **Trip data: Synced** state for Yoav.
+
 Saving starts an automatic upload. One request may be active at a time. If
 another edit is saved during that request, the current request finishes and
 the latest complete payload is uploaded next. Successful PUT metadata,
@@ -28,12 +34,16 @@ memory, and the accepted IndexedDB cache.
 
 Failure keeps the local bundle and Saved status. Retry occurs automatically on
 startup, focus, visibility, online events, and after a 15-second in-memory
-delay while the app remains active. The timer is not a durable queue.
+delay while the app remains active. GET and PUT requests share a 12-second
+client timeout so a stalled request releases the single-flight controller and
+allows those later triggers to proceed. The timer is not a durable queue.
 
 Revision and ETag protection remain internal. A revision conflict performs one
 GET for the latest server revision and one automatic PUT retry with Yoav's
-complete current local payload. A second failure waits for the next standard
-trigger. No merge or version choice is offered.
+complete current local payload. The GET revision and strong ETag are returned
+as one version pair, and the retry is reconstructed with that revision and an
+`If-Match` header carrying that ETag. A second failure waits for the next
+standard trigger. No merge or version choice is offered.
 
 ## Isabel: remote follower
 
@@ -90,10 +100,12 @@ is **Check for app update**.
 2. Confirm traveler is Yoav.
 3. Edit one Day 3 tender time.
 4. Save.
-5. Confirm status first shows Saved.
+5. Confirm the small temporary confirmation first shows Saved.
 6. Wait for automatic sync.
-7. Confirm status becomes Synced.
+7. Confirm the same temporary confirmation becomes Synced and disappears.
 8. Do not press any sync button.
+9. Confirm Trip has no persistent sync banner and More shows Trip data:
+   Synced.
 
 ### CHROME AS ISABEL
 
@@ -111,12 +123,13 @@ is **Check for app update**.
 
 1. Enable airplane mode.
 2. Edit one value.
-3. Confirm status is Saved.
+3. Confirm the temporary confirmation shows Saved and then disappears.
 4. Close and reopen PWA.
 5. Confirm edit remains.
 6. Restore network.
 7. Confirm sync happens automatically.
-8. Confirm status becomes Synced.
+8. Confirm no startup warning or synchronization banner appears.
+9. Confirm More eventually shows Trip data: Synced.
 
 ### OFFLINE ISABEL
 

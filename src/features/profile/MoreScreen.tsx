@@ -65,8 +65,11 @@ export function MoreScreen({
         />
       </SurfaceCard>
 
-      {travelerId === 'traveler-isabel' ? (
-        <TripDataSyncStatus repository={tripOverrideRepository} />
+      {travelerId ? (
+        <TripDataSyncStatus
+          repository={tripOverrideRepository}
+          travelerId={travelerId}
+        />
       ) : null}
       <PwaStatusCard manager={pwaUpdateManager} />
       <AppInformationCard
