@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { emptyTripOverrideBundle } from '../../src/domain/trip/tripOverrides.js'
 import { oceaniaMarina2026TripData } from '../../src/trips/oceania-marina-2026/tripData.js'
 import type { TripSnapshotBlobReadResult } from '../lib/tripSnapshotBlob.js'
+import type { TripSyncDiagnostics } from '../lib/tripSyncDiagnostics.js'
 import { handleTripSnapshotRequest } from './[tripId].js'
 
 const snapshot = {
@@ -193,6 +194,42 @@ describe('PUT /api/trips/[tripId]', () => {
     )
   })
 
+  it('logs safe request and response stages without payload data', async () => {
+    const diagnostics = {
+      info: vi.fn(),
+      error: vi.fn(),
+    } satisfies TripSyncDiagnostics
+    const response = await handleTripSnapshotRequest(
+      request(
+        'oceania-marina-2026',
+        'PUT',
+        putBody,
+        '"etag-1"',
+      ),
+      {
+        diagnostics,
+        writeSnapshot: vi.fn(async () => ({
+          status: 'WRITTEN' as const,
+          snapshot: { ...snapshot, revision: 2 },
+        })),
+      },
+    )
+
+    expect(response.status).toBe(200)
+    expect(
+      diagnostics.info.mock.calls.map(([stage]) => stage),
+    ).toEqual([
+      'REQUEST_BODY_PARSED',
+      'BASE_REVISION_READ',
+      'IF_MATCH_HEADER_READ',
+      'ETAG_NORMALIZED',
+      'RESPONSE_SERIALIZED',
+    ])
+    expect(JSON.stringify(diagnostics.info.mock.calls)).not.toContain(
+      'operationalOverrides',
+    )
+  })
+
   it('rejects a weak If-Match value before writing', async () => {
     const writeSnapshot = vi.fn()
     const response = await handleTripSnapshotRequest(
@@ -207,6 +244,48 @@ describe('PUT /api/trips/[tripId]', () => {
 
     expect(response.status).toBe(400)
     expect(writeSnapshot).not.toHaveBeenCalled()
+  })
+
+  it('rejects a malformed quoted If-Match before writing', async () => {
+    const writeSnapshot = vi.fn()
+    const response = await handleTripSnapshotRequest(
+      request(
+        'oceania-marina-2026',
+        'PUT',
+        putBody,
+        '"unterminated',
+      ),
+      { writeSnapshot },
+    )
+
+    expect(response.status).toBe(400)
+    expect(writeSnapshot).not.toHaveBeenCalled()
+  })
+
+  it('reports response serialization failures at the safe stage', async () => {
+    const diagnostics = {
+      info: vi.fn(),
+      error: vi.fn(),
+    } satisfies TripSyncDiagnostics
+    const response = await handleTripSnapshotRequest(
+      request('oceania-marina-2026', 'PUT', putBody),
+      {
+        diagnostics,
+        writeSnapshot: vi.fn(async () => ({
+          status: 'WRITTEN' as const,
+          snapshot: {
+            ...snapshot,
+            revision: BigInt(2) as never,
+          },
+        })),
+      },
+    )
+
+    expect(response.status).toBe(500)
+    expect(diagnostics.error).toHaveBeenCalledWith(
+      'RESPONSE_SERIALIZED',
+      expect.any(TypeError),
+    )
   })
 
   it('rejects client-authored revision metadata', async () => {
