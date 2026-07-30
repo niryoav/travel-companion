@@ -1,4 +1,5 @@
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -11,12 +12,15 @@ import { BundledTripRepository } from '../data/trips/BundledTripRepository'
 import { BundledTripContentRepository } from '../data/content/BundledTripContentRepository'
 import type { DailyLoveMessageSchedule } from '../domain/content/dailyLoveMessage'
 import type { TravelerId, TripId } from '../domain/trip/tripTypes'
+import { emptyTripOverrideBundle } from '../domain/trip/tripOverrides'
 import type {
   DocumentRoundTripState,
   MeaningfulInternalRoute,
   TripStateRepository,
 } from '../storage/TripStateRepository'
 import { LocalTripOverrideRepository } from '../storage/LocalTripOverrideRepository'
+import type { TripOverrideRepository } from '../storage/TripOverrideRepository'
+import { SyncedTripOverrideRepository } from '../sync/SyncedTripOverrideRepository'
 import { tripFixture } from '../test/fixtures/tripFixture'
 import { tripContentFixture } from '../test/fixtures/tripContentFixture'
 import { oceaniaMarina2026TripContent } from '../content/oceania-marina-2026/tripContent'
@@ -106,7 +110,7 @@ function renderApp(
   tripStateRepository = new MemoryTripStateRepository(),
   now = new Date('2030-05-01T12:00:00Z'),
   loveMessageSchedule = dailyLoveMessageFixture,
-  tripOverrideRepository?: LocalTripOverrideRepository,
+  tripOverrideRepository?: TripOverrideRepository,
 ) {
   render(
     <App
@@ -965,5 +969,63 @@ describe('App', () => {
     await openTripFrom('Today')
     await openTripFrom('Documents')
     await openTripFrom('Home')
+  })
+
+  it('applies an accepted remote snapshot consistently across Home, Today, and Trip', async () => {
+    const tripStateRepository = new MemoryTripStateRepository()
+    tripStateRepository.activateTrip()
+    tripStateRepository.travelerId = 'traveler-alex'
+    tripStateRepository.lastMeaningfulRoute = '/home'
+    const localRepository = new LocalTripOverrideRepository(
+      window.localStorage,
+      tripFixture,
+    )
+    const syncedRepository = new SyncedTripOverrideRepository(
+      localRepository,
+      localRepository.getSnapshot(),
+      false,
+    )
+    window.history.replaceState({}, '', '/home')
+    renderApp(
+      tripStateRepository,
+      new Date('2030-05-11T12:00:00Z'),
+      dailyLoveMessageFixture,
+      syncedRepository,
+    )
+
+    act(() => {
+      syncedRepository.acceptRemoteSnapshot({
+        tripId: tripFixture.trip.id,
+        schemaVersion: 1,
+        revision: 2,
+        updatedAt: '2030-05-11T12:01:00Z',
+        updatedBy: 'yoav',
+        operationalOverrides: {
+          ...emptyTripOverrideBundle(tripFixture.trip.id),
+          dayOverrides: {
+            'day-2030-05-11': {
+              dayId: 'day-2030-05-11',
+              allAboardAt: '2030-05-11T17:00:00+02:00',
+              allAboardVerification: 'CONFIRMED',
+              updatedAt: '2030-05-11T12:01:00Z',
+            },
+          },
+        },
+      })
+    })
+
+    expect(await screen.findByText('17:00')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('link', { name: 'Home' }))
+    expect(
+      await screen.findByRole('heading', {
+        name: /Good (morning|afternoon|evening), Alex/,
+      }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('17:00')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('link', { name: 'Trip' }))
+    expect(await screen.findByText('17:00')).toBeInTheDocument()
+    expect(tripStateRepository.travelerId).toBe('traveler-alex')
   })
 })

@@ -15,6 +15,10 @@ import { PwaUpdateManager } from './pwa/PwaUpdateManager'
 import { registerPwaUpdates } from './pwa/registerPwa'
 import { HttpTripSnapshotApiClient } from './services/TripSnapshotApiClient'
 import { bootstrapTripSync } from './sync/bootstrapTripSync'
+import {
+  hasActiveTripEditSession,
+  TripSyncRefreshController,
+} from './sync/TripSyncRefreshController'
 import './styles/index.css'
 
 const tripRepository = new BundledTripRepository(
@@ -71,7 +75,14 @@ async function startApplication(): Promise<void> {
     </StrictMode>,
   )
 
-  void refreshFromRemote()
+  const refreshController = new TripSyncRefreshController({
+    refreshFromRemote,
+    canRefresh: () =>
+      tripOverrideRepository.canAcceptRemoteSnapshot() &&
+      !hasActiveTripEditSession(),
+  })
+  refreshController.start()
+  void refreshController.requestRefresh()
 }
 
 void startApplication()

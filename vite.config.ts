@@ -59,6 +59,7 @@ export default defineConfig({
       workbox: {
         cleanupOutdatedCaches: true,
         navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api\//],
         globPatterns: [
           '**/*.{js,css,html,svg,png,jpg,jpeg,webp,woff2,pdf}',
         ],
