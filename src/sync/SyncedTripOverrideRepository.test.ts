@@ -9,7 +9,10 @@ import {
   TripSnapshotApiError,
   type TripSnapshotApiClient,
 } from '../services/TripSnapshotApiClient'
-import { LocalTripOverrideRepository } from '../storage/LocalTripOverrideRepository'
+import {
+  localTripOverrideStorageKey,
+  LocalTripOverrideRepository,
+} from '../storage/LocalTripOverrideRepository'
 import type { TripSnapshotCache } from '../storage/TripSnapshotCache'
 import { tripFixture } from '../test/fixtures/tripFixture'
 import { SyncedTripOverrideRepository } from './SyncedTripOverrideRepository'
@@ -176,6 +179,20 @@ describe('SyncedTripOverrideRepository', () => {
     )
     expect(cache.saveAcceptedSnapshot).toHaveBeenCalledWith(accepted)
     expect(local.getMetadata().baseRevision).toBe(3)
+    expect(repository.getSyncMetadata()).toMatchObject({
+      baseRevision: 3,
+      syncState: 'synced',
+    })
+    expect(
+      JSON.parse(
+        window.localStorage.getItem(
+          localTripOverrideStorageKey(tripFixture.trip.id),
+        ) ?? 'null',
+      ).metadata,
+    ).toMatchObject({
+      baseRevision: 3,
+      syncState: 'synced',
+    })
   })
 
   it.each([

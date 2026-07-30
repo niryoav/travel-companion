@@ -46,6 +46,7 @@ describe('HttpTripSnapshotApiClient', () => {
       '/api/trips/oceania-marina-2026',
       {
         method: 'GET',
+        cache: 'no-store',
         headers: { Accept: 'application/json' },
       },
     )

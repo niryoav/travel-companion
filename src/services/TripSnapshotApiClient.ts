@@ -70,6 +70,7 @@ implements TripSnapshotApiClient {
         `/api/trips/${encodeURIComponent(routeId)}`,
         {
           method: 'GET',
+          cache: 'no-store',
           headers: { Accept: 'application/json' },
         },
       )

@@ -11,7 +11,10 @@ import {
 } from '../services/TripSnapshotApiClient'
 import {
   localTripOverrideStorageKey,
+  readLocalTripOverrideState,
 } from '../storage/LocalTripOverrideRepository'
+import type { LocalTripOverrideSyncState } from '../storage/LocalTripOverrideMetadata'
+import { LocalTripStateRepository } from '../storage/LocalTripStateRepository'
 import type {
   PendingTripSnapshot,
   TripSnapshotCache,
@@ -45,6 +48,26 @@ function snapshot(revision: number, note: string): TripSnapshot {
     updatedBy: 'yoav',
     operationalOverrides: overrides(note),
   }
+}
+
+function storeLocalState(
+  note: string | undefined,
+  baseRevision: number | null,
+  syncState: LocalTripOverrideSyncState = 'synced',
+) {
+  window.localStorage.setItem(
+    localTripOverrideStorageKey(tripFixture.trip.id),
+    JSON.stringify({
+      storageVersion: 1,
+      tripId: tripFixture.trip.id,
+      operationalOverrides: overrides(note),
+      metadata: {
+        baseRevision,
+        lastModified: '2030-05-10T12:09:00Z',
+        syncState,
+      },
+    }),
+  )
 }
 
 class FakeCache implements TripSnapshotCache {
@@ -103,11 +126,103 @@ describe('bootstrapTripSync', () => {
     ).toBe('Accepted')
   })
 
-  it('uses accepted overrides as the baseline for later local editing', async () => {
-    window.localStorage.setItem(
-      localTripOverrideStorageKey(tripFixture.trip.id),
-      JSON.stringify(emptyTripOverrideBundle(tripFixture.trip.id)),
+  it('prefers a newer synced local snapshot over an older accepted snapshot', async () => {
+    storeLocalState('Newer local', 4)
+    const cache = new FakeCache()
+    cache.accepted = snapshot(3, 'Older accepted')
+
+    const result = await bootstrapTripSync({
+      tripData: tripFixture,
+      cache,
+      apiClient: apiClient(null),
+      localStorage: window.localStorage,
+    })
+
+    expect(
+      result.tripOverrideRepository.getSnapshot().dayOverrides[
+        'day-2030-05-11'
+      ]?.note,
+    ).toBe('Newer local')
+    expect(result.tripOverrideRepository.getSyncMetadata()).toMatchObject({
+      baseRevision: 4,
+      syncState: 'synced',
+    })
+    expect(cache.saveAcceptedSnapshot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        revision: 4,
+        operationalOverrides: overrides('Newer local'),
+      }),
     )
+  })
+
+  it('prefers a newer accepted snapshot over an older synced local snapshot', async () => {
+    storeLocalState('Older local', 2)
+    const cache = new FakeCache()
+    cache.accepted = snapshot(3, 'Newer accepted')
+
+    const result = await bootstrapTripSync({
+      tripData: tripFixture,
+      cache,
+      apiClient: apiClient(null),
+      localStorage: window.localStorage,
+    })
+
+    expect(
+      result.tripOverrideRepository.getSnapshot().dayOverrides[
+        'day-2030-05-11'
+      ]?.note,
+    ).toBe('Newer accepted')
+    expect(result.tripOverrideRepository.getSyncMetadata()).toMatchObject({
+      baseRevision: 3,
+      syncState: 'synced',
+    })
+    expect(
+      readLocalTripOverrideState(window.localStorage, tripFixture)
+        ?.operationalOverrides.dayOverrides['day-2030-05-11']?.note,
+    ).toBe('Newer accepted')
+  })
+
+  it('prefers local state when synced revisions are equal', async () => {
+    storeLocalState('Equal local', 3)
+    const cache = new FakeCache()
+    cache.accepted = snapshot(3, 'Equal accepted')
+
+    const result = await bootstrapTripSync({
+      tripData: tripFixture,
+      cache,
+      apiClient: apiClient(null),
+      localStorage: window.localStorage,
+    })
+
+    expect(
+      result.tripOverrideRepository.getSnapshot().dayOverrides[
+        'day-2030-05-11'
+      ]?.note,
+    ).toBe('Equal local')
+  })
+
+  it('protects unsynced local state even when its override bundle is empty', async () => {
+    storeLocalState(undefined, 2, 'unsynced')
+    const cache = new FakeCache()
+    cache.accepted = snapshot(4, 'Newer accepted')
+    const client = apiClient(snapshot(5, 'Newest remote'))
+
+    const result = await bootstrapTripSync({
+      tripData: tripFixture,
+      cache,
+      apiClient: client,
+      localStorage: window.localStorage,
+    })
+    await result.refreshFromRemote()
+
+    expect(result.tripOverrideRepository.getSnapshot()).toEqual(
+      emptyTripOverrideBundle(tripFixture.trip.id),
+    )
+    expect(client.getTripSnapshot).not.toHaveBeenCalled()
+  })
+
+  it('uses accepted overrides as the baseline for later local editing', async () => {
+    storeLocalState(undefined, 1)
     const cache = new FakeCache()
     cache.accepted = snapshot(2, 'Accepted')
     const result = await bootstrapTripSync({
@@ -155,6 +270,47 @@ describe('bootstrapTripSync', () => {
         'day-2030-05-11'
       ]?.note,
     ).toBe('Local')
+  })
+
+  it('uses synced local state when no accepted cache exists', async () => {
+    storeLocalState('Only local', 3)
+
+    const result = await bootstrapTripSync({
+      tripData: tripFixture,
+      cache: new FakeCache(),
+      apiClient: apiClient(null),
+      localStorage: window.localStorage,
+    })
+
+    expect(
+      result.tripOverrideRepository.getSnapshot().dayOverrides[
+        'day-2030-05-11'
+      ]?.note,
+    ).toBe('Only local')
+    expect(result.tripOverrideRepository.getSyncMetadata().baseRevision)
+      .toBe(3)
+  })
+
+  it('ignores an invalid accepted source and falls back to valid local state', async () => {
+    storeLocalState('Valid local', 2)
+    const cache = new FakeCache()
+    cache.accepted = {
+      ...snapshot(3, 'Invalid accepted'),
+      schemaVersion: 2,
+    } as unknown as TripSnapshot
+
+    const result = await bootstrapTripSync({
+      tripData: tripFixture,
+      cache,
+      apiClient: apiClient(null),
+      localStorage: window.localStorage,
+    })
+
+    expect(
+      result.tripOverrideRepository.getSnapshot().dayOverrides[
+        'day-2030-05-11'
+      ]?.note,
+    ).toBe('Valid local')
   })
 
   it('uses empty bundled overrides without cache or local state', async () => {
@@ -207,6 +363,15 @@ describe('bootstrapTripSync', () => {
       ]?.note,
     ).toBe('New')
     expect(listener).toHaveBeenCalledOnce()
+    expect(
+      readLocalTripOverrideState(window.localStorage, tripFixture),
+    ).toMatchObject({
+      metadata: {
+        baseRevision: 2,
+        syncState: 'synced',
+      },
+      operationalOverrides: overrides('New'),
+    })
   })
 
   it.each([
@@ -264,16 +429,18 @@ describe('bootstrapTripSync', () => {
     )
     const cache = new FakeCache()
     cache.accepted = snapshot(1, 'Accepted')
+    const client = apiClient(snapshot(2, 'Remote'))
     const result = await bootstrapTripSync({
       tripData: tripFixture,
       cache,
-      apiClient: apiClient(snapshot(2, 'Remote')),
+      apiClient: client,
       localStorage: window.localStorage,
     })
 
     await result.refreshFromRemote()
 
-    expect(cache.accepted?.revision).toBe(2)
+    expect(client.getTripSnapshot).not.toHaveBeenCalled()
+    expect(cache.accepted?.revision).toBe(1)
     expect(
       result.tripOverrideRepository.getSnapshot().dayOverrides[
         'day-2030-05-11'
@@ -298,9 +465,11 @@ describe('bootstrapTripSync', () => {
 
     await result.refreshFromRemote()
 
-    expect(result.tripOverrideRepository.getSnapshot()).toEqual(
-      emptyTripOverrideBundle(tripFixture.trip.id),
-    )
+    expect(
+      result.tripOverrideRepository.getSnapshot().dayOverrides[
+        'day-2030-05-11'
+      ]?.note,
+    ).toBe('Remote')
   })
 
   it('does not read, write, delete, or upload a pending candidate', async () => {
@@ -489,6 +658,48 @@ describe('bootstrapTripSync', () => {
       readLocalStorageNote(window.localStorage),
     ).toBe('Editor device local state')
   })
+
+  it.each(['traveler-yoav', 'traveler-isabel'] as const)(
+    'preserves the selected %s identity while accepting shared state',
+    async (travelerId) => {
+      const tripId = oceaniaMarina2026TripData.trip.id
+      const validTravelerIds = new Set(
+        oceaniaMarina2026TripData.travelers.map(({ id }) => id),
+      )
+      const tripStateRepository = new LocalTripStateRepository(
+        window.localStorage,
+        tripId,
+        validTravelerIds,
+      )
+      tripStateRepository.setTravelerId(travelerId)
+      const cache = new FakeCache()
+      cache.accepted = {
+        tripId,
+        schemaVersion: 1,
+        revision: 2,
+        updatedAt: '2026-07-30T12:00:00Z',
+        updatedBy: 'yoav',
+        operationalOverrides: emptyTripOverrideBundle(tripId),
+      }
+
+      await bootstrapTripSync({
+        tripData: oceaniaMarina2026TripData,
+        cache,
+        apiClient: apiClient(null),
+        localStorage: window.localStorage,
+      })
+
+      const restartedTripStateRepository =
+        new LocalTripStateRepository(
+          window.localStorage,
+          tripId,
+          validTravelerIds,
+        )
+      expect(restartedTripStateRepository.getTravelerId()).toBe(
+        travelerId,
+      )
+    },
+  )
 })
 
 function readLocalStorageNote(storage: Storage): string | undefined {

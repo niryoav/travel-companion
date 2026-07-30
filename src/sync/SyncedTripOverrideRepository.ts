@@ -57,20 +57,25 @@ implements TripOverrideRepository {
     return () => this.listeners.delete(listener)
   }
 
+  canAcceptRemoteSnapshot(): boolean {
+    return !this.protectsLocalChanges && !this.writeInFlight
+  }
+
   acceptRemoteSnapshot(snapshot: TripSnapshot): boolean {
-    if (this.protectsLocalChanges) {
+    const metadata = this.localRepository.getMetadata()
+    if (
+      !this.canAcceptRemoteSnapshot() ||
+      (
+        metadata.syncState === 'synced' &&
+        metadata.baseRevision !== null &&
+        snapshot.revision <= metadata.baseRevision
+      )
+    ) {
       return false
     }
     this.applyingAcceptedRemote = true
     try {
-      this.localRepository.replaceSnapshotForRead(
-        snapshot.operationalOverrides,
-        {
-          baseRevision: snapshot.revision,
-          lastModified: snapshot.updatedAt,
-          syncState: 'synced',
-        },
-      )
+      this.localRepository.acceptSyncedSnapshot(snapshot)
     } finally {
       this.applyingAcceptedRemote = false
     }
@@ -78,7 +83,7 @@ implements TripOverrideRepository {
   }
 
   acceptNoRemoteSnapshot(): boolean {
-    if (this.protectsLocalChanges) {
+    if (!this.canAcceptRemoteSnapshot()) {
       return false
     }
     this.applyingAcceptedRemote = true
