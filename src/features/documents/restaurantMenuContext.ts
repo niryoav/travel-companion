@@ -1,9 +1,18 @@
 import { createContext, useContext } from 'react'
 
+import type { MealRestaurant } from '../../domain/trip/tripTypes'
 import type { RestaurantMenuGroup } from './restaurantMenus'
 
-export const RestaurantMenuContext = createContext<RestaurantMenuGroup[]>([])
+export interface RestaurantMenuContextValue {
+  groups: RestaurantMenuGroup[]
+  mealRestaurants: readonly MealRestaurant[]
+}
 
-export function useRestaurantMenus(): RestaurantMenuGroup[] {
+export const RestaurantMenuContext = createContext<RestaurantMenuContextValue>({
+  groups: [],
+  mealRestaurants: [],
+})
+
+export function useRestaurantMenus(): RestaurantMenuContextValue {
   return useContext(RestaurantMenuContext)
 }

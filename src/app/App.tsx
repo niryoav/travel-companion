@@ -156,7 +156,9 @@ export function App({
             <Route
               path="today"
               element={
-                <RestaurantMenuProvider>
+                <RestaurantMenuProvider
+                  mealRestaurants={tripData.mealRestaurants}
+                >
                   <TodayScreen now={now} tripData={tripData} />
                 </RestaurantMenuProvider>
               }
@@ -164,7 +166,9 @@ export function App({
             <Route
               path="trip"
               element={
-                <RestaurantMenuProvider>
+                <RestaurantMenuProvider
+                  mealRestaurants={tripData.mealRestaurants}
+                >
                   <TripScreen
                     baselineTripData={baselineTripData}
                     now={now}

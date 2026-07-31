@@ -2,20 +2,24 @@ import { resolveMealMenuActions } from '../mealMenuResolver'
 import { useRestaurantMenus } from '../restaurantMenuContext'
 
 interface MealMenuActionsProps {
-  isMeal: boolean
+  localStartTime?: string
   mealType: string
   restaurantName: string
 }
 
 export function MealMenuActions({
-  isMeal,
+  localStartTime,
   mealType,
   restaurantName,
 }: MealMenuActionsProps) {
-  const groups = useRestaurantMenus()
-  const actions = isMeal
-    ? resolveMealMenuActions(groups, restaurantName, mealType)
-    : null
+  const { groups, mealRestaurants } = useRestaurantMenus()
+  const actions = resolveMealMenuActions(
+    groups,
+    restaurantName,
+    mealType,
+    localStartTime,
+    mealRestaurants,
+  )
 
   if (!actions) {
     return null

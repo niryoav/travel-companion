@@ -1,6 +1,12 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
-import type { RestaurantMenuGroup } from './restaurantMenus'
+import { formatLocalTime } from '../../domain/trip/tripTime'
+import { oceaniaMarina2026TripData } from '../../trips/oceania-marina-2026/tripData'
+import {
+  parseRestaurantMenuManifest,
+  type RestaurantMenuGroup,
+} from './restaurantMenus'
 import { resolveMealMenuActions } from './mealMenuResolver'
 
 const groups: RestaurantMenuGroup[] = [
@@ -50,6 +56,41 @@ const groups: RestaurantMenuGroup[] = [
 ]
 
 describe('resolveMealMenuActions', () => {
+  it.each([
+    ['event-toscana-dinner', true],
+    ['event-red-ginger-dinner', false],
+    ['event-polo-grill-dinner', true],
+    ['event-jacques-dinner', true],
+  ] as const)(
+    'infers Dinner for existing legacy reservation %s',
+    (eventId, hasDessert) => {
+      const event = oceaniaMarina2026TripData.events.find(
+        ({ id }) => id === eventId,
+      )
+      expect(event?.kind).toBe('MEAL')
+      expect(event?.mealType).toBeUndefined()
+
+      const manifest = JSON.parse(readFileSync(
+        'public/documents/restaurant-menus/manifest.json',
+        'utf8',
+      ))
+      const manifestGroups = parseRestaurantMenuManifest(manifest)
+      const result = resolveMealMenuActions(
+        manifestGroups,
+        event!.title,
+        'Meal',
+        formatLocalTime(event!.startsAt!, event!.timeZone!),
+        oceaniaMarina2026TripData.mealRestaurants,
+      )
+
+      expect(result?.menu.menuType).toBe('Dinner')
+      expect(result?.menu.href).toBe(
+        `/documents/restaurant-menus/${event!.title}/Dinner.pdf`,
+      )
+      expect(Boolean(result?.dessert)).toBe(hasDessert)
+    },
+  )
+
   it('matches a dinner menu and its separate dessert menu', () => {
     expect(resolveMealMenuActions(groups, 'Toscana', 'Dinner')).toEqual({
       menu: groups[2].menus[0],
@@ -98,5 +139,25 @@ describe('resolveMealMenuActions', () => {
   it('fails safely for an unavailable menu or unsupported event kind', () => {
     expect(resolveMealMenuActions(groups, 'Polo Grill', 'Dinner')).toBeNull()
     expect(resolveMealMenuActions(groups, 'Toscana', 'High Tea')).toBeNull()
+  })
+
+  it('does not infer legacy Dinner outside the canonical dinner window', () => {
+    expect(resolveMealMenuActions(
+      groups,
+      'Toscana',
+      'Meal',
+      '17:00',
+      oceaniaMarina2026TripData.mealRestaurants,
+    )).toBeNull()
+  })
+
+  it('does not infer legacy Dinner for an unknown restaurant in the window', () => {
+    expect(resolveMealMenuActions(
+      groups,
+      'Unknown Restaurant',
+      'Meal',
+      '20:00',
+      oceaniaMarina2026TripData.mealRestaurants,
+    )).toBeNull()
   })
 })

@@ -42,7 +42,7 @@ export function TimelineEvent({ event }: TimelineEventProps) {
           </p>
         ) : null}
         <MealMenuActions
-          isMeal={event.mealLabels !== undefined}
+          localStartTime={event.time}
           mealType={event.kindLabel}
           restaurantName={event.title}
         />

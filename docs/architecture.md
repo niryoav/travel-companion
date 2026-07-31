@@ -114,6 +114,13 @@ existing Workbox precache includes the menu manifest and menu PDFs alongside
 the existing approved travel PDFs; it adds no runtime cache or document
 storage subsystem.
 
+Trip and Today derive contextual menu actions from that same manifest. Typed
+meal moments match by normalized restaurant name and explicit meal type. A
+canonical legacy generic `MEAL` may fall back to Dinner only when its normalized
+restaurant name also matches the meal catalog and its event-local start time is
+one of the Dinner choices generated from that restaurant's existing service
+windows. No Breakfast or Lunch type is inferred.
+
 ## Date-aware startup routing
 
 Application initialization derives its destination from the canonical trip
