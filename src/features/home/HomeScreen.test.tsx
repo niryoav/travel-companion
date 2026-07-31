@@ -29,6 +29,13 @@ function renderHome(route: string) {
 }
 
 describe('HomeScreen', () => {
+  it('does not show the Simulation Preview entry point on live Home', () => {
+    renderHome('/home')
+
+    expect(screen.queryByText('Simulation preview')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Scenario')).not.toBeInTheDocument()
+  })
+
   it.each([
     ['before-departure', 'Travel to Reykjavík', 'Leave home at 10:30'],
     [

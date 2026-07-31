@@ -8,6 +8,7 @@ import { HomeScreen } from '../home/HomeScreen'
 interface HomeProfileGateProps {
   loveMessageSchedule: DailyLoveMessageSchedule
   now: Date
+  showSimulationPreview?: boolean
   tripData: TripData
   tripStateRepository: TripStateRepository
 }
@@ -15,6 +16,7 @@ interface HomeProfileGateProps {
 export function HomeProfileGate({
   loveMessageSchedule,
   now,
+  showSimulationPreview = false,
   tripData,
   tripStateRepository,
 }: HomeProfileGateProps) {
@@ -25,6 +27,7 @@ export function HomeProfileGate({
     <HomeScreen
       loveMessageSchedule={loveMessageSchedule}
       now={now}
+      showSimulationPreview={showSimulationPreview}
       travelerName={traveler.displayName}
       tripData={tripData}
     />

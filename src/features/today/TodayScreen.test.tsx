@@ -60,11 +60,17 @@ describe('TodayScreen', () => {
       target: { value: 'live' },
     })
 
-    expect(screen.getByLabelText('Scenario')).toHaveValue('live')
-    expect(screen.getByRole('option', { name: 'Actual trip' })).toBeInTheDocument()
+    expect(screen.queryByLabelText('Scenario')).not.toBeInTheDocument()
     expect(
       screen.queryByRole('heading', { level: 1, name: 'Húsavík' }),
     ).not.toBeInTheDocument()
+  })
+
+  it('does not show the Simulation Preview entry point on live Today', () => {
+    renderToday('/today')
+
+    expect(screen.queryByText('Simulation preview')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Scenario')).not.toBeInTheDocument()
   })
 
   it('uses the verified departure sequence without the false early time', () => {

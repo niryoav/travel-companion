@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { Link } from 'react-router'
 
+import { AppIcon } from '../../components/AppIcon'
 import { PageHeader } from '../../components/PageHeader'
 import { SurfaceCard } from '../../components/SurfaceCard'
 import type {
@@ -49,6 +51,15 @@ export function MoreScreen({
         title="More"
         description="Personal preferences and supporting information."
       />
+
+      <SurfaceCard className="more-tools">
+        <p className="card-eyebrow">Tools</p>
+        <Link className="more-menu-item" to="/more/simulation-preview">
+          <AppIcon name="compass" />
+          <span>Simulation Preview</span>
+          <span aria-hidden="true" className="more-menu-chevron">›</span>
+        </Link>
+      </SurfaceCard>
 
       <SurfaceCard className="profile-settings">
         <p className="card-eyebrow">Profile</p>

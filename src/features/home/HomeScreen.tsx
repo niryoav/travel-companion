@@ -17,6 +17,7 @@ import { selectHomeViewModel } from './selectors/selectHomeViewModel'
 interface HomeScreenProps {
   loveMessageSchedule: DailyLoveMessageSchedule
   now: Date
+  showSimulationPreview?: boolean
   travelerName: string
   tripData: TripData
 }
@@ -24,6 +25,7 @@ interface HomeScreenProps {
 export function HomeScreen({
   loveMessageSchedule,
   now,
+  showSimulationPreview = false,
   travelerName,
   tripData,
 }: HomeScreenProps) {
@@ -52,7 +54,11 @@ export function HomeScreen({
       <HomePhaseView
         greeting={greetingFor(travelerName, now)}
         loveMessage={visibleLoveMessage}
-        reviewControl={<SimulationScenarioSwitcher />}
+        reviewControl={
+          showSimulationPreview || simulationScenario
+            ? <SimulationScenarioSwitcher />
+            : undefined
+        }
         viewModel={viewModel}
       />
     </main>

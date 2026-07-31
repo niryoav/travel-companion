@@ -14,7 +14,10 @@ interface StartupRouteGateProps {
 }
 
 function isExplicitReviewRoute(pathname: string, search: string): boolean {
-  if (pathname === '/welcome') {
+  if (
+    pathname === '/welcome' ||
+    pathname === '/more/simulation-preview'
+  ) {
     return true
   }
 

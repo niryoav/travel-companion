@@ -363,7 +363,7 @@ describe('App', () => {
       }),
     ).toBeInTheDocument()
     expect(window.location.search).toBe('')
-    expect(screen.getByLabelText('Scenario')).toHaveValue('live')
+    expect(screen.queryByLabelText('Scenario')).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('link', { name: 'Today' }))
 
@@ -373,8 +373,88 @@ describe('App', () => {
         name: 'Today starts when the journey begins',
       }),
     ).toBeInTheDocument()
-    expect(screen.getByLabelText('Scenario')).toHaveValue('live')
+    expect(screen.queryByLabelText('Scenario')).not.toBeInTheDocument()
     expect(window.location.search).toBe('')
+  })
+
+  it.each(['traveler-yoav', 'traveler-isabel'] as const)(
+    'moves Simulation Preview under More for %s',
+    async (travelerId) => {
+      const repository = new MemoryTripStateRepository()
+      repository.travelerId = travelerId
+      window.history.replaceState({}, '', '/home?phase=pre-trip')
+      renderSimulationApp(repository)
+
+      expect(screen.queryByText('Simulation preview'))
+        .not.toBeInTheDocument()
+
+      const primaryNavigation = screen.getByRole('navigation', {
+        name: 'Primary navigation',
+      })
+      expect(within(primaryNavigation).getAllByRole('link')).toHaveLength(5)
+      expect(
+        within(primaryNavigation).queryByRole('link', {
+          name: 'Simulation Preview',
+        }),
+      ).not.toBeInTheDocument()
+
+      fireEvent.click(
+        within(primaryNavigation).getByRole('link', { name: 'More' }),
+      )
+
+      expect(window.location.pathname).toBe('/more')
+      expect(
+        screen.getByRole('heading', { name: 'Traveler on this device' }),
+      ).toBeInTheDocument()
+      expect(
+        screen.getByRole('heading', { name: 'App version' }),
+      ).toBeInTheDocument()
+
+      fireEvent.click(
+        screen.getByRole('link', { name: 'Simulation Preview' }),
+      )
+
+      expect(window.location.pathname).toBe('/more/simulation-preview')
+      expect(screen.getByLabelText('Scenario')).toHaveValue('live')
+      expect(
+        screen.getByRole('link', { name: 'More' }),
+      ).toHaveAttribute('aria-current', 'page')
+
+      act(() => window.history.back())
+      await waitFor(() => expect(window.location.pathname).toBe('/more'))
+
+      fireEvent.click(
+        screen.getByRole('link', { name: 'Simulation Preview' }),
+      )
+      fireEvent.change(screen.getByLabelText('Scenario'), {
+        target: { value: 'sea-day' },
+      })
+
+      expect(
+        await screen.findByRole('heading', { level: 2, name: 'At sea' }),
+      ).toBeInTheDocument()
+      expect(window.location.search).toBe('?simulation=sea-day')
+    },
+  )
+
+  it('supports a direct refresh of the Simulation Preview route', async () => {
+    const repository = new MemoryTripStateRepository()
+    repository.travelerId = 'traveler-yoav'
+    window.history.replaceState(
+      {},
+      '',
+      '/more/simulation-preview',
+    )
+    renderSimulationApp(repository)
+
+    expect(window.location.pathname).toBe('/more/simulation-preview')
+    expect(screen.getByLabelText('Scenario')).toHaveValue('live')
+    expect(
+      await screen.findByRole('heading', {
+        level: 2,
+        name: 'Our journey begins soon',
+      }),
+    ).toBeInTheDocument()
   })
 
   it('opens the full Trip experience from primary navigation', async () => {
