@@ -1,6 +1,8 @@
 import {
   emptyTripOverrideBundle,
   parseTripOverrideBundle,
+  type AddedDinnerEvent,
+  type AddedDinnerEventInput,
   type DayOperationalOverrideInput,
   type EventOperationalOverrideInput,
   type TripOverrideBundle,
@@ -35,6 +37,7 @@ function latestOverrideTimestamp(bundle: TripOverrideBundle): string | null {
   const timestamps = [
     ...Object.values(bundle.dayOverrides),
     ...Object.values(bundle.eventOverrides),
+    ...Object.values(bundle.addedEvents ?? {}),
   ].map(({ updatedAt }) => updatedAt)
   return timestamps.sort().at(-1) ?? null
 }
@@ -142,6 +145,19 @@ function hasValues(value: object): boolean {
   return Object.keys(value).length > 0
 }
 
+export function createUserEventId(
+  existingIds: ReadonlySet<string>,
+  randomUUID: () => string = () => globalThis.crypto.randomUUID(),
+): EventId {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const eventId = `user-event-${randomUUID()}`
+    if (!existingIds.has(eventId)) {
+      return eventId
+    }
+  }
+  throw new Error('Unable to create a unique user event ID')
+}
+
 export class LocalTripOverrideRepository
 implements TripOverrideRepository {
   private readonly listeners = new Set<() => void>()
@@ -154,6 +170,8 @@ implements TripOverrideRepository {
     private readonly now: () => Date = () => new Date(),
     initialSnapshot?: TripOverrideBundle,
     initialMetadata?: LocalTripOverrideMetadata,
+    private readonly randomUUID: () => string = () =>
+      globalThis.crypto.randomUUID(),
   ) {
     const storedState = readLocalTripOverrideState(
       this.storage,
@@ -316,6 +334,80 @@ implements TripOverrideRepository {
       {
         ...this.metadata,
         lastModified: this.now().toISOString(),
+        syncState: 'unsynced',
+      },
+    )
+  }
+
+  addDinnerEvent(input: AddedDinnerEventInput): EventId {
+    const existingIds = new Set([
+      ...this.tripData.events.map(({ id }) => id),
+      ...Object.keys(this.snapshot.addedEvents ?? {}),
+    ])
+    const eventId = createUserEventId(existingIds, this.randomUUID)
+    this.saveDinnerEvent(eventId, input)
+    return eventId
+  }
+
+  updateDinnerEvent(
+    eventId: EventId,
+    input: AddedDinnerEventInput,
+  ): void {
+    if (!this.snapshot.addedEvents?.[eventId]) {
+      throw new Error(`User-created Dinner does not exist: ${eventId}`)
+    }
+    this.saveDinnerEvent(eventId, input)
+  }
+
+  removeDinnerEvent(eventId: EventId): void {
+    if (!this.snapshot.addedEvents?.[eventId]) {
+      return
+    }
+    const addedEvents = { ...this.snapshot.addedEvents }
+    delete addedEvents[eventId]
+    this.write(
+      { ...this.snapshot, addedEvents },
+      {
+        ...this.metadata,
+        lastModified: this.now().toISOString(),
+        syncState: 'unsynced',
+      },
+    )
+  }
+
+  private saveDinnerEvent(
+    eventId: EventId,
+    input: AddedDinnerEventInput,
+  ): void {
+    const day = this.tripData.days.find(({ id }) => id === input.dayId)
+    const restaurant = this.tripData.dinnerRestaurants?.find(
+      ({ id }) => id === input.restaurantId,
+    )
+    if (!day || !restaurant) {
+      throw new Error('Dinner day or restaurant is unavailable')
+    }
+    const updatedAt = this.now().toISOString()
+    const event: AddedDinnerEvent = {
+      id: eventId,
+      dayId: day.id,
+      kind: 'DINNER',
+      restaurantId: restaurant.id,
+      startsAt: input.startsAt,
+      timeZone: day.timeZone,
+      reservationNumber:
+        restaurant.reservationRequired
+          ? input.reservationNumber?.trim() || undefined
+          : undefined,
+      notes: input.notes?.trim() || undefined,
+      updatedAt,
+    }
+    const existing = this.snapshot.addedEvents ?? {}
+    const addedEvents = { ...existing, [eventId]: event }
+    this.write(
+      { ...this.snapshot, addedEvents },
+      {
+        ...this.metadata,
+        lastModified: updatedAt,
         syncState: 'unsynced',
       },
     )

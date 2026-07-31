@@ -4,6 +4,7 @@ import type {
   TripData,
   TripDay,
 } from '../../domain/trip/tripTypes.js'
+import { oceaniaMarinaDinnerRestaurants } from './dinnerRestaurants.js'
 
 // Public cruise dates, ports, and published arrival/departure times:
 // https://www.oceaniacruises.com/cruises/MNA260823/
@@ -415,6 +416,7 @@ export const oceaniaMarina2026TripData: TripData = {
     { id: 'traveler-isabel', displayName: 'Isabel' },
   ],
   days,
+  dinnerRestaurants: [...oceaniaMarinaDinnerRestaurants],
   events: [
     {
       id: 'event-home-brussels-transfer',

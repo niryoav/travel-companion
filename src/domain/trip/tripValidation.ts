@@ -49,6 +49,7 @@ export function validateTripData(data: TripData): string[] {
     data.travelers,
     data.days,
     data.events,
+    data.dinnerRestaurants ?? [],
     data.locations,
     data.transports,
     data.cruises,
@@ -65,6 +66,9 @@ export function validateTripData(data: TripData): string[] {
 
   const dayIds = new Set(data.days.map(({ id }) => id))
   const eventIds = new Set(data.events.map(({ id }) => id))
+  const dinnerRestaurantIds = new Set(
+    (data.dinnerRestaurants ?? []).map(({ id }) => id),
+  )
   const travelerIds = new Set(data.travelers.map(({ id }) => id))
   const locationIds = new Set(data.locations.map(({ id }) => id))
   const transportIds = new Set(data.transports.map(({ id }) => id))
@@ -180,6 +184,25 @@ export function validateTripData(data: TripData): string[] {
     }
     if (event.locationId && !locationIds.has(event.locationId)) {
       errors.push(`Unknown location ${event.locationId} on event ${event.id}`)
+    }
+    if (
+      event.dinnerRestaurantId &&
+      !dinnerRestaurantIds.has(event.dinnerRestaurantId)
+    ) {
+      errors.push(
+        `Unknown Dinner restaurant ${event.dinnerRestaurantId} on event ${event.id}`,
+      )
+    }
+    if (
+      (event.userCreated === true &&
+        (!event.id.startsWith('user-event-') ||
+          event.kind !== 'MEAL' ||
+          !event.dinnerRestaurantId)) ||
+      (event.dinnerReservationNumber !== undefined &&
+        (!event.dinnerRestaurantId ||
+          !event.dinnerReservationNumber.trim()))
+    ) {
+      errors.push(`Invalid user-created Dinner event: ${event.id}`)
     }
     if (
       event.travelOriginLocationId &&

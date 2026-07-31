@@ -8,6 +8,16 @@ export type CruiseId = string
 export type PortCallId = string
 export type BookingReferenceId = string
 export type DocumentReferenceId = string
+export type DinnerRestaurantId =
+  | 'grand-dining-room'
+  | 'terrace-cafe'
+  | 'waves-grill'
+  | 'polo-grill'
+  | 'toscana'
+  | 'jacques'
+  | 'red-ginger'
+  | 'la-reserve'
+  | 'privee'
 export type OperationalTimingVerification =
   | 'CONFIRMED'
   | 'ESTIMATED'
@@ -98,6 +108,14 @@ export interface Location {
   country?: string
 }
 
+export interface DinnerRestaurant {
+  id: DinnerRestaurantId
+  name: string
+  location: string
+  reservationRequired: boolean
+  extraFee: boolean
+}
+
 interface BaseEvent {
   id: EventId
   dayId: TripDayId
@@ -134,6 +152,9 @@ interface BaseEvent {
   requiredItems?: string[]
   operationalStatus?: ExcursionOperationalStatus
   localOperationalNote?: string
+  userCreated?: true
+  dinnerRestaurantId?: DinnerRestaurantId
+  dinnerReservationNumber?: string
 }
 
 export interface TransportEvent extends BaseEvent {
@@ -235,6 +256,7 @@ export interface TripData {
   travelers: Traveler[]
   days: TripDay[]
   events: TripEvent[]
+  dinnerRestaurants?: DinnerRestaurant[]
   locations: Location[]
   transports: TransportSegment[]
   cruises: Cruise[]

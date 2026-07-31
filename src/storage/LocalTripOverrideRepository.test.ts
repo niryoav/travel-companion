@@ -5,6 +5,7 @@ import { tripFixture } from '../test/fixtures/tripFixture'
 import { oceaniaMarina2026TripData } from '../trips/oceania-marina-2026/tripData'
 import {
   LocalTripOverrideRepository,
+  createUserEventId,
   localTripOverrideStorageKey,
   readLocalTripOverrideBundle,
   readLocalTripOverrideState,
@@ -109,6 +110,70 @@ describe('LocalTripOverrideRepository', () => {
     ).toBe('Use pier B')
   })
 
+  it('creates a stable prefixed Dinner ID without colliding', () => {
+    const randomUUID = vi
+      .fn()
+      .mockReturnValueOnce('canonical-collision')
+      .mockReturnValueOnce('dinner-fixture')
+
+    expect(
+      createUserEventId(
+        new Set(['user-event-canonical-collision']),
+        randomUUID,
+      ),
+    ).toBe('user-event-dinner-fixture')
+  })
+
+  it('persists, reloads, edits, and removes a user-created Dinner', () => {
+    const first = new LocalTripOverrideRepository(
+      window.localStorage,
+      oceaniaMarina2026TripData,
+      () => new Date('2026-08-20T12:00:00Z'),
+      undefined,
+      undefined,
+      () => 'dinner-fixture',
+    )
+    const eventId = first.addDinnerEvent({
+      dayId: 'day-2026-08-25',
+      restaurantId: 'terrace-cafe',
+      startsAt: '2026-08-25T18:30:00Z',
+      notes: 'Window table if available.',
+    })
+
+    expect(eventId).toBe('user-event-dinner-fixture')
+    expect(first.getMetadata().syncState).toBe('unsynced')
+
+    const restarted = new LocalTripOverrideRepository(
+      window.localStorage,
+      oceaniaMarina2026TripData,
+      () => new Date('2026-08-20T13:00:00Z'),
+    )
+    expect(restarted.getSnapshot().addedEvents?.[eventId]).toMatchObject({
+      restaurantId: 'terrace-cafe',
+      notes: 'Window table if available.',
+    })
+
+    restarted.updateDinnerEvent(eventId, {
+      dayId: 'day-2026-08-25',
+      restaurantId: 'toscana',
+      startsAt: '2026-08-25T19:30:00Z',
+      reservationNumber: 'TEST-42',
+    })
+    expect(restarted.getSnapshot().addedEvents?.[eventId]).toMatchObject({
+      restaurantId: 'toscana',
+      reservationNumber: 'TEST-42',
+      startsAt: '2026-08-25T19:30:00Z',
+    })
+
+    restarted.removeDinnerEvent(eventId)
+    expect(restarted.getSnapshot().addedEvents).toEqual({})
+    const reopened = new LocalTripOverrideRepository(
+      window.localStorage,
+      oceaniaMarina2026TripData,
+    )
+    expect(reopened.getSnapshot().addedEvents).toEqual({})
+  })
+
   it('reads a valid local override bundle for later migration', () => {
     const bundle = {
       schemaVersion: 1 as const,
@@ -129,7 +194,7 @@ describe('LocalTripOverrideRepository', () => {
 
     expect(
       readLocalTripOverrideBundle(window.localStorage, tripFixture),
-    ).toEqual(bundle)
+    ).toEqual({ ...bundle, addedEvents: {} })
     expect(
       readLocalTripOverrideState(window.localStorage, tripFixture)
         ?.metadata,
@@ -313,6 +378,7 @@ describe('LocalTripOverrideRepository', () => {
       tripId: tripFixture.trip.id,
       dayOverrides: {},
       eventOverrides: {},
+      addedEvents: {},
     })
   })
 

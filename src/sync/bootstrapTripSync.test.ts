@@ -148,6 +148,82 @@ describe('bootstrapTripSync role-based startup', () => {
     )
   })
 
+  it('reopens with a locally Saved Dinner and uploads it automatically when triggered', async () => {
+    const operationalOverrides = emptyTripOverrideBundle(
+      oceaniaMarina2026TripData.trip.id,
+    )
+    operationalOverrides.addedEvents = {
+      'user-event-startup-dinner': {
+        id: 'user-event-startup-dinner',
+        dayId: 'day-2026-08-25',
+        kind: 'DINNER',
+        restaurantId: 'terrace-cafe',
+        startsAt: '2026-08-25T18:30:00Z',
+        timeZone: 'Atlantic/Reykjavik',
+        updatedAt: '2026-08-20T12:00:00Z',
+      },
+    }
+    window.localStorage.setItem(
+      localTripOverrideStorageKey(
+        oceaniaMarina2026TripData.trip.id,
+      ),
+      JSON.stringify({
+        storageVersion: 1,
+        tripId: oceaniaMarina2026TripData.trip.id,
+        operationalOverrides,
+        metadata: {
+          baseRevision: 3,
+          lastModified: '2026-08-20T12:00:00Z',
+          syncState: 'unsynced',
+        },
+      }),
+    )
+    const putTripSnapshot = vi.fn(
+      async (
+        _tripId: string,
+        baseRevision: number,
+        overrides: TripOverrideBundle,
+      ): Promise<TripSnapshot> => ({
+        tripId: oceaniaMarina2026TripData.trip.id,
+        schemaVersion: 1,
+        revision: baseRevision + 1,
+        updatedAt: '2026-08-20T13:00:00Z',
+        updatedBy: 'yoav',
+        operationalOverrides: overrides,
+      }),
+    )
+    const result = await bootstrapTripSync({
+      apiClient: {
+        getTripSnapshot: vi.fn(async () => null),
+        putTripSnapshot,
+      },
+      cache: new FakeCache(),
+      getTravelerId: () => 'traveler-yoav',
+      localStorage: window.localStorage,
+      tripData: oceaniaMarina2026TripData,
+    })
+
+    expect(
+      result.tripOverrideRepository.getSnapshot().addedEvents,
+    ).toHaveProperty('user-event-startup-dinner')
+    await result.tripOverrideRepository.synchronizeForCurrentRole()
+
+    expect(putTripSnapshot).toHaveBeenCalledWith(
+      oceaniaMarina2026TripData.trip.id,
+      3,
+      expect.objectContaining({
+        addedEvents: expect.objectContaining({
+          'user-event-startup-dinner': expect.objectContaining({
+            restaurantId: 'terrace-cafe',
+          }),
+        }),
+      }),
+    )
+    expect(
+      result.tripOverrideRepository.getSyncMetadata()?.syncState,
+    ).toBe('synced')
+  })
+
   it('migrates a pre-change unsynced local edit and syncs it through the revision-only PUT path', async () => {
     // Simulates local storage written by a build that still tracked ETag
     // metadata over the wire; the persisted schema itself never stored an

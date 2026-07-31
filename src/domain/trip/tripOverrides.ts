@@ -1,6 +1,7 @@
 import { MAX_TENDER_CROSSING_MINUTES } from './operationalEditValidation.js'
-import { isValidInstant } from './tripTime.js'
+import { isSupportedTimeZone, isValidInstant } from './tripTime.js'
 import type {
+  DinnerRestaurantId,
   EventId,
   ExcursionOperationalStatus,
   OperationalEntryStatus,
@@ -53,11 +54,31 @@ export interface EventOperationalOverride {
   updatedAt: string
 }
 
+export interface AddedDinnerEvent {
+  id: EventId
+  dayId: TripDayId
+  kind: 'DINNER'
+  restaurantId: DinnerRestaurantId
+  startsAt: string
+  timeZone: string
+  reservationNumber?: string
+  notes?: string
+  updatedAt: string
+}
+
+export type AddedDinnerEventInput = Pick<
+  AddedDinnerEvent,
+  'dayId' | 'restaurantId' | 'startsAt'
+> & Partial<
+  Pick<AddedDinnerEvent, 'reservationNumber' | 'notes'>
+>
+
 export interface TripOverrideBundle {
   schemaVersion: 1
   tripId: TripId
   dayOverrides: Record<TripDayId, DayOperationalOverride>
   eventOverrides: Record<EventId, EventOperationalOverride>
+  addedEvents?: Record<EventId, AddedDinnerEvent>
 }
 
 export type DayOperationalOverrideInput = Omit<
@@ -237,6 +258,18 @@ const EVENT_OVERRIDE_KEYS = new Set([
   'updatedAt',
 ])
 
+const ADDED_DINNER_EVENT_KEYS = new Set([
+  'id',
+  'dayId',
+  'kind',
+  'restaurantId',
+  'startsAt',
+  'timeZone',
+  'reservationNumber',
+  'notes',
+  'updatedAt',
+])
+
 function isEventOverride(
   value: unknown,
   eventId: string,
@@ -279,6 +312,54 @@ function isEventOverride(
   )
 }
 
+function isAddedDinnerEvent(
+  value: unknown,
+  eventId: string,
+  data: TripData,
+): value is AddedDinnerEvent {
+  if (!isObject(value) || !validKeys(value, ADDED_DINNER_EVENT_KEYS)) {
+    return false
+  }
+  const day = data.days.find(({ id }) => id === value.dayId)
+  const restaurant = data.dinnerRestaurants?.find(
+    ({ id }) => id === value.restaurantId,
+  )
+  return (
+    eventId.startsWith('user-event-') &&
+    value.id === eventId &&
+    !data.events.some(({ id }) => id === eventId) &&
+    Boolean(day) &&
+    value.kind === 'DINNER' &&
+    Boolean(restaurant) &&
+    typeof value.startsAt === 'string' &&
+    isValidInstant(value.startsAt) &&
+    Date.parse(value.startsAt) >= Date.parse(day?.startsAt ?? '') &&
+    Date.parse(value.startsAt) < Date.parse(day?.endsAt ?? '') &&
+    typeof value.timeZone === 'string' &&
+    value.timeZone === day?.timeZone &&
+    isSupportedTimeZone(value.timeZone) &&
+    (
+      value.reservationNumber === undefined ||
+      (
+        restaurant?.reservationRequired === true &&
+        typeof value.reservationNumber === 'string' &&
+        value.reservationNumber.trim().length > 0 &&
+        value.reservationNumber.length <= 120
+      )
+    ) &&
+    (
+      value.notes === undefined ||
+      (
+        typeof value.notes === 'string' &&
+        value.notes.trim().length > 0 &&
+        value.notes.length <= 240
+      )
+    ) &&
+    typeof value.updatedAt === 'string' &&
+    isValidInstant(value.updatedAt)
+  )
+}
+
 export function emptyTripOverrideBundle(
   tripId: TripId,
 ): TripOverrideBundle {
@@ -287,6 +368,7 @@ export function emptyTripOverrideBundle(
     tripId,
     dayOverrides: {},
     eventOverrides: {},
+    addedEvents: {},
   }
 }
 
@@ -304,7 +386,11 @@ export function parseTripOverrideBundle(
       value.schemaVersion !== 1 ||
       value.tripId !== data.trip.id ||
       !isObject(value.dayOverrides) ||
-      !isObject(value.eventOverrides)
+      !isObject(value.eventOverrides) ||
+      (
+        value.addedEvents !== undefined &&
+        !isObject(value.addedEvents)
+      )
     ) {
       return null
     }
@@ -314,11 +400,23 @@ export function parseTripOverrideBundle(
       ) ||
       !Object.entries(value.eventOverrides).every(([eventId, override]) =>
         isEventOverride(override, eventId, data),
+      ) ||
+      !Object.entries(value.addedEvents ?? {}).every(([eventId, event]) =>
+        isAddedDinnerEvent(event, eventId, data),
       )
     ) {
       return null
     }
-    return value as unknown as TripOverrideBundle
+    return {
+      schemaVersion: 1,
+      tripId: data.trip.id,
+      dayOverrides: value.dayOverrides as TripOverrideBundle['dayOverrides'],
+      eventOverrides:
+        value.eventOverrides as TripOverrideBundle['eventOverrides'],
+      addedEvents: (value.addedEvents ?? {}) as NonNullable<
+        TripOverrideBundle['addedEvents']
+      >,
+    }
   } catch {
     return null
   }
@@ -453,20 +551,66 @@ export function applyTripOverrides(
   if (overrides.tripId !== baseline.trip.id) {
     return baseline
   }
+  const addedEvents = Object.values(overrides.addedEvents ?? {})
+    .sort(
+      (left, right) =>
+        Date.parse(left.startsAt) - Date.parse(right.startsAt) ||
+        left.id.localeCompare(right.id),
+    )
+  const effectiveAddedEvents: TripEvent[] = addedEvents.flatMap(
+    (event) => {
+      const restaurant = baseline.dinnerRestaurants?.find(
+        ({ id }) => id === event.restaurantId,
+      )
+      return restaurant
+        ? [{
+            id: event.id,
+            dayId: event.dayId,
+            kind: 'MEAL' as const,
+            title: restaurant.name,
+            startsAt: event.startsAt,
+            timeZone: event.timeZone,
+            userCreated: true as const,
+            dinnerRestaurantId: event.restaurantId,
+            dinnerReservationNumber: event.reservationNumber,
+            localOperationalNote: event.notes,
+          }]
+        : []
+    },
+  )
   return {
     ...baseline,
+    days: baseline.days.map((day) => {
+      const addedIds = addedEvents
+        .filter(({ dayId }) => dayId === day.id)
+        .map(({ id }) => id)
+      return addedIds.length > 0
+        ? {
+            ...day,
+            eventIds: [
+              ...day.eventIds,
+              ...addedIds.filter(
+                (eventId) => !day.eventIds.includes(eventId),
+              ),
+            ],
+          }
+        : day
+    }),
     portCalls: baseline.portCalls.map((portCall) => {
       const override = overrides.dayOverrides[portCall.dayId]
       return override
         ? applyDayOverride(portCall, override)
         : portCall
     }),
-    events: baseline.events.map((event) => {
-      const override = overrides.eventOverrides[event.id]
-      return override
-        ? applyEventOverride(event, override)
-        : event
-    }),
+    events: [
+      ...baseline.events.map((event) => {
+        const override = overrides.eventOverrides[event.id]
+        return override
+          ? applyEventOverride(event, override)
+          : event
+      }),
+      ...effectiveAddedEvents,
+    ],
   }
 }
 
@@ -477,6 +621,9 @@ export function hasDayOperationalChanges(
 ): boolean {
   return Boolean(
     overrides.dayOverrides[dayId] ||
-    eventIds.some((eventId) => overrides.eventOverrides[eventId]),
+    eventIds.some((eventId) => overrides.eventOverrides[eventId]) ||
+    Object.values(overrides.addedEvents ?? {}).some(
+      (event) => event.dayId === dayId,
+    ),
   )
 }

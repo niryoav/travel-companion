@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import { tripFixture } from '../../test/fixtures/tripFixture'
+import { oceaniaMarina2026TripData } from '../../trips/oceania-marina-2026/tripData'
+import { selectDayEvents } from './selectors/selectDayEvents'
 import {
   applyTripOverrides,
   emptyTripOverrideBundle,
@@ -119,5 +121,69 @@ describe('trip operational overrides', () => {
         tripFixture,
       ),
     ).toBeNull()
+  })
+
+  it('loads legacy operational state with an empty added-event collection', () => {
+    const parsed = parseTripOverrideBundle(
+      JSON.stringify({
+        schemaVersion: 1,
+        tripId: tripFixture.trip.id,
+        dayOverrides: {},
+        eventOverrides: {},
+      }),
+      tripFixture,
+    )
+
+    expect(parsed?.addedEvents).toEqual({})
+  })
+
+  it('merges one user-created Dinner once and sorts it chronologically', () => {
+    const day = oceaniaMarina2026TripData.days.find(
+      ({ id }) => id === 'day-2026-08-25',
+    )!
+    const overrides = emptyTripOverrideBundle(
+      oceaniaMarina2026TripData.trip.id,
+    )
+    overrides.addedEvents = {
+      'user-event-dinner-fixture': {
+        id: 'user-event-dinner-fixture',
+        dayId: day.id,
+        kind: 'DINNER',
+        restaurantId: 'terrace-cafe',
+        startsAt: '2026-08-25T18:30:00Z',
+        timeZone: day.timeZone,
+        notes: 'A quiet table if available.',
+        updatedAt: '2026-08-20T12:00:00Z',
+      },
+    }
+
+    const effective = applyTripOverrides(
+      oceaniaMarina2026TripData,
+      overrides,
+    )
+    const events = selectDayEvents(
+      effective,
+      effective.days.find(({ id }) => id === day.id) ?? null,
+    )
+
+    expect(
+      events.filter(({ id }) => id === 'user-event-dinner-fixture'),
+    ).toHaveLength(1)
+    expect(
+      events.findIndex(({ id }) => id === 'user-event-dinner-fixture'),
+    ).toBeLessThan(
+      events.findIndex(({ id }) => id === 'event-toscana-dinner'),
+    )
+    expect(
+      events.find(({ id }) => id === 'user-event-dinner-fixture'),
+    ).toMatchObject({
+      title: 'Terrace Café',
+      dinnerRestaurantId: 'terrace-cafe',
+      localOperationalNote: 'A quiet table if available.',
+      userCreated: true,
+    })
+    expect(oceaniaMarina2026TripData.events).not.toContainEqual(
+      expect.objectContaining({ id: 'user-event-dinner-fixture' }),
+    )
   })
 })
