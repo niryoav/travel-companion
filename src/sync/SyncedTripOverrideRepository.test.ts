@@ -18,6 +18,7 @@ import {
 } from '../storage/LocalTripOverrideRepository'
 import type { TripSnapshotCache } from '../storage/TripSnapshotCache'
 import { tripFixture } from '../test/fixtures/tripFixture'
+import { oceaniaMarinaActivityLocations } from '../trips/oceania-marina-2026/activityLocations'
 import { oceaniaMarinaMealRestaurants } from '../trips/oceania-marina-2026/mealRestaurants'
 import { SyncedTripOverrideRepository } from './SyncedTripOverrideRepository'
 
@@ -63,6 +64,7 @@ function deferred<T>() {
 
 const productionTrip: TripData = {
   ...tripFixture,
+  activityLocations: [...oceaniaMarinaActivityLocations],
   mealRestaurants: [...oceaniaMarinaMealRestaurants],
   trip: {
     ...tripFixture.trip,
@@ -269,6 +271,72 @@ describe('SyncedTripOverrideRepository role-based sync', () => {
       'user-event-dinner-sync': expect.objectContaining({
         restaurantId: 'terrace-cafe',
       }),
+    })
+    expect(local.getMetadata().syncState).toBe('synced')
+  })
+
+  it('includes a Show / activity in the existing shared operational payload', async () => {
+    const putTripSnapshot = vi.fn(
+      async (
+        _tripId: string,
+        baseRevision: number,
+        operationalOverrides: TripOverrideBundle,
+      ) => productionSnapshot(baseRevision + 1, operationalOverrides),
+    )
+    const local = new LocalTripOverrideRepository(
+      window.localStorage,
+      productionTrip,
+      () => new Date('2030-05-10T13:00:00Z'),
+      productionBundle('Saved on device'),
+      {
+        baseRevision: 1,
+        lastModified: '2030-05-10T12:00:00Z',
+        syncState: 'synced',
+      },
+      () => 'show-sync',
+    )
+    const repository = new SyncedTripOverrideRepository(
+      local,
+      local.getSnapshot(),
+      {
+        apiClient: {
+          getTripSnapshot: vi.fn(async () => null),
+          putTripSnapshot,
+        },
+        cache: {
+          getAcceptedSnapshot: vi.fn(async () => null),
+          saveAcceptedSnapshot: vi.fn(async () => {}),
+          getPendingSnapshot: vi.fn(async () => null),
+          savePendingSnapshot: vi.fn(async () => {}),
+          deletePendingSnapshot: vi.fn(async () => {}),
+        },
+        getTravelerId: () => 'traveler-yoav',
+        tripId: productionTrip.trip.id,
+      },
+    )
+
+    repository.addShowActivityEvent({
+      dayId: 'day-2030-05-11',
+      title: 'Broadway Show',
+      startsAt: '2030-05-11T19:30:00Z',
+      locationId: 'marina-lounge',
+      notes: 'Arrive early',
+    })
+    await repository.synchronizeForCurrentRole()
+
+    expect(putTripSnapshot).toHaveBeenCalledOnce()
+    expect(putTripSnapshot.mock.calls[0]?.[2].addedEvents).toEqual({
+      'user-event-show-sync': {
+        id: 'user-event-show-sync',
+        dayId: 'day-2030-05-11',
+        kind: 'SHOW_ACTIVITY',
+        title: 'Broadway Show',
+        startsAt: '2030-05-11T19:30:00Z',
+        timeZone: 'Europe/Brussels',
+        locationId: 'marina-lounge',
+        notes: 'Arrive early',
+        updatedAt: '2030-05-10T13:00:00.000Z',
+      },
     })
     expect(local.getMetadata().syncState).toBe('synced')
   })
@@ -733,6 +801,68 @@ describe('SyncedTripOverrideRepository role-based sync', () => {
 
     expect(repository.getSnapshot().addedEvents).toHaveProperty(
       'user-event-shared-dinner',
+    )
+    expect(putTripSnapshot).not.toHaveBeenCalled()
+  })
+
+  it('downloads a shared Show / activity for Isabel without uploading', async () => {
+    const remoteOverrides = emptyTripOverrideBundle(
+      productionTrip.trip.id,
+    )
+    remoteOverrides.addedEvents = {
+      'user-event-shared-show': {
+        id: 'user-event-shared-show',
+        dayId: 'day-2030-05-11',
+        kind: 'SHOW_ACTIVITY',
+        title: 'Guest lecture',
+        startsAt: '2030-05-11T13:00:00Z',
+        timeZone: 'Europe/Brussels',
+        locationId: 'the-lounge',
+        updatedAt: '2030-05-10T12:00:00Z',
+      },
+    }
+    const putTripSnapshot = vi.fn()
+    const local = new LocalTripOverrideRepository(
+      window.localStorage,
+      productionTrip,
+      undefined,
+      emptyTripOverrideBundle(productionTrip.trip.id),
+      {
+        baseRevision: 1,
+        lastModified: '2030-05-10T11:00:00Z',
+        syncState: 'synced',
+      },
+    )
+    const repository = new SyncedTripOverrideRepository(
+      local,
+      local.getSnapshot(),
+      {
+        apiClient: {
+          getTripSnapshot: vi.fn(async () => ({
+            snapshot: productionSnapshot(2, remoteOverrides),
+          })),
+          putTripSnapshot,
+        },
+        cache: {
+          getAcceptedSnapshot: vi.fn(async () => null),
+          saveAcceptedSnapshot: vi.fn(async () => {}),
+          getPendingSnapshot: vi.fn(async () => null),
+          savePendingSnapshot: vi.fn(async () => {}),
+          deletePendingSnapshot: vi.fn(async () => {}),
+        },
+        getTravelerId: () => 'traveler-isabel',
+        tripId: productionTrip.trip.id,
+      },
+    )
+
+    await repository.synchronizeForCurrentRole()
+
+    expect(repository.getSnapshot().addedEvents).toHaveProperty(
+      'user-event-shared-show',
+      expect.objectContaining({
+        kind: 'SHOW_ACTIVITY',
+        locationId: 'the-lounge',
+      }),
     )
     expect(putTripSnapshot).not.toHaveBeenCalled()
   })

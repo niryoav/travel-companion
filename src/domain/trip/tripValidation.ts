@@ -50,6 +50,7 @@ export function validateTripData(data: TripData): string[] {
     data.days,
     data.events,
     data.mealRestaurants ?? [],
+    data.activityLocations ?? [],
     data.locations,
     data.transports,
     data.cruises,
@@ -68,6 +69,9 @@ export function validateTripData(data: TripData): string[] {
   const eventIds = new Set(data.events.map(({ id }) => id))
   const mealRestaurantIds = new Set<string>(
     (data.mealRestaurants ?? []).map(({ id }) => id),
+  )
+  const activityLocationIds = new Set<string>(
+    (data.activityLocations ?? []).map(({ id }) => id),
   )
   const travelerIds = new Set(data.travelers.map(({ id }) => id))
   const locationIds = new Set(data.locations.map(({ id }) => id))
@@ -195,12 +199,28 @@ export function validateTripData(data: TripData): string[] {
       )
     }
     if (
+      event.showActivityLocationId &&
+      !activityLocationIds.has(event.showActivityLocationId)
+    ) {
+      errors.push(
+        `Unknown activity location ${event.showActivityLocationId} on event ${event.id}`,
+      )
+    }
+    if (
       (event.userCreated === true &&
         (!event.id.startsWith('user-event-') ||
-          event.kind !== 'MEAL' ||
           !(
-            event.highTea === true ||
-            (event.mealType && event.mealRestaurantId)
+            (
+              event.kind === 'MEAL' &&
+              (
+                event.highTea === true ||
+                (event.mealType && event.mealRestaurantId)
+              )
+            ) ||
+            (
+              event.kind === 'ACTIVITY' &&
+              event.showActivityLocationId
+            )
           )))
     ) {
       errors.push(`Invalid user-created moment: ${event.id}`)

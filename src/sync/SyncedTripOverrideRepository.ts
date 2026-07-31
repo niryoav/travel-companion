@@ -1,6 +1,7 @@
 import type {
   AddedHighTeaEventInput,
   AddedMealEventInput,
+  AddedShowActivityEventInput,
   DayOperationalOverrideInput,
   EventOperationalOverrideInput,
   TripOverrideBundle,
@@ -128,6 +129,20 @@ implements TripOverrideRepository {
     input: AddedHighTeaEventInput,
   ): void {
     this.localRepository.updateHighTeaEvent(eventId, input)
+    void this.synchronizeForCurrentRole()
+  }
+
+  addShowActivityEvent(input: AddedShowActivityEventInput): EventId {
+    const eventId = this.localRepository.addShowActivityEvent(input)
+    void this.synchronizeForCurrentRole()
+    return eventId
+  }
+
+  updateShowActivityEvent(
+    eventId: EventId,
+    input: AddedShowActivityEventInput,
+  ): void {
+    this.localRepository.updateShowActivityEvent(eventId, input)
     void this.synchronizeForCurrentRole()
   }
 

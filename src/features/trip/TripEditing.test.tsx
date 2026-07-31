@@ -242,6 +242,8 @@ describe('Trip operational editing', () => {
       updateMealEvent: local.updateMealEvent.bind(local),
       addHighTeaEvent: local.addHighTeaEvent.bind(local),
       updateHighTeaEvent: local.updateHighTeaEvent.bind(local),
+      addShowActivityEvent: local.addShowActivityEvent.bind(local),
+      updateShowActivityEvent: local.updateShowActivityEvent.bind(local),
       removeAddedEvent: local.removeAddedEvent.bind(local),
       getSyncMetadata: () => ({
         baseRevision: null,
@@ -431,6 +433,8 @@ describe('Trip operational editing', () => {
       updateMealEvent: local.updateMealEvent.bind(local),
       addHighTeaEvent: local.addHighTeaEvent.bind(local),
       updateHighTeaEvent: local.updateHighTeaEvent.bind(local),
+      addShowActivityEvent: local.addShowActivityEvent.bind(local),
+      updateShowActivityEvent: local.updateShowActivityEvent.bind(local),
       removeAddedEvent: local.removeAddedEvent.bind(local),
     }
     render(

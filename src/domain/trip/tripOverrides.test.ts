@@ -295,4 +295,60 @@ describe('trip operational overrides', () => {
       ),
     ).toBeNull()
   })
+
+  it('projects a Show / activity into the shared chronological event collection', () => {
+    const overrides = emptyTripOverrideBundle(
+      oceaniaMarina2026TripData.trip.id,
+    )
+    overrides.addedEvents = {
+      'user-event-show-fixture': {
+        id: 'user-event-show-fixture',
+        dayId: 'day-2026-08-25',
+        kind: 'SHOW_ACTIVITY',
+        title: 'Broadway Show',
+        startsAt: '2026-08-25T21:30:00Z',
+        timeZone: 'Atlantic/Reykjavik',
+        locationId: 'marina-lounge',
+        notes: 'Arrive ten minutes early.',
+        updatedAt: '2026-08-20T12:00:00Z',
+      },
+      'user-event-high-tea-fixture': {
+        id: 'user-event-high-tea-fixture',
+        dayId: 'day-2026-08-25',
+        kind: 'HIGH_TEA',
+        startsAt: '2026-08-25T16:00:00.000Z',
+        timeZone: 'Atlantic/Reykjavik',
+        updatedAt: '2026-08-20T12:00:00Z',
+      },
+    }
+
+    const effective = applyTripOverrides(
+      oceaniaMarina2026TripData,
+      overrides,
+    )
+    const day = effective.days.find(
+      ({ id }) => id === 'day-2026-08-25',
+    )!
+    const events = selectDayEvents(effective, day)
+    expect(
+      events.find(({ id }) => id === 'user-event-show-fixture'),
+    ).toMatchObject({
+      kind: 'ACTIVITY',
+      title: 'Broadway Show',
+      showActivityLocationId: 'marina-lounge',
+      localOperationalNote: 'Arrive ten minutes early.',
+      userCreated: true,
+    })
+    expect(
+      events.find(({ id }) => id === 'user-event-high-tea-fixture'),
+    ).toMatchObject({
+      kind: 'MEAL',
+      highTea: true,
+    })
+    expect(
+      events.findIndex(({ id }) => id === 'user-event-high-tea-fixture'),
+    ).toBeLessThan(
+      events.findIndex(({ id }) => id === 'user-event-show-fixture'),
+    )
+  })
 })

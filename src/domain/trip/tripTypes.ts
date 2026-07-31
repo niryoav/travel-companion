@@ -20,6 +20,20 @@ export type MealRestaurantId =
   | 'jacques'
   | 'red-ginger'
   | 'privee'
+export type ActivityLocationId =
+  | 'marina-lounge'
+  | 'the-lounge'
+  | 'martinis'
+  | 'casino-casino-bar'
+  | 'culinary-center'
+  | 'artist-loft'
+  | 'pool-deck'
+  | 'aquamar-spa-vitality'
+  | 'library'
+  | 'horizons'
+  | 'fitness-track-sport'
+  | 'sports-deck'
+  | 'other'
 export type OperationalTimingVerification =
   | 'CONFIRMED'
   | 'ESTIMATED'
@@ -126,6 +140,13 @@ export interface MealRestaurant {
   services: Partial<Record<MealType, MealServiceWindow[]>>
 }
 
+export interface ActivityLocation {
+  id: ActivityLocationId
+  name: string
+  deck?: string
+  description: string
+}
+
 interface BaseEvent {
   id: EventId
   dayId: TripDayId
@@ -166,6 +187,7 @@ interface BaseEvent {
   mealType?: MealType
   mealRestaurantId?: string
   highTea?: true
+  showActivityLocationId?: ActivityLocationId
 }
 
 export interface TransportEvent extends BaseEvent {
@@ -268,6 +290,7 @@ export interface TripData {
   days: TripDay[]
   events: TripEvent[]
   mealRestaurants?: MealRestaurant[]
+  activityLocations?: ActivityLocation[]
   locations: Location[]
   transports: TransportSegment[]
   cruises: Cruise[]

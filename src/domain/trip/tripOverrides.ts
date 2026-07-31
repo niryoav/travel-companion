@@ -7,8 +7,10 @@ import {
   availableOnboardMomentTypes,
   isValidMealSelection,
 } from './mealPlanning.js'
+import { isShowActivityAvailable } from './showActivityPlanning.js'
 import { isSupportedTimeZone, isValidInstant } from './tripTime.js'
 import type {
+  ActivityLocationId,
   EventId,
   ExcursionOperationalStatus,
   MealRestaurantId,
@@ -86,7 +88,22 @@ export interface AddedHighTeaEvent {
   updatedAt: string
 }
 
-export type AddedEvent = AddedMealEvent | AddedHighTeaEvent
+export interface AddedShowActivityEvent {
+  id: EventId
+  dayId: TripDayId
+  kind: 'SHOW_ACTIVITY'
+  title: string
+  startsAt: string
+  timeZone: string
+  locationId: ActivityLocationId
+  notes?: string
+  updatedAt: string
+}
+
+export type AddedEvent =
+  | AddedMealEvent
+  | AddedHighTeaEvent
+  | AddedShowActivityEvent
 
 export type AddedMealEventInput = Pick<
   AddedMealEvent,
@@ -95,6 +112,11 @@ export type AddedMealEventInput = Pick<
 
 export type AddedHighTeaEventInput = Pick<AddedHighTeaEvent, 'dayId'> &
   Partial<Pick<AddedHighTeaEvent, 'notes'>>
+
+export type AddedShowActivityEventInput = Pick<
+  AddedShowActivityEvent,
+  'dayId' | 'title' | 'startsAt' | 'locationId'
+> & Partial<Pick<AddedShowActivityEvent, 'notes'>>
 
 export interface TripOverrideBundle {
   schemaVersion: 1
@@ -312,6 +334,18 @@ const ADDED_HIGH_TEA_EVENT_KEYS = new Set([
   'kind',
   'startsAt',
   'timeZone',
+  'notes',
+  'updatedAt',
+])
+
+const ADDED_SHOW_ACTIVITY_EVENT_KEYS = new Set([
+  'id',
+  'dayId',
+  'kind',
+  'title',
+  'startsAt',
+  'timeZone',
+  'locationId',
   'notes',
   'updatedAt',
 ])
@@ -537,6 +571,39 @@ function parseAddedHighTeaEvent(
     : null
 }
 
+function parseAddedShowActivityEvent(
+  value: Record<string, unknown>,
+  eventId: string,
+  data: TripData,
+): AddedShowActivityEvent | null {
+  if (
+    !validKeys(value, ADDED_SHOW_ACTIVITY_EVENT_KEYS) ||
+    value.kind !== 'SHOW_ACTIVITY' ||
+    !validAddedEventBase(value, eventId, data) ||
+    typeof value.title !== 'string' ||
+    !value.title.trim() ||
+    value.title.length > 120 ||
+    typeof value.locationId !== 'string' ||
+    !data.activityLocations?.some(({ id }) => id === value.locationId)
+  ) {
+    return null
+  }
+  const day = data.days.find(({ id }) => id === value.dayId)!
+  if (!isShowActivityAvailable(data, day)) {
+    return null
+  }
+  const localTime = timeInputValue(value.startsAt as string, day.timeZone)
+  const expectedStartsAt = instantFromLocalTime(
+    day.localDate,
+    localTime,
+    day.timeZone,
+  )
+  return expectedStartsAt &&
+    Date.parse(expectedStartsAt) === Date.parse(value.startsAt as string)
+    ? value as unknown as AddedShowActivityEvent
+    : null
+}
+
 function parseAddedEvent(
   value: unknown,
   eventId: string,
@@ -553,6 +620,9 @@ function parseAddedEvent(
   }
   if (value.kind === 'HIGH_TEA') {
     return parseAddedHighTeaEvent(value, eventId, data)
+  }
+  if (value.kind === 'SHOW_ACTIVITY') {
+    return parseAddedShowActivityEvent(value, eventId, data)
   }
   return null
 }
@@ -768,6 +838,19 @@ export function applyTripOverrides(
         left.id.localeCompare(right.id),
     )
   const effectiveAddedEvents: TripEvent[] = addedEvents.map((event) => {
+    if (event.kind === 'SHOW_ACTIVITY') {
+      return {
+        id: event.id,
+        dayId: event.dayId,
+        kind: 'ACTIVITY' as const,
+        title: event.title,
+        startsAt: event.startsAt,
+        timeZone: event.timeZone,
+        userCreated: true as const,
+        showActivityLocationId: event.locationId,
+        localOperationalNote: event.notes,
+      }
+    }
     if (event.kind === 'HIGH_TEA') {
       return {
         id: event.id,

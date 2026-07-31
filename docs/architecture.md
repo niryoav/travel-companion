@@ -184,18 +184,20 @@ ashore is derived in memory from the planned outbound tender and crossing
 duration. This device-local layer performs no network request and introduces
 no account, collaboration, or synchronization behavior. See ADR-003.
 
-## User-created meal and High Tea moments
+## User-created meal, High Tea, and Show / activity moments
 
 All itinerary mutations originate from an opened Trip day. Yoav can add, edit,
-and remove Breakfast, Lunch, Dinner, and High Tea. Isabel is read-only. Today
-has no mutation controls and derives its timeline from the same effective event
-collection as Trip.
+and remove Breakfast, Lunch, Dinner, High Tea, and Show / activity moments.
+Isabel is read-only. Today has no mutation controls and derives its timeline
+from the same effective event collection as Trip.
 
 The operational override bundle keeps canonical changes in `eventOverrides`
 and user-created moments in `addedEvents`. Breakfast, Lunch, and Dinner share
 one `MEAL` record with a meal type, restaurant ID, start time, timezone,
 optional Notes, and the existing update timestamp. High Tea uses a small
-separate added-event kind because its time and location are fixed. Removing a
+separate added-event kind because its time and location are fixed. Show /
+activity uses `SHOW_ACTIVITY` with a title, start instant, timezone, stable
+activity-location ID, optional Notes, and the update timestamp. Removing a
 user-created moment deletes only that `addedEvents` entry; canonical events
 cannot be deleted. Stable `user-event-` IDs continue through reload and sync.
 
@@ -237,17 +239,33 @@ High Tea is always created at 16:00 in Horizons Lounge, Deck 15. Only Notes are
 editable, and the repository plus Trip selector prevent a second High Tea on
 the same day.
 
+The Oceania Marina trip configuration also owns one fixed 13-entry activity
+location catalog: Marina Lounge, The Lounge, Martinis, Casino & Casino Bar,
+The Culinary Center, Artist Loft, Pool Deck, Aquamar Spa & Vitality, Library,
+Horizons, Fitness Track & Sport, Sports Deck, and Other. Deck and descriptive
+text are derived from that catalog and are never copied into `addedEvents`.
+Other has no deck; its exact location can be written in Notes. Horizons'
+activity description does not include High Tea, which remains the dedicated
+fixed-time event type above. Show / activity has no opening-hour validation.
+
+Show / activity is available on canonical port and sea days inside the active
+cruise dates. It is not available on the pre-embarkation travel day or the
+disembarkation day, so the existing final-day Breakfast-only rule remains
+intact. This reuses the same cruise-date and day-kind context as meal planning
+without reclassifying the final day.
+
 `addedEvents` remains in the existing complete operational JSON snapshot, so
 local-first persistence, automatic upload, follower refresh, retry, and
 Saved-to-Synced feedback are unchanged. Old bundles without `addedEvents`
 still default to an empty collection.
 
-This increment deliberately adds no Show or Activity planning, Baristas,
-general dining subsystem, reminders, notifications, recurring events,
-attachments, calendar integration, new backend, new sync mechanism,
-authentication, queue, conflict UI, or general-purpose event editor.
+This increment deliberately adds no Baristas, general dining subsystem,
+reminders, notifications, recurring events, attachments, calendar integration,
+new backend, new sync mechanism, authentication, queue, conflict UI, editable
+location catalog, or general-purpose event editor. `Reset this day` behavior is
+unchanged and still does not remove user-created `addedEvents`.
 
-### Meal-planning real-environment acceptance
+### User-created moment real-environment acceptance
 
 This vertical slice must be checked on the installed PWA and matching
 production logs before production behavior is claimed as verified.
@@ -285,6 +303,16 @@ High Tea:
 
 1. Add High Tea and confirm 16:00, Horizons Lounge, Deck 15.
 2. Save and confirm a second High Tea on that day is prevented.
+
+Show / activity:
+
+1. On a port or sea day, add a Show / activity with a title, time, and Marina
+   Lounge.
+2. Confirm Trip and Today show the same title, local time, Marina Lounge, and
+   Deck 5 in chronological order.
+3. Edit all four fields, choose Other, and put the exact location in Notes.
+4. Confirm no deck is shown for Other.
+5. Remove the event, cancel the first confirmation, then confirm removal.
 
 Edit and remove:
 

@@ -4,23 +4,27 @@ import type { MealType } from '../../../domain/trip/tripTypes'
 interface TripMomentTypeSheetProps {
   availableMealTypes: readonly MealType[]
   highTeaAvailable: boolean
+  showActivityAvailable: boolean
   onClose: () => void
   highTeaExists: boolean
   onSelectBreakfast: () => void
   onSelectLunch: () => void
   onSelectDinner: () => void
   onSelectHighTea: () => void
+  onSelectShowActivity: () => void
 }
 
 export function TripMomentTypeSheet({
   availableMealTypes,
   highTeaAvailable,
+  showActivityAvailable,
   onClose,
   highTeaExists,
   onSelectBreakfast,
   onSelectLunch,
   onSelectDinner,
   onSelectHighTea,
+  onSelectShowActivity,
 }: TripMomentTypeSheetProps) {
   const dialogRef = useRef<HTMLElement>(null)
 
@@ -99,6 +103,15 @@ export function TripMomentTypeSheet({
               onClick={onSelectHighTea}
             >
               High Tea
+            </button>
+          ) : null}
+          {showActivityAvailable ? (
+            <button
+              className="trip-moment-type-action"
+              type="button"
+              onClick={onSelectShowActivity}
+            >
+              Show / activity
             </button>
           ) : null}
           {highTeaAvailable && highTeaExists ? (

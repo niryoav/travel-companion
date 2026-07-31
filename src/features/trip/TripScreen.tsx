@@ -4,6 +4,7 @@ import { useLocation } from 'react-router'
 import type { TripData } from '../../domain/trip/tripTypes'
 import type { MealType } from '../../domain/trip/tripTypes'
 import { availableOnboardMomentTypes } from '../../domain/trip/mealPlanning'
+import { isShowActivityAvailable } from '../../domain/trip/showActivityPlanning'
 import type { TripContentBundle } from '../../domain/content/contentTypes'
 import type { TripOverrideBundle } from '../../domain/trip/tripOverrides'
 import type { TripOverrideRepository } from '../../storage/TripOverrideRepository'
@@ -17,6 +18,7 @@ import { TripView } from './TripView'
 import { TripEditSheet } from './components/TripEditSheet'
 import { MealEventSheet } from './components/MealEventSheet'
 import { HighTeaEventSheet } from './components/HighTeaEventSheet'
+import { ShowActivityEventSheet } from './components/ShowActivityEventSheet'
 import { TripMomentTypeSheet } from './components/TripMomentTypeSheet'
 import { useTripRouteActivation } from './useTripRouteActivation'
 
@@ -52,6 +54,8 @@ export function TripScreen({
   const [mealDayId, setMealDayId] = useState<string | null>(null)
   const [mealType, setMealType] = useState<MealType | null>(null)
   const [highTeaDayId, setHighTeaDayId] = useState<string | null>(null)
+  const [showActivityDayId, setShowActivityDayId] =
+    useState<string | null>(null)
   const [editingAddedEventId, setEditingAddedEventId] =
     useState<string | null>(null)
   const [savedConfirmationVisible, setSavedConfirmationVisible] =
@@ -78,6 +82,9 @@ export function TripScreen({
   const highTeaDay = highTeaDayId
     ? tripData.days.find(({ id }) => id === highTeaDayId)
     : undefined
+  const showActivityDay = showActivityDayId
+    ? tripData.days.find(({ id }) => id === showActivityDayId)
+    : undefined
   const editingAddedEvent = editingAddedEventId
     ? tripOverrides?.addedEvents?.[editingAddedEventId]
     : undefined
@@ -87,6 +94,9 @@ export function TripScreen({
   const addingMomentAvailability = addingMomentDay
     ? availableOnboardMomentTypes(tripData, addingMomentDay)
     : { mealTypes: [], highTea: false }
+  const addingShowActivityAvailable = addingMomentDay
+    ? isShowActivityAvailable(tripData, addingMomentDay)
+    : false
   const syncConfirmation =
     awaitingSyncConfirmation &&
     syncMetadata?.syncState === 'synced'
@@ -137,7 +147,11 @@ export function TripScreen({
             return false
           }
           const availability = availableOnboardMomentTypes(tripData, day)
-          return availability.mealTypes.length > 0 || availability.highTea
+          return (
+            availability.mealTypes.length > 0 ||
+            availability.highTea ||
+            isShowActivityAvailable(tripData, day)
+          )
         }}
         onEditMoment={
           !reviewState && canEdit && tripOverrideRepository
@@ -149,6 +163,9 @@ export function TripScreen({
                   setEditingAddedEventId(event.id)
                 } else if (event?.kind === 'HIGH_TEA') {
                   setHighTeaDayId(event.dayId)
+                  setEditingAddedEventId(event.id)
+                } else if (event?.kind === 'SHOW_ACTIVITY') {
+                  setShowActivityDayId(event.dayId)
                   setEditingAddedEventId(event.id)
                 }
               }
@@ -182,6 +199,7 @@ export function TripScreen({
         <TripMomentTypeSheet
           availableMealTypes={addingMomentAvailability.mealTypes}
           highTeaAvailable={addingMomentAvailability.highTea}
+          showActivityAvailable={addingShowActivityAvailable}
           highTeaExists={Object.values(
             tripOverrides?.addedEvents ?? {},
           ).some(
@@ -210,6 +228,11 @@ export function TripScreen({
           }}
           onSelectHighTea={() => {
             setHighTeaDayId(addingMomentDayId)
+            setEditingAddedEventId(null)
+            setAddingMomentDayId(null)
+          }}
+          onSelectShowActivity={() => {
+            setShowActivityDayId(addingMomentDayId)
             setEditingAddedEventId(null)
             setAddingMomentDayId(null)
           }}
@@ -247,6 +270,26 @@ export function TripScreen({
           }
           onClose={() => {
             setHighTeaDayId(null)
+            setEditingAddedEventId(null)
+          }}
+          onSaved={() => {
+            setSavedConfirmationVisible(true)
+            setAwaitingSyncConfirmation(true)
+          }}
+          repository={tripOverrideRepository}
+        />
+      ) : null}
+      {showActivityDay && tripOverrideRepository ? (
+        <ShowActivityEventSheet
+          day={showActivityDay}
+          event={
+            editingAddedEvent?.kind === 'SHOW_ACTIVITY'
+              ? editingAddedEvent
+              : undefined
+          }
+          locations={tripData.activityLocations ?? []}
+          onClose={() => {
+            setShowActivityDayId(null)
             setEditingAddedEventId(null)
           }}
           onSaved={() => {
