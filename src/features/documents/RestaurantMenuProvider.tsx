@@ -9,15 +9,18 @@ import {
   type RestaurantMenuGroup,
 } from './restaurantMenus'
 import { RestaurantMenuContext } from './restaurantMenuContext'
+import type { MealRestaurant } from '../../domain/trip/tripTypes'
 
 interface RestaurantMenuProviderProps {
   children: ReactNode
   loadManifest?: () => Promise<RestaurantMenuGroup[]>
+  mealRestaurants?: readonly MealRestaurant[]
 }
 
 export function RestaurantMenuProvider({
   children,
   loadManifest = loadRestaurantMenuManifest,
+  mealRestaurants = [],
 }: RestaurantMenuProviderProps) {
   const [groups, setGroups] = useState<RestaurantMenuGroup[]>([])
 
@@ -42,7 +45,7 @@ export function RestaurantMenuProvider({
   }, [loadManifest])
 
   return (
-    <RestaurantMenuContext.Provider value={groups}>
+    <RestaurantMenuContext.Provider value={{ groups, mealRestaurants }}>
       {children}
     </RestaurantMenuContext.Provider>
   )

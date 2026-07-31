@@ -2,6 +2,8 @@ import type {
   RestaurantMenu,
   RestaurantMenuGroup,
 } from './restaurantMenus'
+import { generateServiceTimes } from '../../domain/trip/mealPlanning'
+import type { MealRestaurant } from '../../domain/trip/tripTypes'
 
 const MEAL_MENU_TYPES = ['Breakfast', 'Lunch', 'Dinner'] as const
 
@@ -27,21 +29,57 @@ function mealMenuType(value: string): MealMenuType | null {
   return MEAL_MENU_TYPES.find((type) => type === value) ?? null
 }
 
+function legacyDinnerType(
+  mealTypeValue: string,
+  localStartTime: string | undefined,
+  restaurantKey: string,
+  mealRestaurants: readonly MealRestaurant[],
+): MealMenuType | null {
+  if (mealTypeValue !== 'Meal' || !localStartTime) {
+    return null
+  }
+
+  const restaurant = mealRestaurants.find(
+    ({ name }) => normalizeRestaurantName(name) === restaurantKey,
+  )
+  if (!restaurant) {
+    return null
+  }
+
+  return generateServiceTimes(restaurant.services.DINNER ?? [])
+    .includes(localStartTime)
+    ? 'Dinner'
+    : null
+}
+
 export function resolveMealMenuActions(
   groups: RestaurantMenuGroup[],
   restaurantName: string,
   mealTypeValue: string,
+  localStartTime?: string,
+  mealRestaurants: readonly MealRestaurant[] = [],
 ): MealMenuActionsResult | null {
-  const type = mealMenuType(mealTypeValue)
-  if (!type) {
-    return null
-  }
-
   const restaurantKey = normalizeRestaurantName(restaurantName)
   const group = groups.find(
     ({ restaurant }) => normalizeRestaurantName(restaurant) === restaurantKey,
   )
-  const menu = group?.menus.find(({ menuType }) => menuType === type)
+  if (!group) {
+    return null
+  }
+
+  const type =
+    mealMenuType(mealTypeValue) ??
+    legacyDinnerType(
+      mealTypeValue,
+      localStartTime,
+      restaurantKey,
+      mealRestaurants,
+    )
+  if (!type) {
+    return null
+  }
+
+  const menu = group.menus.find(({ menuType }) => menuType === type)
 
   if (!menu) {
     return null
@@ -51,7 +89,7 @@ export function resolveMealMenuActions(
     menu,
     dessert:
       type === 'Dinner'
-        ? group?.menus.find(
+        ? group.menus.find(
             ({ menuType }) => menuType === 'Dessert',
           )
         : undefined,
