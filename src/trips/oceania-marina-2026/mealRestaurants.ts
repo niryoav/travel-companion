@@ -5,6 +5,7 @@ export const oceaniaMarinaMealRestaurants = [
     id: 'grand-dining-room',
     name: 'The Grand Dining Room',
     location: 'Deck 6',
+    deck: 6,
     reservationRequiredForDinner: false,
     extraFee: false,
     services: {
@@ -17,6 +18,7 @@ export const oceaniaMarinaMealRestaurants = [
     id: 'terrace-cafe',
     name: 'Terrace Café',
     location: 'Deck 12',
+    deck: 12,
     reservationRequiredForDinner: false,
     extraFee: false,
     services: {
@@ -29,6 +31,7 @@ export const oceaniaMarinaMealRestaurants = [
     id: 'waves-grill',
     name: 'Waves Grill',
     location: 'Deck 12',
+    deck: 12,
     reservationRequiredForDinner: false,
     extraFee: false,
     services: {
@@ -47,6 +50,7 @@ export const oceaniaMarinaMealRestaurants = [
     id: 'aquamar-kitchen',
     name: 'Aquamar Kitchen',
     location: 'Deck 12',
+    deck: 12,
     reservationRequiredForDinner: false,
     extraFee: false,
     services: {
@@ -64,6 +68,7 @@ export const oceaniaMarinaMealRestaurants = [
     id: 'polo-grill',
     name: 'Polo Grill',
     location: 'Deck 14',
+    deck: 14,
     reservationRequiredForDinner: true,
     extraFee: false,
     services: {
@@ -74,6 +79,7 @@ export const oceaniaMarinaMealRestaurants = [
     id: 'toscana',
     name: 'Toscana',
     location: 'Deck 14',
+    deck: 14,
     reservationRequiredForDinner: true,
     extraFee: false,
     services: {
@@ -84,6 +90,7 @@ export const oceaniaMarinaMealRestaurants = [
     id: 'jacques',
     name: 'Jacques',
     location: 'Deck 5',
+    deck: 5,
     reservationRequiredForDinner: true,
     extraFee: false,
     services: {
@@ -94,6 +101,7 @@ export const oceaniaMarinaMealRestaurants = [
     id: 'red-ginger',
     name: 'Red Ginger',
     location: 'Deck 5',
+    deck: 5,
     reservationRequiredForDinner: true,
     extraFee: false,
     services: {
@@ -104,6 +112,7 @@ export const oceaniaMarinaMealRestaurants = [
     id: 'privee',
     name: 'Privée',
     location: 'Deck 14',
+    deck: 14,
     reservationRequiredForDinner: true,
     extraFee: true,
     services: {

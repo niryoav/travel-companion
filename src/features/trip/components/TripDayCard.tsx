@@ -1,4 +1,5 @@
 import { PortAccessIndicator } from '../../../components/PortAccessIndicator'
+import { formatRestaurantTitle } from '../../../domain/trip/mealEvents'
 import type { TripDayViewModel } from '../tripTypes'
 import { TripDayDetails } from './TripDayDetails'
 
@@ -53,7 +54,7 @@ export function TripDayCard({
               {day.leadEvent.time || day.leadEvent.timingStatusLabel
                 ? ' · '
                 : null}
-              {day.leadEvent.title}
+              {formatRestaurantTitle(day.leadEvent.title, day.leadEvent.deck)}
             </strong>
             {day.additionalEventCount > 0 ? (
               <small>{additionalLabel}</small>

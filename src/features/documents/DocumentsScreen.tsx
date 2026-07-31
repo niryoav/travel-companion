@@ -47,6 +47,19 @@ export function DocumentsScreen({ tripData }: DocumentsScreenProps) {
               Restaurant menus
             </Link>
           </li>
+          <li className="document-card">
+            <div className="document-card-meta">
+              <span>Activities</span>
+              <span className="document-offline-status">
+                Available offline
+              </span>
+            </div>
+            <h3>Activities & entertainment</h3>
+            <p>Browse onboard activity and entertainment locations by deck.</p>
+            <Link className="document-action" to="/documents/activities">
+              Activities & entertainment
+            </Link>
+          </li>
         </ul>
       </section>
 

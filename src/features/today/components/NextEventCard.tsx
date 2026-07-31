@@ -1,5 +1,6 @@
 import { DocumentActionLink } from '../../documents/components/DocumentActionLink'
 import { MealMenuActions } from '../../documents/components/MealMenuActions'
+import { formatRestaurantTitle } from '../../../domain/trip/mealEvents'
 import type { TodayEventViewModel } from '../todayTypes'
 
 interface NextEventCardProps {
@@ -28,7 +29,9 @@ export function NextEventCard({
         )}
         <div>
           <p className="today-event-kind">{event.kindLabel}</p>
-          <h2 id="next-event-title">{event.title}</h2>
+          <h2 id="next-event-title">
+            {formatRestaurantTitle(event.title, event.deck)}
+          </h2>
         </div>
       </div>
       {event.endTime ? (

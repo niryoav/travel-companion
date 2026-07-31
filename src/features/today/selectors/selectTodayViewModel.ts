@@ -271,6 +271,7 @@ function eventViewModel(
       eventKindLabel(event),
     publicCode: event.publicCode,
     title: meal?.title ?? event.title,
+    deck: meal?.deck,
     state,
     stateLabel:
       event.operationalStatus === 'CANCELLED'

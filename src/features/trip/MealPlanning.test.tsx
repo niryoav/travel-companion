@@ -147,8 +147,10 @@ describe('Trip meal planning', () => {
     ]).not.toHaveProperty('endsAt')
     expect(within(currentDayCard()).getAllByText('Breakfast').length)
       .toBeGreaterThan(0)
-    expect(within(currentDayCard()).getAllByText('Aquamar Kitchen').length)
-      .toBeGreaterThan(0)
+    expect(
+      within(currentDayCard()).getAllByText('Aquamar Kitchen · Deck 12')
+        .length,
+    ).toBeGreaterThan(0)
   })
 
   it('clears an incompatible time when the restaurant changes', () => {
@@ -260,7 +262,7 @@ describe('Trip meal planning', () => {
       />,
     )
 
-    expect(within(currentDayCard()).getByText('Terrace Café'))
+    expect(within(currentDayCard()).getByText('Terrace Café · Deck 12'))
       .toBeInTheDocument()
     expect(within(currentDayCard()).getAllByText('High Tea').length)
       .toBeGreaterThan(0)
@@ -298,7 +300,8 @@ describe('Trip meal planning', () => {
       </MemoryRouter>,
     )
 
-    expect(screen.getAllByText('Aquamar Kitchen').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Aquamar Kitchen · Deck 12').length)
+      .toBeGreaterThan(0)
     expect(screen.getAllByText('High Tea').length).toBeGreaterThan(0)
     expect(screen.getByText('Horizons Lounge · Deck 15')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '+ Add moment' })).toBeNull()

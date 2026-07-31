@@ -28,6 +28,7 @@ export interface TodayEventViewModel {
   kindLabel: string
   publicCode?: string
   title: string
+  deck?: number
   state: TodayEventState
   stateLabel: string
   time?: string
