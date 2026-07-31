@@ -105,6 +105,15 @@ not depend on provider portals or connectivity. Private identifiers present
 inside a necessary ticket are not duplicated into TypeScript metadata, tests,
 or editorial content.
 
+Restaurant menus are a separate static Documents collection under
+`public/documents/restaurant-menus/`. Its `manifest.json` is the canonical
+source for restaurant name, friendly menu type, and relative PDF path. The
+nested Documents route fetches and validates that manifest, ignores only
+invalid individual entries, and opens each PDF through the device viewer. The
+existing Workbox precache includes the menu manifest and menu PDFs alongside
+the existing approved travel PDFs; it adds no runtime cache or document
+storage subsystem.
+
 ## Date-aware startup routing
 
 Application initialization derives its destination from the canonical trip

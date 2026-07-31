@@ -51,7 +51,10 @@ export default defineConfig({
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
         globPatterns: [
-          '**/*.{js,css,html,svg,png,jpg,jpeg,webp,woff2,pdf}',
+          '**/*.{js,css,html,svg,png,jpg,jpeg,webp,woff2}',
+          'documents/travel/**/*.pdf',
+          'documents/restaurant-menus/**/*.pdf',
+          'documents/restaurant-menus/manifest.json',
         ],
       },
       devOptions: {

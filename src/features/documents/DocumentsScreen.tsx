@@ -1,3 +1,5 @@
+import { Link } from 'react-router'
+
 import { PageHeader } from '../../components/PageHeader'
 import type { TripData } from '../../domain/trip/tripTypes'
 import { DocumentActionLink } from './components/DocumentActionLink'
@@ -22,6 +24,31 @@ export function DocumentsScreen({ tripData }: DocumentsScreenProps) {
         Documents open in your device&apos;s PDF viewer. Return to Travel
         Companion when finished.
       </p>
+
+      <section
+        aria-labelledby="document-group-restaurant-menus"
+        className="document-group"
+      >
+        <h2 id="document-group-restaurant-menus">Onboard</h2>
+        <ul>
+          <li className="document-card">
+            <div className="document-card-meta">
+              <span>Dining</span>
+              <span className="document-offline-status">
+                Available offline
+              </span>
+            </div>
+            <h3>Restaurant menus</h3>
+            <p>Browse available menus by restaurant and meal type.</p>
+            <Link
+              className="document-action"
+              to="/documents/restaurant-menus"
+            >
+              Restaurant menus
+            </Link>
+          </li>
+        </ul>
+      </section>
 
       {viewModel.groups.length > 0 ? (
         viewModel.groups.map((group) => (
@@ -65,9 +92,10 @@ export function DocumentsScreen({ tripData }: DocumentsScreenProps) {
           className="documents-empty-state"
           aria-labelledby="documents-empty-title"
         >
-          <h2 id="documents-empty-title">No documents available</h2>
+          <h2 id="documents-empty-title">No travel documents available</h2>
           <p>
-            No approved offline travel documents are included in this trip.
+            No additional approved offline travel documents are included in
+            this trip.
           </p>
         </section>
       )}

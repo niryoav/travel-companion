@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 
 import { AppShell } from './AppShell'
 import { DocumentsScreen } from '../features/documents/DocumentsScreen'
+import { RestaurantMenusScreen } from '../features/documents/RestaurantMenusScreen'
 import { HomeProfileGate } from '../features/profile/HomeProfileGate'
 import { MoreScreen } from '../features/profile/MoreScreen'
 import { TodayScreen } from '../features/today/TodayScreen'
@@ -177,6 +178,10 @@ export function App({
             <Route
               path="documents"
               element={<DocumentsScreen tripData={tripData} />}
+            />
+            <Route
+              path="documents/restaurant-menus"
+              element={<RestaurantMenusScreen />}
             />
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Route>

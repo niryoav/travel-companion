@@ -6,7 +6,7 @@ import {
   waitFor,
   within,
 } from '@testing-library/react'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { BundledTripRepository } from '../data/trips/BundledTripRepository'
 import { BundledTripContentRepository } from '../data/content/BundledTripContentRepository'
@@ -153,6 +153,8 @@ describe('App', () => {
       value: true,
     })
   })
+
+  afterEach(() => vi.unstubAllGlobals())
 
   it('shows the approved trip welcome content without primary navigation', () => {
     window.history.replaceState({}, '', '/welcome')
@@ -502,6 +504,66 @@ describe('App', () => {
       screen.queryByText(/ready for its first feature/i),
     ).not.toBeInTheDocument()
     expect(window.location.pathname).toBe('/documents')
+  })
+
+  it('opens Restaurant menus under Documents and returns with browser back', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
+      menus: [
+        {
+          restaurant: 'Red Ginger',
+          menuType: 'Dinner',
+          file: 'Red Ginger/Dinner.pdf',
+        },
+      ],
+    }), { status: 200 })))
+    const repository = new MemoryTripStateRepository()
+    repository.travelerId = 'traveler-alex'
+    window.history.replaceState({}, '', '/home?phase=pre-trip')
+    renderApp(repository)
+
+    fireEvent.click(
+      await screen.findByRole('link', { name: 'Documents' }),
+    )
+    fireEvent.click(
+      await screen.findByRole('link', { name: 'Restaurant menus' }),
+    )
+
+    expect(window.location.pathname).toBe('/documents/restaurant-menus')
+    expect(
+      await screen.findByRole('heading', { name: 'Red Ginger' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: 'Documents' }),
+    ).toHaveAttribute('aria-current', 'page')
+
+    act(() => window.history.back())
+
+    await waitFor(() => expect(window.location.pathname).toBe('/documents'))
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Documents' }),
+    ).toBeInTheDocument()
+  })
+
+  it('preserves a direct Restaurant menus route on refresh', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
+      menus: [
+        {
+          restaurant: 'Jacques',
+          menuType: 'Dessert',
+          file: 'Jacques/Dessert.pdf',
+        },
+      ],
+    }), { status: 200 })))
+    const repository = new MemoryTripStateRepository()
+    repository.travelerId = 'traveler-alex'
+    window.history.replaceState({}, '', '/documents/restaurant-menus')
+
+    renderApp(repository)
+
+    expect(window.location.pathname).toBe('/documents/restaurant-menus')
+    expect(
+      await screen.findByRole('heading', { name: 'Jacques' }),
+    ).toBeInTheDocument()
   })
 
   it('does not show a prominent appearance toggle on Home', async () => {
