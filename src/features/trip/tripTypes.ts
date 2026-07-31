@@ -100,8 +100,8 @@ export interface TripEventViewModel {
   operationalStatusLabel?: string
   isCancelled?: boolean
   operationalUpdateLabel?: string
-  dinnerLabels?: string[]
-  isUserCreatedDinner?: boolean
+  mealLabels?: string[]
+  isUserCreatedMoment?: boolean
   experience?: TripExcursionContentViewModel
   relatedDocumentCount: number
   documentActions?: DocumentActionViewModel[]

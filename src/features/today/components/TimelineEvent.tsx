@@ -35,9 +35,9 @@ export function TimelineEvent({ event }: TimelineEventProps) {
           <p>{event.timingConfidenceLabel}</p>
         ) : null}
         {event.location ? <p>{event.location}</p> : null}
-        {event.dinnerLabels?.length ? (
+        {event.mealLabels?.length ? (
           <p className="timeline-event-labels">
-            {event.dinnerLabels.join(' · ')}
+            {event.mealLabels.join(' · ')}
           </p>
         ) : null}
         {event.meetingPointLabel ? <p>{event.meetingPointLabel}</p> : null}

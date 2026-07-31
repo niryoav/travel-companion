@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router'
 
 import type { TripData } from '../../domain/trip/tripTypes'
+import type { MealType } from '../../domain/trip/tripTypes'
+import { availableOnboardMomentTypes } from '../../domain/trip/mealPlanning'
 import type { TripContentBundle } from '../../domain/content/contentTypes'
 import type { TripOverrideBundle } from '../../domain/trip/tripOverrides'
 import type { TripOverrideRepository } from '../../storage/TripOverrideRepository'
@@ -13,7 +15,8 @@ import { reviewStateFromSearch } from './fixtures/reviewStateFromSearch'
 import { selectTripViewModel } from './selectors/selectTripViewModel'
 import { TripView } from './TripView'
 import { TripEditSheet } from './components/TripEditSheet'
-import { DinnerEventSheet } from './components/DinnerEventSheet'
+import { MealEventSheet } from './components/MealEventSheet'
+import { HighTeaEventSheet } from './components/HighTeaEventSheet'
 import { TripMomentTypeSheet } from './components/TripMomentTypeSheet'
 import { useTripRouteActivation } from './useTripRouteActivation'
 
@@ -46,8 +49,10 @@ export function TripScreen({
   const [editingDayId, setEditingDayId] = useState<string | null>(null)
   const [addingMomentDayId, setAddingMomentDayId] =
     useState<string | null>(null)
-  const [dinnerDayId, setDinnerDayId] = useState<string | null>(null)
-  const [editingDinnerId, setEditingDinnerId] =
+  const [mealDayId, setMealDayId] = useState<string | null>(null)
+  const [mealType, setMealType] = useState<MealType | null>(null)
+  const [highTeaDayId, setHighTeaDayId] = useState<string | null>(null)
+  const [editingAddedEventId, setEditingAddedEventId] =
     useState<string | null>(null)
   const [savedConfirmationVisible, setSavedConfirmationVisible] =
     useState(false)
@@ -67,9 +72,21 @@ export function TripScreen({
         tripOverrides,
         syncMetadata?.syncState,
       )
-  const dinnerDay = dinnerDayId
-    ? tripData.days.find(({ id }) => id === dinnerDayId)
+  const mealDay = mealDayId
+    ? tripData.days.find(({ id }) => id === mealDayId)
     : undefined
+  const highTeaDay = highTeaDayId
+    ? tripData.days.find(({ id }) => id === highTeaDayId)
+    : undefined
+  const editingAddedEvent = editingAddedEventId
+    ? tripOverrides?.addedEvents?.[editingAddedEventId]
+    : undefined
+  const addingMomentDay = addingMomentDayId
+    ? tripData.days.find(({ id }) => id === addingMomentDayId)
+    : undefined
+  const addingMomentAvailability = addingMomentDay
+    ? availableOnboardMomentTypes(tripData, addingMomentDay)
+    : { mealTypes: [], highTea: false }
   const syncConfirmation =
     awaitingSyncConfirmation &&
     syncMetadata?.syncState === 'synced'
@@ -114,13 +131,25 @@ export function TripScreen({
             ? setAddingMomentDayId
             : undefined
         }
-        onEditDinner={
+        canAddMoment={(dayId) => {
+          const day = tripData.days.find(({ id }) => id === dayId)
+          if (!day) {
+            return false
+          }
+          const availability = availableOnboardMomentTypes(tripData, day)
+          return availability.mealTypes.length > 0 || availability.highTea
+        }}
+        onEditMoment={
           !reviewState && canEdit && tripOverrideRepository
             ? (eventId) => {
                 const event = tripOverrides?.addedEvents?.[eventId]
-                if (event) {
-                  setDinnerDayId(event.dayId)
-                  setEditingDinnerId(event.id)
+                if (event?.kind === 'MEAL') {
+                  setMealDayId(event.dayId)
+                  setMealType(event.mealType)
+                  setEditingAddedEventId(event.id)
+                } else if (event?.kind === 'HIGH_TEA') {
+                  setHighTeaDayId(event.dayId)
+                  setEditingAddedEventId(event.id)
                 }
               }
             : undefined
@@ -151,32 +180,80 @@ export function TripScreen({
       ) : null}
       {addingMomentDayId ? (
         <TripMomentTypeSheet
+          availableMealTypes={addingMomentAvailability.mealTypes}
+          highTeaAvailable={addingMomentAvailability.highTea}
+          highTeaExists={Object.values(
+            tripOverrides?.addedEvents ?? {},
+          ).some(
+            (event) =>
+              event.kind === 'HIGH_TEA' &&
+              event.dayId === addingMomentDayId,
+          )}
           onClose={() => setAddingMomentDayId(null)}
+          onSelectBreakfast={() => {
+            setMealDayId(addingMomentDayId)
+            setMealType('BREAKFAST')
+            setEditingAddedEventId(null)
+            setAddingMomentDayId(null)
+          }}
+          onSelectLunch={() => {
+            setMealDayId(addingMomentDayId)
+            setMealType('LUNCH')
+            setEditingAddedEventId(null)
+            setAddingMomentDayId(null)
+          }}
           onSelectDinner={() => {
-            setDinnerDayId(addingMomentDayId)
-            setEditingDinnerId(null)
+            setMealDayId(addingMomentDayId)
+            setMealType('DINNER')
+            setEditingAddedEventId(null)
+            setAddingMomentDayId(null)
+          }}
+          onSelectHighTea={() => {
+            setHighTeaDayId(addingMomentDayId)
+            setEditingAddedEventId(null)
             setAddingMomentDayId(null)
           }}
         />
       ) : null}
-      {dinnerDay && tripOverrideRepository ? (
-        <DinnerEventSheet
-          day={dinnerDay}
+      {mealDay && mealType && tripOverrideRepository ? (
+        <MealEventSheet
+          day={mealDay}
           event={
-            editingDinnerId
-              ? tripOverrides?.addedEvents?.[editingDinnerId]
+            editingAddedEvent?.kind === 'MEAL'
+              ? editingAddedEvent
               : undefined
           }
+          mealType={mealType}
           onClose={() => {
-            setDinnerDayId(null)
-            setEditingDinnerId(null)
+            setMealDayId(null)
+            setMealType(null)
+            setEditingAddedEventId(null)
           }}
           onSaved={() => {
             setSavedConfirmationVisible(true)
             setAwaitingSyncConfirmation(true)
           }}
           repository={tripOverrideRepository}
-          restaurants={tripData.dinnerRestaurants ?? []}
+          tripData={tripData}
+        />
+      ) : null}
+      {highTeaDay && tripOverrideRepository ? (
+        <HighTeaEventSheet
+          day={highTeaDay}
+          event={
+            editingAddedEvent?.kind === 'HIGH_TEA'
+              ? editingAddedEvent
+              : undefined
+          }
+          onClose={() => {
+            setHighTeaDayId(null)
+            setEditingAddedEventId(null)
+          }}
+          onSaved={() => {
+            setSavedConfirmationVisible(true)
+            setAwaitingSyncConfirmation(true)
+          }}
+          repository={tripOverrideRepository}
         />
       ) : null}
     </>

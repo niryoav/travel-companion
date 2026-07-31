@@ -1,9 +1,18 @@
 import { MAX_TENDER_CROSSING_MINUTES } from './operationalEditValidation.js'
+import {
+  instantFromLocalTime,
+  timeInputValue,
+} from './localTimeInput.js'
+import {
+  availableOnboardMomentTypes,
+  isValidMealSelection,
+} from './mealPlanning.js'
 import { isSupportedTimeZone, isValidInstant } from './tripTime.js'
 import type {
-  DinnerRestaurantId,
   EventId,
   ExcursionOperationalStatus,
+  MealRestaurantId,
+  MealType,
   OperationalEntryStatus,
   OperationalTime,
   PortAccess,
@@ -54,31 +63,45 @@ export interface EventOperationalOverride {
   updatedAt: string
 }
 
-export interface AddedDinnerEvent {
+export interface AddedMealEvent {
   id: EventId
   dayId: TripDayId
-  kind: 'DINNER'
-  restaurantId: DinnerRestaurantId
+  kind: 'MEAL'
+  mealType: MealType
+  restaurantId: MealRestaurantId | 'la-reserve'
   startsAt: string
   timeZone: string
-  reservationNumber?: string
+  notes?: string
+  updatedAt: string
+  legacy?: true
+}
+
+export interface AddedHighTeaEvent {
+  id: EventId
+  dayId: TripDayId
+  kind: 'HIGH_TEA'
+  startsAt: string
+  timeZone: string
   notes?: string
   updatedAt: string
 }
 
-export type AddedDinnerEventInput = Pick<
-  AddedDinnerEvent,
-  'dayId' | 'restaurantId' | 'startsAt'
-> & Partial<
-  Pick<AddedDinnerEvent, 'reservationNumber' | 'notes'>
->
+export type AddedEvent = AddedMealEvent | AddedHighTeaEvent
+
+export type AddedMealEventInput = Pick<
+  AddedMealEvent,
+  'dayId' | 'mealType' | 'restaurantId' | 'startsAt'
+> & Partial<Pick<AddedMealEvent, 'notes'>>
+
+export type AddedHighTeaEventInput = Pick<AddedHighTeaEvent, 'dayId'> &
+  Partial<Pick<AddedHighTeaEvent, 'notes'>>
 
 export interface TripOverrideBundle {
   schemaVersion: 1
   tripId: TripId
   dayOverrides: Record<TripDayId, DayOperationalOverride>
   eventOverrides: Record<EventId, EventOperationalOverride>
-  addedEvents?: Record<EventId, AddedDinnerEvent>
+  addedEvents?: Record<EventId, AddedEvent>
 }
 
 export type DayOperationalOverrideInput = Omit<
@@ -258,7 +281,20 @@ const EVENT_OVERRIDE_KEYS = new Set([
   'updatedAt',
 ])
 
-const ADDED_DINNER_EVENT_KEYS = new Set([
+const ADDED_MEAL_EVENT_KEYS = new Set([
+  'id',
+  'dayId',
+  'kind',
+  'mealType',
+  'restaurantId',
+  'startsAt',
+  'timeZone',
+  'notes',
+  'updatedAt',
+  'legacy',
+])
+
+const LEGACY_DINNER_EVENT_KEYS = new Set([
   'id',
   'dayId',
   'kind',
@@ -266,6 +302,16 @@ const ADDED_DINNER_EVENT_KEYS = new Set([
   'startsAt',
   'timeZone',
   'reservationNumber',
+  'notes',
+  'updatedAt',
+])
+
+const ADDED_HIGH_TEA_EVENT_KEYS = new Set([
+  'id',
+  'dayId',
+  'kind',
+  'startsAt',
+  'timeZone',
   'notes',
   'updatedAt',
 ])
@@ -312,25 +358,20 @@ function isEventOverride(
   )
 }
 
-function isAddedDinnerEvent(
+function validAddedEventBase(
   value: unknown,
   eventId: string,
   data: TripData,
-): value is AddedDinnerEvent {
-  if (!isObject(value) || !validKeys(value, ADDED_DINNER_EVENT_KEYS)) {
+): value is Record<string, unknown> {
+  if (!isObject(value)) {
     return false
   }
   const day = data.days.find(({ id }) => id === value.dayId)
-  const restaurant = data.dinnerRestaurants?.find(
-    ({ id }) => id === value.restaurantId,
-  )
   return (
     eventId.startsWith('user-event-') &&
     value.id === eventId &&
     !data.events.some(({ id }) => id === eventId) &&
     Boolean(day) &&
-    value.kind === 'DINNER' &&
-    Boolean(restaurant) &&
     typeof value.startsAt === 'string' &&
     isValidInstant(value.startsAt) &&
     Date.parse(value.startsAt) >= Date.parse(day?.startsAt ?? '') &&
@@ -339,25 +380,181 @@ function isAddedDinnerEvent(
     value.timeZone === day?.timeZone &&
     isSupportedTimeZone(value.timeZone) &&
     (
-      value.reservationNumber === undefined ||
-      (
-        restaurant?.reservationRequired === true &&
-        typeof value.reservationNumber === 'string' &&
-        value.reservationNumber.trim().length > 0 &&
-        value.reservationNumber.length <= 120
-      )
-    ) &&
-    (
       value.notes === undefined ||
       (
         typeof value.notes === 'string' &&
         value.notes.trim().length > 0 &&
-        value.notes.length <= 240
+        value.notes.length <= 500
       )
     ) &&
     typeof value.updatedAt === 'string' &&
     isValidInstant(value.updatedAt)
   )
+}
+
+function normalizeLegacyDinner(
+  value: Record<string, unknown>,
+  eventId: string,
+  data: TripData,
+): AddedMealEvent | null {
+  if (
+    !validKeys(value, LEGACY_DINNER_EVENT_KEYS) ||
+    value.kind !== 'DINNER' ||
+    !validAddedEventBase(value, eventId, data) ||
+    typeof value.restaurantId !== 'string' ||
+    (
+      value.reservationNumber !== undefined &&
+      (
+        typeof value.reservationNumber !== 'string' ||
+        !value.reservationNumber.trim() ||
+        value.reservationNumber.length > 120
+      )
+    )
+  ) {
+    return null
+  }
+  const day = data.days.find(({ id }) => id === value.dayId)!
+  const restaurant = data.mealRestaurants?.find(
+    ({ id }) => id === value.restaurantId,
+  )
+  const localTime = timeInputValue(value.startsAt as string, day.timeZone)
+  const expectedStartsAt = instantFromLocalTime(
+    day.localDate,
+    localTime,
+    day.timeZone,
+  )
+  const validSelection = Boolean(
+    restaurant &&
+      expectedStartsAt &&
+      Date.parse(expectedStartsAt) === Date.parse(value.startsAt as string) &&
+      isValidMealSelection(
+        data,
+        day,
+        'DINNER',
+        restaurant.id,
+        localTime,
+      ),
+  )
+  if (!restaurant && value.restaurantId !== 'la-reserve') {
+    return null
+  }
+  const notes = [
+    typeof value.notes === 'string' ? value.notes.trim() : '',
+    typeof value.reservationNumber === 'string'
+      ? `Reservation: ${value.reservationNumber.trim()}`
+      : '',
+  ].filter(Boolean).join('\n')
+  return {
+    id: eventId,
+    dayId: day.id,
+    kind: 'MEAL',
+    mealType: 'DINNER',
+    restaurantId:
+      value.restaurantId as MealRestaurantId | 'la-reserve',
+    startsAt: value.startsAt as string,
+    timeZone: day.timeZone,
+    notes: notes || undefined,
+    updatedAt: value.updatedAt as string,
+    legacy: validSelection ? undefined : true,
+  }
+}
+
+function parseAddedMealEvent(
+  value: Record<string, unknown>,
+  eventId: string,
+  data: TripData,
+): AddedMealEvent | null {
+  if (
+    !validKeys(value, ADDED_MEAL_EVENT_KEYS) ||
+    value.kind !== 'MEAL' ||
+    !validAddedEventBase(value, eventId, data) ||
+    (
+      value.mealType !== 'BREAKFAST' &&
+      value.mealType !== 'LUNCH' &&
+      value.mealType !== 'DINNER'
+    ) ||
+    typeof value.restaurantId !== 'string' ||
+    (value.legacy !== undefined && value.legacy !== true)
+  ) {
+    return null
+  }
+  const day = data.days.find(({ id }) => id === value.dayId)!
+  const restaurant = data.mealRestaurants?.find(
+    ({ id }) => id === value.restaurantId,
+  )
+  const localTime = timeInputValue(value.startsAt as string, day.timeZone)
+  const expectedStartsAt = instantFromLocalTime(
+    day.localDate,
+    localTime,
+    day.timeZone,
+  )
+  const validSelection = Boolean(
+    restaurant &&
+      expectedStartsAt &&
+      Date.parse(expectedStartsAt) === Date.parse(value.startsAt as string) &&
+      isValidMealSelection(
+        data,
+        day,
+        value.mealType,
+        restaurant.id,
+        localTime,
+      ),
+  )
+  const validLegacy =
+    value.legacy === true &&
+    value.mealType === 'DINNER' &&
+    (value.restaurantId === 'la-reserve' || Boolean(restaurant))
+  if (!validSelection && !validLegacy) {
+    return null
+  }
+  return value as unknown as AddedMealEvent
+}
+
+function parseAddedHighTeaEvent(
+  value: Record<string, unknown>,
+  eventId: string,
+  data: TripData,
+): AddedHighTeaEvent | null {
+  if (
+    !validKeys(value, ADDED_HIGH_TEA_EVENT_KEYS) ||
+    value.kind !== 'HIGH_TEA' ||
+    !validAddedEventBase(value, eventId, data)
+  ) {
+    return null
+  }
+  const day = data.days.find(({ id }) => id === value.dayId)!
+  if (!availableOnboardMomentTypes(data, day).highTea) {
+    return null
+  }
+  const expected = instantFromLocalTime(
+    day.localDate,
+    '16:00',
+    day.timeZone,
+  )
+  return expected &&
+    Date.parse(expected) === Date.parse(value.startsAt as string)
+    ? value as unknown as AddedHighTeaEvent
+    : null
+}
+
+function parseAddedEvent(
+  value: unknown,
+  eventId: string,
+  data: TripData,
+): AddedEvent | null {
+  if (!isObject(value)) {
+    return null
+  }
+  if (value.kind === 'DINNER') {
+    return normalizeLegacyDinner(value, eventId, data)
+  }
+  if (value.kind === 'MEAL') {
+    return parseAddedMealEvent(value, eventId, data)
+  }
+  if (value.kind === 'HIGH_TEA') {
+    return parseAddedHighTeaEvent(value, eventId, data)
+  }
+  return null
 }
 
 export function emptyTripOverrideBundle(
@@ -401,10 +598,25 @@ export function parseTripOverrideBundle(
       !Object.entries(value.eventOverrides).every(([eventId, override]) =>
         isEventOverride(override, eventId, data),
       ) ||
-      !Object.entries(value.addedEvents ?? {}).every(([eventId, event]) =>
-        isAddedDinnerEvent(event, eventId, data),
+      Object.entries(value.addedEvents ?? {}).some(
+        ([eventId, event]) => !parseAddedEvent(event, eventId, data),
       )
     ) {
+      return null
+    }
+    const addedEvents = Object.fromEntries(
+      Object.entries(value.addedEvents ?? {}).map(([eventId, event]) => [
+        eventId,
+        parseAddedEvent(event, eventId, data)!,
+      ]),
+    ) as Record<EventId, AddedEvent>
+    const highTeaDays = Object.values(addedEvents)
+      .filter(
+        (event): event is AddedHighTeaEvent =>
+          event.kind === 'HIGH_TEA',
+      )
+      .map(({ dayId }) => dayId)
+    if (new Set(highTeaDays).size !== highTeaDays.length) {
       return null
     }
     return {
@@ -413,9 +625,7 @@ export function parseTripOverrideBundle(
       dayOverrides: value.dayOverrides as TripOverrideBundle['dayOverrides'],
       eventOverrides:
         value.eventOverrides as TripOverrideBundle['eventOverrides'],
-      addedEvents: (value.addedEvents ?? {}) as NonNullable<
-        TripOverrideBundle['addedEvents']
-      >,
+      addedEvents,
     }
   } catch {
     return null
@@ -557,27 +767,40 @@ export function applyTripOverrides(
         Date.parse(left.startsAt) - Date.parse(right.startsAt) ||
         left.id.localeCompare(right.id),
     )
-  const effectiveAddedEvents: TripEvent[] = addedEvents.flatMap(
-    (event) => {
-      const restaurant = baseline.dinnerRestaurants?.find(
-        ({ id }) => id === event.restaurantId,
-      )
-      return restaurant
-        ? [{
-            id: event.id,
-            dayId: event.dayId,
-            kind: 'MEAL' as const,
-            title: restaurant.name,
-            startsAt: event.startsAt,
-            timeZone: event.timeZone,
-            userCreated: true as const,
-            dinnerRestaurantId: event.restaurantId,
-            dinnerReservationNumber: event.reservationNumber,
-            localOperationalNote: event.notes,
-          }]
-        : []
-    },
-  )
+  const effectiveAddedEvents: TripEvent[] = addedEvents.map((event) => {
+    if (event.kind === 'HIGH_TEA') {
+      return {
+        id: event.id,
+        dayId: event.dayId,
+        kind: 'MEAL' as const,
+        title: 'High Tea',
+        startsAt: event.startsAt,
+        timeZone: event.timeZone,
+        userCreated: true as const,
+        highTea: true as const,
+        localOperationalNote: event.notes,
+      }
+    }
+    const restaurant = baseline.mealRestaurants?.find(
+      ({ id }) => id === event.restaurantId,
+    )
+    return {
+      id: event.id,
+      dayId: event.dayId,
+      kind: 'MEAL' as const,
+      title:
+        restaurant?.name ??
+        (event.restaurantId === 'la-reserve'
+          ? 'La Reserve'
+          : 'Unknown venue'),
+      startsAt: event.startsAt,
+      timeZone: event.timeZone,
+      userCreated: true as const,
+      mealType: event.mealType,
+      mealRestaurantId: event.restaurantId,
+      localOperationalNote: event.notes,
+    }
+  })
   return {
     ...baseline,
     days: baseline.days.map((day) => {

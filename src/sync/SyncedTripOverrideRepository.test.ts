@@ -18,7 +18,7 @@ import {
 } from '../storage/LocalTripOverrideRepository'
 import type { TripSnapshotCache } from '../storage/TripSnapshotCache'
 import { tripFixture } from '../test/fixtures/tripFixture'
-import { oceaniaMarinaDinnerRestaurants } from '../trips/oceania-marina-2026/dinnerRestaurants'
+import { oceaniaMarinaMealRestaurants } from '../trips/oceania-marina-2026/mealRestaurants'
 import { SyncedTripOverrideRepository } from './SyncedTripOverrideRepository'
 
 function bundle(note?: string): TripOverrideBundle {
@@ -63,7 +63,7 @@ function deferred<T>() {
 
 const productionTrip: TripData = {
   ...tripFixture,
-  dinnerRestaurants: [...oceaniaMarinaDinnerRestaurants],
+  mealRestaurants: [...oceaniaMarinaMealRestaurants],
   trip: {
     ...tripFixture.trip,
     id: 'trip-oceania-marina-2026',
@@ -256,8 +256,9 @@ describe('SyncedTripOverrideRepository role-based sync', () => {
       },
     )
 
-    repository.addDinnerEvent({
+    repository.addMealEvent({
       dayId: 'day-2030-05-11',
+      mealType: 'DINNER',
       restaurantId: 'terrace-cafe',
       startsAt: '2030-05-11T17:30:00Z',
     })
@@ -685,11 +686,13 @@ describe('SyncedTripOverrideRepository role-based sync', () => {
       'user-event-shared-dinner': {
         id: 'user-event-shared-dinner',
         dayId: 'day-2030-05-11',
-        kind: 'DINNER',
+        kind: 'MEAL',
+        mealType: 'DINNER',
         restaurantId: 'la-reserve',
         startsAt: '2030-05-11T17:30:00Z',
         timeZone: 'Europe/Brussels',
         updatedAt: '2030-05-10T12:00:00Z',
+        legacy: true,
       },
     }
     const putTripSnapshot = vi.fn()

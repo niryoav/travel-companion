@@ -1,17 +1,28 @@
 import {
   emptyTripOverrideBundle,
   parseTripOverrideBundle,
-  type AddedDinnerEvent,
-  type AddedDinnerEventInput,
+  type AddedHighTeaEvent,
+  type AddedHighTeaEventInput,
+  type AddedMealEvent,
+  type AddedMealEventInput,
   type DayOperationalOverrideInput,
   type EventOperationalOverrideInput,
   type TripOverrideBundle,
 } from '../domain/trip/tripOverrides'
 import type {
   EventId,
+  MealRestaurantId,
   TripData,
   TripDayId,
 } from '../domain/trip/tripTypes'
+import {
+  instantFromLocalTime,
+  timeInputValue,
+} from '../domain/trip/localTimeInput'
+import {
+  availableOnboardMomentTypes,
+  isValidMealSelection,
+} from '../domain/trip/mealPlanning'
 import type { TripOverrideRepository } from './TripOverrideRepository'
 import type { TripSnapshot } from '../domain/trip/tripSnapshot'
 import { isValidInstant } from '../domain/trip/tripTime'
@@ -297,6 +308,7 @@ implements TripOverrideRepository {
         tripId: this.tripData.trip.id,
         dayOverrides,
         eventOverrides: nextEventOverrides,
+        addedEvents: this.snapshot.addedEvents ?? {},
       },
       {
         ...this.metadata,
@@ -339,27 +351,49 @@ implements TripOverrideRepository {
     )
   }
 
-  addDinnerEvent(input: AddedDinnerEventInput): EventId {
+  private nextAddedEventId(): EventId {
     const existingIds = new Set([
       ...this.tripData.events.map(({ id }) => id),
       ...Object.keys(this.snapshot.addedEvents ?? {}),
     ])
-    const eventId = createUserEventId(existingIds, this.randomUUID)
-    this.saveDinnerEvent(eventId, input)
+    return createUserEventId(existingIds, this.randomUUID)
+  }
+
+  addMealEvent(input: AddedMealEventInput): EventId {
+    const eventId = this.nextAddedEventId()
+    this.saveMealEvent(eventId, input)
     return eventId
   }
 
-  updateDinnerEvent(
+  updateMealEvent(
     eventId: EventId,
-    input: AddedDinnerEventInput,
+    input: AddedMealEventInput,
   ): void {
-    if (!this.snapshot.addedEvents?.[eventId]) {
-      throw new Error(`User-created Dinner does not exist: ${eventId}`)
+    const existing = this.snapshot.addedEvents?.[eventId]
+    if (!existing || existing.kind !== 'MEAL') {
+      throw new Error(`User-created meal does not exist: ${eventId}`)
     }
-    this.saveDinnerEvent(eventId, input)
+    this.saveMealEvent(eventId, input)
   }
 
-  removeDinnerEvent(eventId: EventId): void {
+  addHighTeaEvent(input: AddedHighTeaEventInput): EventId {
+    const eventId = this.nextAddedEventId()
+    this.saveHighTeaEvent(eventId, input)
+    return eventId
+  }
+
+  updateHighTeaEvent(
+    eventId: EventId,
+    input: AddedHighTeaEventInput,
+  ): void {
+    const existing = this.snapshot.addedEvents?.[eventId]
+    if (!existing || existing.kind !== 'HIGH_TEA') {
+      throw new Error(`User-created High Tea does not exist: ${eventId}`)
+    }
+    this.saveHighTeaEvent(eventId, input)
+  }
+
+  removeAddedEvent(eventId: EventId): void {
     if (!this.snapshot.addedEvents?.[eventId]) {
       return
     }
@@ -375,34 +409,99 @@ implements TripOverrideRepository {
     )
   }
 
-  private saveDinnerEvent(
+  private saveMealEvent(
     eventId: EventId,
-    input: AddedDinnerEventInput,
+    input: AddedMealEventInput,
   ): void {
     const day = this.tripData.days.find(({ id }) => id === input.dayId)
-    const restaurant = this.tripData.dinnerRestaurants?.find(
+    const restaurant = this.tripData.mealRestaurants?.find(
       ({ id }) => id === input.restaurantId,
     )
-    if (!day || !restaurant) {
-      throw new Error('Dinner day or restaurant is unavailable')
+    const localTime =
+      day && timeInputValue(input.startsAt, day.timeZone)
+    const expectedStartsAt =
+      day && localTime
+        ? instantFromLocalTime(day.localDate, localTime, day.timeZone)
+        : null
+    if (
+      !day ||
+      !restaurant ||
+      !localTime ||
+      !expectedStartsAt ||
+      Date.parse(expectedStartsAt) !== Date.parse(input.startsAt) ||
+      !isValidMealSelection(
+        this.tripData,
+        day,
+        input.mealType,
+        restaurant.id,
+        localTime,
+      )
+    ) {
+      throw new Error('Meal day, restaurant, or time is unavailable')
     }
     const updatedAt = this.now().toISOString()
-    const event: AddedDinnerEvent = {
+    const event: AddedMealEvent = {
       id: eventId,
       dayId: day.id,
-      kind: 'DINNER',
-      restaurantId: restaurant.id,
+      kind: 'MEAL',
+      mealType: input.mealType,
+      restaurantId: restaurant.id as MealRestaurantId,
       startsAt: input.startsAt,
       timeZone: day.timeZone,
-      reservationNumber:
-        restaurant.reservationRequired
-          ? input.reservationNumber?.trim() || undefined
-          : undefined,
       notes: input.notes?.trim() || undefined,
       updatedAt,
     }
+    this.saveAddedEvent(event, updatedAt)
+  }
+
+  private saveHighTeaEvent(
+    eventId: EventId,
+    input: AddedHighTeaEventInput,
+  ): void {
+    const day = this.tripData.days.find(({ id }) => id === input.dayId)
+    if (!day) {
+      throw new Error('High Tea day is unavailable')
+    }
+    if (!availableOnboardMomentTypes(this.tripData, day).highTea) {
+      throw new Error('High Tea is unavailable for this day')
+    }
+    if (
+      Object.values(this.snapshot.addedEvents ?? {}).some(
+        (event) =>
+          event.kind === 'HIGH_TEA' &&
+          event.dayId === day.id &&
+          event.id !== eventId,
+      )
+    ) {
+      throw new Error('High Tea already exists for this day')
+    }
+    const startsAt = instantFromLocalTime(
+      day.localDate,
+      '16:00',
+      day.timeZone,
+    )
+    if (!startsAt) {
+      throw new Error('High Tea time is unavailable')
+    }
+    const updatedAt = this.now().toISOString()
+    const event: AddedHighTeaEvent = {
+      id: eventId,
+      dayId: day.id,
+      kind: 'HIGH_TEA',
+      startsAt,
+      timeZone: day.timeZone,
+      notes: input.notes?.trim() || undefined,
+      updatedAt,
+    }
+    this.saveAddedEvent(event, updatedAt)
+  }
+
+  private saveAddedEvent(
+    event: AddedMealEvent | AddedHighTeaEvent,
+    updatedAt: string,
+  ): void {
     const existing = this.snapshot.addedEvents ?? {}
-    const addedEvents = { ...existing, [eventId]: event }
+    const addedEvents = { ...existing, [event.id]: event }
     this.write(
       { ...this.snapshot, addedEvents },
       {

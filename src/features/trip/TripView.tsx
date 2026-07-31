@@ -5,15 +5,17 @@ import { TripProgress } from './components/TripProgress'
 import type { TripViewModel } from './tripTypes'
 
 interface TripViewProps {
+  canAddMoment?: (dayId: string) => boolean
   onAddMoment?: (dayId: string) => void
-  onEditDinner?: (eventId: string) => void
+  onEditMoment?: (eventId: string) => void
   onEditDay?: (dayId: string) => void
   viewModel: TripViewModel
 }
 
 export function TripView({
+  canAddMoment,
   onAddMoment,
-  onEditDinner,
+  onEditMoment,
   onEditDay,
   viewModel,
 }: TripViewProps) {
@@ -23,9 +25,10 @@ export function TripView({
       <TripProgress progress={viewModel.progress} />
       {viewModel.days.length > 0 ? (
         <TripDayList
+          canAddMoment={canAddMoment}
           days={viewModel.days}
           onAddMoment={onAddMoment}
-          onEditDinner={onEditDinner}
+          onEditMoment={onEditMoment}
           onEditDay={onEditDay}
         />
       ) : viewModel.emptyMessage ? (

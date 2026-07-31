@@ -4,7 +4,7 @@ import type {
   TripData,
   TripDay,
 } from '../../domain/trip/tripTypes.js'
-import { oceaniaMarinaDinnerRestaurants } from './dinnerRestaurants.js'
+import { oceaniaMarinaMealRestaurants } from './mealRestaurants.js'
 
 // Public cruise dates, ports, and published arrival/departure times:
 // https://www.oceaniacruises.com/cruises/MNA260823/
@@ -397,8 +397,8 @@ const days: TripDay[] = [
 
 export const oceaniaMarina2026TripData: TripData = {
   schemaVersion: 1,
-  dataVersion: '2026-07-30.2',
-  publishedAt: '2026-07-30T14:00:00Z',
+  dataVersion: '2026-07-31.1',
+  publishedAt: '2026-07-31T12:00:00Z',
   trip: {
     id: 'trip-oceania-marina-2026',
     title: 'Iceland & British Isles',
@@ -416,7 +416,7 @@ export const oceaniaMarina2026TripData: TripData = {
     { id: 'traveler-isabel', displayName: 'Isabel' },
   ],
   days,
-  dinnerRestaurants: [...oceaniaMarinaDinnerRestaurants],
+  mealRestaurants: [...oceaniaMarinaMealRestaurants],
   events: [
     {
       id: 'event-home-brussels-transfer',

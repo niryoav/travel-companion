@@ -3,16 +3,18 @@ import type { TripDayViewModel } from '../tripTypes'
 import { TripDayDetails } from './TripDayDetails'
 
 interface TripDayCardProps {
+  canAddMoment?: (dayId: string) => boolean
   day: TripDayViewModel
   onAddMoment?: (dayId: string) => void
-  onEditDinner?: (eventId: string) => void
+  onEditMoment?: (eventId: string) => void
   onEdit?: (dayId: string) => void
 }
 
 export function TripDayCard({
+  canAddMoment,
   day,
   onAddMoment,
-  onEditDinner,
+  onEditMoment,
   onEdit,
 }: TripDayCardProps) {
   const additionalLabel =
@@ -133,9 +135,10 @@ export function TripDayCard({
       </summary>
 
       <TripDayDetails
+        canAddMoment={canAddMoment}
         day={day}
         onAddMoment={onAddMoment}
-        onEditDinner={onEditDinner}
+        onEditMoment={onEditMoment}
       />
     </details>
   )

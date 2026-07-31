@@ -8,15 +8,17 @@ export type CruiseId = string
 export type PortCallId = string
 export type BookingReferenceId = string
 export type DocumentReferenceId = string
-export type DinnerRestaurantId =
+export type MealType = 'BREAKFAST' | 'LUNCH' | 'DINNER'
+export type MealDayType = 'PORT' | 'SEA'
+export type MealRestaurantId =
   | 'grand-dining-room'
   | 'terrace-cafe'
   | 'waves-grill'
+  | 'aquamar-kitchen'
   | 'polo-grill'
   | 'toscana'
   | 'jacques'
   | 'red-ginger'
-  | 'la-reserve'
   | 'privee'
 export type OperationalTimingVerification =
   | 'CONFIRMED'
@@ -108,12 +110,20 @@ export interface Location {
   country?: string
 }
 
-export interface DinnerRestaurant {
-  id: DinnerRestaurantId
+export interface MealServiceWindow {
+  opensAt: string
+  closesAt: string
+  dayType?: MealDayType
+  note?: string
+}
+
+export interface MealRestaurant {
+  id: MealRestaurantId
   name: string
   location: string
-  reservationRequired: boolean
+  reservationRequiredForDinner: boolean
   extraFee: boolean
+  services: Partial<Record<MealType, MealServiceWindow[]>>
 }
 
 interface BaseEvent {
@@ -153,8 +163,9 @@ interface BaseEvent {
   operationalStatus?: ExcursionOperationalStatus
   localOperationalNote?: string
   userCreated?: true
-  dinnerRestaurantId?: DinnerRestaurantId
-  dinnerReservationNumber?: string
+  mealType?: MealType
+  mealRestaurantId?: string
+  highTea?: true
 }
 
 export interface TransportEvent extends BaseEvent {
@@ -256,7 +267,7 @@ export interface TripData {
   travelers: Traveler[]
   days: TripDay[]
   events: TripEvent[]
-  dinnerRestaurants?: DinnerRestaurant[]
+  mealRestaurants?: MealRestaurant[]
   locations: Location[]
   transports: TransportSegment[]
   cruises: Cruise[]
