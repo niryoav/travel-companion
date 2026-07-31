@@ -12,6 +12,15 @@ describe('PWA API navigation handling', () => {
     expect(configSource).toContain(
       'navigateFallbackDenylist: [/^\\/api\\//],',
     )
+    expect(configSource).toContain(
+      "'documents/restaurant-menus/**/*.pdf',",
+    )
+    expect(configSource).toContain(
+      "'documents/restaurant-menus/manifest.json',",
+    )
+    expect(configSource).not.toContain(
+      "woff2,pdf",
+    )
     expect(configSource).not.toContain('runtimeCaching')
   })
 })

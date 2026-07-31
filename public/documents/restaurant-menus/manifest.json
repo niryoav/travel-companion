@@ -1,0 +1,106 @@
+{
+  "menus": [
+    {
+      "restaurant": "Aquamar Kitchen",
+      "menuType": "Breakfast",
+      "file": "Aquamar Kitchen/Breakfast.pdf",
+      "originalFileName": "aquamar-kitchen-breakfast-sample.pdf"
+    },
+    {
+      "restaurant": "Aquamar Kitchen",
+      "menuType": "Lunch",
+      "file": "Aquamar Kitchen/Lunch.pdf",
+      "originalFileName": "Aquamar-Kitchen-Lunch.pdf"
+    },
+    {
+      "restaurant": "The Grand Dining Room",
+      "menuType": "Breakfast",
+      "file": "The Grand Dining Room/Breakfast.pdf",
+      "originalFileName": "GDR_Breakfast.pdf"
+    },
+    {
+      "restaurant": "The Grand Dining Room",
+      "menuType": "Lunch",
+      "file": "The Grand Dining Room/Lunch.pdf",
+      "originalFileName": "GDR_Lunch_Menu.pdf"
+    },
+    {
+      "restaurant": "The Grand Dining Room",
+      "menuType": "Dinner",
+      "file": "The Grand Dining Room/Dinner.pdf",
+      "originalFileName": "GDR_Dinner.pdf"
+    },
+    {
+      "restaurant": "The Grand Dining Room",
+      "menuType": "Dessert",
+      "file": "The Grand Dining Room/Dessert.pdf",
+      "originalFileName": "grand-dining-room-dessert.pdf"
+    },
+    {
+      "restaurant": "Jacques",
+      "menuType": "Dinner",
+      "file": "Jacques/Dinner.pdf",
+      "originalFileName": "Jacques-Dinner-Marina-Riviera_10.23.24.pdf"
+    },
+    {
+      "restaurant": "Jacques",
+      "menuType": "Dessert",
+      "file": "Jacques/Dessert.pdf",
+      "originalFileName": "Jacques-Dessert-Marina-Riviera_10.23.24.pdf"
+    },
+    {
+      "restaurant": "Polo Grill",
+      "menuType": "Dinner",
+      "file": "Polo Grill/Dinner.pdf",
+      "originalFileName": "Polo-Grill-Dinner-Menu-Regatta-Insignia-Nautica-Marina-Riviera_04.25.pdf"
+    },
+    {
+      "restaurant": "Polo Grill",
+      "menuType": "Dessert",
+      "file": "Polo Grill/Dessert.pdf",
+      "originalFileName": "Menu-Polo-Grill-Dessert.pdf"
+    },
+    {
+      "restaurant": "Red Ginger",
+      "menuType": "Dinner",
+      "file": "Red Ginger/Dinner.pdf",
+      "originalFileName": "Red-Ginger-Dinner-Menu-Marina-Riviera_01.26.pdf"
+    },
+    {
+      "restaurant": "Terrace Café",
+      "menuType": "Lunch",
+      "file": "Terrace Café/Lunch.pdf",
+      "originalFileName": "Menu_TerraceCafe_Lunch.pdf"
+    },
+    {
+      "restaurant": "Terrace Café",
+      "menuType": "Dinner",
+      "file": "Terrace Café/Dinner.pdf",
+      "originalFileName": "TerraceCafe_Dinner.pdf"
+    },
+    {
+      "restaurant": "Toscana",
+      "menuType": "Dinner",
+      "file": "Toscana/Dinner.pdf",
+      "originalFileName": "Toscana-Dinner-Menu-Regatta-Insignia-Nautica-Sirena-Marina-Riviera_01.26.pdf"
+    },
+    {
+      "restaurant": "Toscana",
+      "menuType": "Dessert",
+      "file": "Toscana/Dessert.pdf",
+      "originalFileName": "Toscana_Dessert_.pdf"
+    },
+    {
+      "restaurant": "Waves Grill",
+      "menuType": "Lunch",
+      "file": "Waves Grill/Lunch.pdf",
+      "originalFileName": "Waves Grill-Lunch-Menu-05.24.pdf"
+    },
+    {
+      "restaurant": "Waves Grill",
+      "menuType": "Dinner",
+      "file": "Waves Grill/Dinner.pdf",
+      "originalFileName": "Waves Grill Pizzeria Dinner_OClass.pdf"
+    }
+  ]
+}

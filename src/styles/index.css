@@ -2089,6 +2089,20 @@ a:focus-visible {
   line-height: 1.5;
 }
 
+.documents-back-link {
+  justify-self: start;
+  min-height: 2.75rem;
+  align-content: center;
+  color: var(--champagne);
+  font-weight: 800;
+  text-underline-offset: 0.2rem;
+}
+
+.documents-loading {
+  margin: 0;
+  color: var(--text-muted);
+}
+
 .document-group h2 {
   margin: 0 0 0.7rem;
   color: var(--text);
