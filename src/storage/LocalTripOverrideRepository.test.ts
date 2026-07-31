@@ -289,6 +289,57 @@ describe('LocalTripOverrideRepository', () => {
     })).toBe('user-event-day-boundary')
   })
 
+  it('persists and reloads a Show / activity with derived location data omitted', () => {
+    const first = new LocalTripOverrideRepository(
+      window.localStorage,
+      oceaniaMarina2026TripData,
+      () => new Date('2026-08-20T12:00:00Z'),
+      undefined,
+      undefined,
+      () => 'show-activity',
+    )
+    const eventId = first.addShowActivityEvent({
+      dayId: 'day-2026-08-25',
+      title: 'Broadway Show',
+      startsAt: '2026-08-25T21:30:00Z',
+      locationId: 'marina-lounge',
+    })
+
+    const reopened = new LocalTripOverrideRepository(
+      window.localStorage,
+      oceaniaMarina2026TripData,
+      () => new Date('2026-08-20T13:00:00Z'),
+    )
+    expect(reopened.getSnapshot().addedEvents?.[eventId]).toEqual({
+      id: eventId,
+      dayId: 'day-2026-08-25',
+      kind: 'SHOW_ACTIVITY',
+      title: 'Broadway Show',
+      startsAt: '2026-08-25T21:30:00Z',
+      timeZone: 'Atlantic/Reykjavik',
+      locationId: 'marina-lounge',
+      updatedAt: '2026-08-20T12:00:00.000Z',
+    })
+    expect(reopened.getSnapshot().addedEvents?.[eventId])
+      .not.toHaveProperty('deck')
+    expect(reopened.getSnapshot().addedEvents?.[eventId])
+      .not.toHaveProperty('locationDescription')
+
+    reopened.updateShowActivityEvent(eventId, {
+      dayId: 'day-2026-08-25',
+      title: 'Welcome reception',
+      startsAt: '2026-08-25T18:00:00Z',
+      locationId: 'other',
+      notes: 'Meet beside the forward staircase.',
+    })
+    expect(reopened.getSnapshot().addedEvents?.[eventId]).toMatchObject({
+      title: 'Welcome reception',
+      startsAt: '2026-08-25T18:00:00Z',
+      locationId: 'other',
+      notes: 'Meet beside the forward staircase.',
+    })
+  })
+
   it('reads a valid local override bundle for later migration', () => {
     const bundle = {
       schemaVersion: 1 as const,

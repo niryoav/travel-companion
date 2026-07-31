@@ -1,6 +1,7 @@
 import type {
   AddedHighTeaEventInput,
   AddedMealEventInput,
+  AddedShowActivityEventInput,
   DayOperationalOverrideInput,
   EventOperationalOverrideInput,
   TripOverrideBundle,
@@ -31,6 +32,11 @@ export interface TripOverrideRepository {
     eventId: EventId,
     input: AddedHighTeaEventInput,
   ): void
+  addShowActivityEvent(input: AddedShowActivityEventInput): EventId
+  updateShowActivityEvent(
+    eventId: EventId,
+    input: AddedShowActivityEventInput,
+  ): void
   removeAddedEvent(eventId: EventId): void
   getSyncMetadata?(): LocalTripOverrideMetadata
   synchronizeForCurrentRole?(): Promise<void>
@@ -55,5 +61,7 @@ export const unavailableTripOverrideRepository: TripOverrideRepository = {
   updateMealEvent: () => {},
   addHighTeaEvent: () => '',
   updateHighTeaEvent: () => {},
+  addShowActivityEvent: () => '',
+  updateShowActivityEvent: () => {},
   removeAddedEvent: () => {},
 }

@@ -3,8 +3,11 @@ import {
   parseTripOverrideBundle,
   type AddedHighTeaEvent,
   type AddedHighTeaEventInput,
+  type AddedEvent,
   type AddedMealEvent,
   type AddedMealEventInput,
+  type AddedShowActivityEvent,
+  type AddedShowActivityEventInput,
   type DayOperationalOverrideInput,
   type EventOperationalOverrideInput,
   type TripOverrideBundle,
@@ -23,6 +26,7 @@ import {
   availableOnboardMomentTypes,
   isValidMealSelection,
 } from '../domain/trip/mealPlanning'
+import { isShowActivityAvailable } from '../domain/trip/showActivityPlanning'
 import type { TripOverrideRepository } from './TripOverrideRepository'
 import type { TripSnapshot } from '../domain/trip/tripSnapshot'
 import { isValidInstant } from '../domain/trip/tripTime'
@@ -393,6 +397,23 @@ implements TripOverrideRepository {
     this.saveHighTeaEvent(eventId, input)
   }
 
+  addShowActivityEvent(input: AddedShowActivityEventInput): EventId {
+    const eventId = this.nextAddedEventId()
+    this.saveShowActivityEvent(eventId, input)
+    return eventId
+  }
+
+  updateShowActivityEvent(
+    eventId: EventId,
+    input: AddedShowActivityEventInput,
+  ): void {
+    const existing = this.snapshot.addedEvents?.[eventId]
+    if (!existing || existing.kind !== 'SHOW_ACTIVITY') {
+      throw new Error(`User-created Show / activity does not exist: ${eventId}`)
+    }
+    this.saveShowActivityEvent(eventId, input)
+  }
+
   removeAddedEvent(eventId: EventId): void {
     if (!this.snapshot.addedEvents?.[eventId]) {
       return
@@ -496,8 +517,50 @@ implements TripOverrideRepository {
     this.saveAddedEvent(event, updatedAt)
   }
 
+  private saveShowActivityEvent(
+    eventId: EventId,
+    input: AddedShowActivityEventInput,
+  ): void {
+    const day = this.tripData.days.find(({ id }) => id === input.dayId)
+    const location = this.tripData.activityLocations?.find(
+      ({ id }) => id === input.locationId,
+    )
+    const title = input.title.trim()
+    const localTime =
+      day && timeInputValue(input.startsAt, day.timeZone)
+    const expectedStartsAt =
+      day && localTime
+        ? instantFromLocalTime(day.localDate, localTime, day.timeZone)
+        : null
+    if (
+      !day ||
+      !isShowActivityAvailable(this.tripData, day) ||
+      !location ||
+      !title ||
+      title.length > 120 ||
+      !localTime ||
+      !expectedStartsAt ||
+      Date.parse(expectedStartsAt) !== Date.parse(input.startsAt)
+    ) {
+      throw new Error('Show / activity details are invalid')
+    }
+    const updatedAt = this.now().toISOString()
+    const event: AddedShowActivityEvent = {
+      id: eventId,
+      dayId: day.id,
+      kind: 'SHOW_ACTIVITY',
+      title,
+      startsAt: input.startsAt,
+      timeZone: day.timeZone,
+      locationId: location.id,
+      notes: input.notes?.trim() || undefined,
+      updatedAt,
+    }
+    this.saveAddedEvent(event, updatedAt)
+  }
+
   private saveAddedEvent(
-    event: AddedMealEvent | AddedHighTeaEvent,
+    event: AddedEvent,
     updatedAt: string,
   ): void {
     const existing = this.snapshot.addedEvents ?? {}
