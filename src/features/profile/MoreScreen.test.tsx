@@ -1,5 +1,6 @@
 import { act, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { MemoryRouter } from 'react-router'
 
 import { PwaUpdateManager } from '../../pwa/PwaUpdateManager'
 import { LocalTripOverrideRepository } from '../../storage/LocalTripOverrideRepository'
@@ -26,25 +27,31 @@ describe('MoreScreen role-based trip status', () => {
       },
     )
     render(
-      <MoreScreen
-        appBuildInfo={{
-          buildLabel: '10 May 2030, 14:00',
-          builtAt: '2030-05-10T12:00:00Z',
-          environmentLabel: 'Production',
-          version: '97b35d2',
-        }}
-        pwaUpdateManager={new PwaUpdateManager(false)}
-        travelers={oceaniaMarina2026TripData.travelers}
-        tripDataVersion="test-data"
-        tripOverrideRepository={repository}
-        tripStateRepository={
-          {
-            getTravelerId: () => 'traveler-isabel',
-            setTravelerId: () => {},
-          } as unknown as TripStateRepository
-        }
-      />,
+      <MemoryRouter>
+        <MoreScreen
+          appBuildInfo={{
+            buildLabel: '10 May 2030, 14:00',
+            builtAt: '2030-05-10T12:00:00Z',
+            environmentLabel: 'Production',
+            version: '97b35d2',
+          }}
+          pwaUpdateManager={new PwaUpdateManager(false)}
+          travelers={oceaniaMarina2026TripData.travelers}
+          tripDataVersion="test-data"
+          tripOverrideRepository={repository}
+          tripStateRepository={
+            {
+              getTravelerId: () => 'traveler-isabel',
+              setTravelerId: () => {},
+            } as unknown as TripStateRepository
+          }
+        />
+      </MemoryRouter>,
     )
+
+    expect(
+      screen.getByRole('link', { name: 'Simulation Preview' }),
+    ).toHaveAttribute('href', '/more/simulation-preview')
 
     expect(
       screen.getByRole('heading', { name: 'Up to date' }),
@@ -83,24 +90,26 @@ describe('MoreScreen role-based trip status', () => {
     )
 
     render(
-      <MoreScreen
-        appBuildInfo={{
-          buildLabel: '30 Jul 2026, 18:32',
-          builtAt: '2026-07-30T16:32:00Z',
-          environmentLabel: 'Production',
-          version: 'abc1234',
-        }}
-        pwaUpdateManager={new PwaUpdateManager(false)}
-        travelers={oceaniaMarina2026TripData.travelers}
-        tripDataVersion="test-data"
-        tripOverrideRepository={repository}
-        tripStateRepository={
-          {
-            getTravelerId: () => 'traveler-yoav',
-            setTravelerId: () => {},
-          } as unknown as TripStateRepository
-        }
-      />,
+      <MemoryRouter>
+        <MoreScreen
+          appBuildInfo={{
+            buildLabel: '30 Jul 2026, 18:32',
+            builtAt: '2026-07-30T16:32:00Z',
+            environmentLabel: 'Production',
+            version: 'abc1234',
+          }}
+          pwaUpdateManager={new PwaUpdateManager(false)}
+          travelers={oceaniaMarina2026TripData.travelers}
+          tripDataVersion="test-data"
+          tripOverrideRepository={repository}
+          tripStateRepository={
+            {
+              getTravelerId: () => 'traveler-yoav',
+              setTravelerId: () => {},
+            } as unknown as TripStateRepository
+          }
+        />
+      </MemoryRouter>,
     )
 
     expect(screen.getByRole('heading', { name: 'App version' }))
@@ -127,5 +136,11 @@ describe('MoreScreen role-based trip status', () => {
       screen.getByRole('heading', { name: 'Synced' }),
     ).toBeInTheDocument()
     expect(fetchSpy).not.toHaveBeenCalled()
+    expect(
+      screen.getByRole('heading', { name: 'Traveler on this device' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: 'Simulation Preview' }),
+    ).toBeInTheDocument()
   })
 })

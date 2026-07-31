@@ -39,7 +39,7 @@ export function TodayScreen({ now, tripData }: TodayScreenProps) {
     <TodayView
       viewModel={viewModel}
       previewControls={
-        <SimulationScenarioSwitcher />
+        simulationScenario ? <SimulationScenarioSwitcher /> : undefined
       }
     />
   )

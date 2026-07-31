@@ -140,6 +140,18 @@ export function App({
               }
             />
             <Route
+              path="more/simulation-preview"
+              element={
+                <HomeProfileGate
+                  loveMessageSchedule={loveMessageSchedule}
+                  now={now}
+                  showSimulationPreview
+                  tripData={tripData}
+                  tripStateRepository={tripStateRepository}
+                />
+              }
+            />
+            <Route
               path="today"
               element={<TodayScreen now={now} tripData={tripData} />}
             />

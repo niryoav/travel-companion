@@ -7,7 +7,8 @@ import { primaryNavigation } from './navigation/primaryNavigation'
 
 export function AppShell() {
   const { pathname, search } = useLocation()
-  const isHome = pathname === '/home'
+  const isHome =
+    pathname === '/home' || pathname === '/more/simulation-preview'
   const simulationScenario = simulationScenarioFromSearch(search)
 
   return (
