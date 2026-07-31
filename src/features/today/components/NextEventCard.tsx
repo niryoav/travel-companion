@@ -1,14 +1,17 @@
 import { DocumentActionLink } from '../../documents/components/DocumentActionLink'
+import { MealMenuActions } from '../../documents/components/MealMenuActions'
 import type { TodayEventViewModel } from '../todayTypes'
 
 interface NextEventCardProps {
   event: TodayEventViewModel
   showDocumentAction?: boolean
+  showMenuAction?: boolean
 }
 
 export function NextEventCard({
   event,
   showDocumentAction = false,
+  showMenuAction = false,
 }: NextEventCardProps) {
   return (
     <section className="today-card today-next-event" aria-labelledby="next-event-title">
@@ -81,6 +84,13 @@ export function NextEventCard({
         <p className="today-event-detail">
           {event.localOperationalNote}
         </p>
+      ) : null}
+      {showMenuAction ? (
+        <MealMenuActions
+          isMeal={event.mealLabels !== undefined}
+          mealType={event.kindLabel}
+          restaurantName={event.title}
+        />
       ) : null}
       {showDocumentAction
         ? event.documentActions?.map((action) => (

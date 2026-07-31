@@ -50,6 +50,7 @@ export function TodayView({
         <NextEventCard
           event={viewModel.nextEvent}
           showDocumentAction={viewModel.timeline.length === 0}
+          showMenuAction={viewModel.timeline.length === 0}
         />
       ) : null}
 

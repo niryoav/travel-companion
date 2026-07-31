@@ -4,6 +4,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 import { AppShell } from './AppShell'
 import { DocumentsScreen } from '../features/documents/DocumentsScreen'
 import { RestaurantMenusScreen } from '../features/documents/RestaurantMenusScreen'
+import { RestaurantMenuProvider } from '../features/documents/RestaurantMenuProvider'
 import { HomeProfileGate } from '../features/profile/HomeProfileGate'
 import { MoreScreen } from '../features/profile/MoreScreen'
 import { TodayScreen } from '../features/today/TodayScreen'
@@ -154,25 +155,31 @@ export function App({
             />
             <Route
               path="today"
-              element={<TodayScreen now={now} tripData={tripData} />}
+              element={
+                <RestaurantMenuProvider>
+                  <TodayScreen now={now} tripData={tripData} />
+                </RestaurantMenuProvider>
+              }
             />
             <Route
               path="trip"
               element={
-                <TripScreen
-                  baselineTripData={baselineTripData}
-                  now={now}
-                  tripData={tripData}
-                  tripContent={tripContent}
-                  tripOverrideRepository={
-                    tripOverrideRepository ===
-                    unavailableTripOverrideRepository
-                      ? undefined
-                      : tripOverrideRepository
-                  }
-                  tripOverrides={tripOverrides}
-                  tripStateRepository={tripStateRepository}
-                />
+                <RestaurantMenuProvider>
+                  <TripScreen
+                    baselineTripData={baselineTripData}
+                    now={now}
+                    tripData={tripData}
+                    tripContent={tripContent}
+                    tripOverrideRepository={
+                      tripOverrideRepository ===
+                      unavailableTripOverrideRepository
+                        ? undefined
+                        : tripOverrideRepository
+                    }
+                    tripOverrides={tripOverrides}
+                    tripStateRepository={tripStateRepository}
+                  />
+                </RestaurantMenuProvider>
               }
             />
             <Route

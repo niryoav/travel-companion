@@ -1,4 +1,5 @@
 import { DocumentActionLink } from '../../documents/components/DocumentActionLink'
+import { MealMenuActions } from '../../documents/components/MealMenuActions'
 import type { TodayEventViewModel } from '../todayTypes'
 
 interface TimelineEventProps {
@@ -40,6 +41,11 @@ export function TimelineEvent({ event }: TimelineEventProps) {
             {event.mealLabels.join(' · ')}
           </p>
         ) : null}
+        <MealMenuActions
+          isMeal={event.mealLabels !== undefined}
+          mealType={event.kindLabel}
+          restaurantName={event.title}
+        />
         {event.meetingPointLabel ? <p>{event.meetingPointLabel}</p> : null}
         {event.transport ? <p>{event.transport}</p> : null}
         {event.operationalNotes?.map((note) => (
