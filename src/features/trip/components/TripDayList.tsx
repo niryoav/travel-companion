@@ -3,10 +3,17 @@ import { TripDayCard } from './TripDayCard'
 
 interface TripDayListProps {
   days: TripDayViewModel[]
+  onAddMoment?: (dayId: string) => void
+  onEditDinner?: (eventId: string) => void
   onEditDay?: (dayId: string) => void
 }
 
-export function TripDayList({ days, onEditDay }: TripDayListProps) {
+export function TripDayList({
+  days,
+  onAddMoment,
+  onEditDinner,
+  onEditDay,
+}: TripDayListProps) {
   return (
     <section aria-labelledby="trip-days-title">
       <div className="trip-list-heading">
@@ -16,7 +23,12 @@ export function TripDayList({ days, onEditDay }: TripDayListProps) {
       <ol className="trip-day-list">
         {days.map((day) => (
           <li key={day.id}>
-          <TripDayCard day={day} onEdit={onEditDay} />
+            <TripDayCard
+              day={day}
+              onAddMoment={onAddMoment}
+              onEditDinner={onEditDinner}
+              onEdit={onEditDay}
+            />
           </li>
         ))}
       </ol>

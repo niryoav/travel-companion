@@ -1404,6 +1404,37 @@ a:focus-visible {
   outline-offset: 2px;
 }
 
+.trip-add-moment-action,
+.trip-moment-type-action {
+  min-height: 2.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface-muted);
+  color: var(--champagne);
+  padding: 0.65rem 0.8rem;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.trip-add-moment-action {
+  width: fit-content;
+  justify-self: end;
+}
+
+.trip-dinner-edit-action {
+  min-height: 2.5rem;
+  margin-top: 0.25rem;
+}
+
+.trip-dinner-labels,
+.timeline-event-labels {
+  color: var(--champagne) !important;
+  font-size: 0.78rem !important;
+  font-weight: 750;
+}
+
 .trip-disclosure-label::after {
   margin-left: 0.45rem;
   content: "⌄";
@@ -1783,6 +1814,36 @@ a:focus-visible {
 .trip-edit-field-error {
   color: var(--attention);
   font-weight: 750;
+}
+
+.dinner-derived-location {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+}
+
+.dinner-derived-location span {
+  color: var(--text);
+  font-weight: 750;
+}
+
+.dinner-remove-action {
+  justify-self: start;
+  color: var(--attention);
+}
+
+.trip-moment-type-sheet {
+  max-height: min(22rem, 70dvh);
+}
+
+.trip-moment-type-action {
+  width: 100%;
+  color: var(--text);
+  text-align: left;
 }
 
 .trip-edit-field-warning {

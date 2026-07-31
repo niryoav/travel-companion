@@ -184,6 +184,92 @@ ashore is derived in memory from the planned outbound tender and crossing
 duration. This device-local layer performs no network request and introduces
 no account, collaboration, or synchronization behavior. See ADR-003.
 
+## User-created Dinner moments
+
+All itinerary mutations originate from Trip. Yoav can add a Dinner from an
+opened Trip day and can edit or remove only user-created Dinner events. Isabel
+is read-only. Today has no mutation controls: it derives its timeline from the
+same effective event collection as Trip.
+
+The operational override bundle keeps changes to canonical events in
+`eventOverrides` and stores new Dinner events separately in `addedEvents`.
+`applyTripOverrides` combines canonical events, canonical overrides, and added
+events into one deterministic effective timeline. Removing a user-created
+Dinner deletes it from `addedEvents`; canonical events are not deleted.
+User-created IDs are generated locally with `crypto.randomUUID()`, use the
+`user-event-` prefix, and remain stable through reload and synchronization.
+
+The Oceania Marina trip configuration owns one fixed nine-venue Dinner catalog.
+An added event stores the catalog restaurant ID, day and start time, and
+optional reservation number and notes. Restaurant name, deck, reservation
+label, and extra-fee label are derived from the catalog. Location is not
+editable. Dinner has no artificial end time. Party size is understood to be two
+for this product workflow but is not stored, displayed, or editable because the
+event model does not require it.
+
+`addedEvents` remains part of the existing complete operational JSON snapshot
+and therefore uses the existing local-first persistence, automatic upload,
+follower refresh, retry, and Saved-to-Synced feedback. State written before
+`addedEvents` existed loads it as an empty collection without changing existing
+day or event overrides.
+
+This increment deliberately adds no dining subsystem, attachment storage,
+notifications, reminders, calendar integration, new backend, authentication,
+queue, conflict interface, conditional-write mechanism, or general-purpose
+event editor.
+
+### Dinner real-environment acceptance
+
+This vertical slice must be checked on the installed PWA and matching
+production logs before production behavior is claimed as verified.
+
+Yoav:
+
+1. Open Trip.
+2. Open a cruise day.
+3. Tap `+ Add moment`.
+4. Select Dinner.
+5. Select Terrace Café.
+6. Confirm Deck 12 appears automatically.
+7. Confirm no reservation-number field appears.
+8. Enter a time and optional note.
+9. Save.
+10. Confirm the Dinner appears immediately in the correct chronological
+    position.
+11. Confirm temporary Saved changes to Synced.
+12. Close and reopen the PWA.
+13. Confirm the Dinner remains.
+14. Edit it and change the restaurant to Toscana.
+15. Confirm Deck 14 appears and the optional reservation-number field becomes
+    visible.
+16. Add a fictional reservation number.
+17. Save and confirm the event updates.
+18. Change the time and confirm it re-sorts.
+19. Remove the Dinner and confirm it disappears.
+
+Isabel in Chrome:
+
+1. Add and sync a Dinner as Yoav.
+2. Open or resume Chrome as Isabel.
+3. Confirm the Dinner appears automatically.
+4. Confirm she cannot edit or remove it.
+5. Confirm she sees no `+ Add moment` action.
+
+Today:
+
+1. Use the existing review tools to make the Dinner date active and confirm
+   the Dinner appears in Today.
+2. Confirm Today contains no modification controls.
+
+Offline:
+
+1. Go offline as Yoav.
+2. Add a Dinner.
+3. Confirm it appears locally and remains after reopening.
+4. Restore connectivity.
+5. Confirm it synchronizes automatically in the corresponding production
+   request sequence and logs.
+
 ## Shared operational snapshot foundation
 
 The approved next storage boundary will share only the existing operational

@@ -25,6 +25,7 @@ import {
   scheduledDurationMinutes,
   selectEstimatedEventTiming,
 } from '../../../domain/trip/operationalTiming'
+import { dinnerEventPresentation } from '../../../domain/trip/dinnerEvents'
 import {
   emptyTripOverrideBundle,
   hasDayOperationalChanges,
@@ -138,6 +139,7 @@ function eventViewModel(
   syncState: LocalTripOverrideSyncState,
   portAccess?: PortAccess,
 ): TripEventViewModel {
+  const dinner = dinnerEventPresentation(data, event)
   const location = data.locations.find(({ id }) => id === event.locationId)
   const transport =
     'transportId' in event
@@ -213,8 +215,8 @@ function eventViewModel(
 
   return {
     id: event.id,
-    kindLabel: eventKindLabel(event),
-    title: event.title,
+    kindLabel: dinner ? 'Dinner' : eventKindLabel(event),
+    title: dinner?.title ?? event.title,
     time:
       event.startsAt
         ? formatLocalTime(event.startsAt, timeZone.timeZone)
@@ -228,7 +230,7 @@ function eventViewModel(
           )
         : undefined,
     endsAt: event.endsAt,
-    location: location?.name,
+    location: dinner?.location ?? location?.name,
     transport: transport?.label,
     organizer: event.organizer,
     bookingTypeLabel:
@@ -317,6 +319,9 @@ function eventViewModel(
           overrides.eventOverrides[event.id].updatedAt,
         )
       : undefined,
+    dinnerLabels: dinner?.labels,
+    isUserCreatedDinner:
+      event.userCreated === true && Boolean(dinner),
     experience: guide
       ? {
           summary: guide.summary,

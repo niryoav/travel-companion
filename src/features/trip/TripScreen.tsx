@@ -13,6 +13,8 @@ import { reviewStateFromSearch } from './fixtures/reviewStateFromSearch'
 import { selectTripViewModel } from './selectors/selectTripViewModel'
 import { TripView } from './TripView'
 import { TripEditSheet } from './components/TripEditSheet'
+import { DinnerEventSheet } from './components/DinnerEventSheet'
+import { TripMomentTypeSheet } from './components/TripMomentTypeSheet'
 import { useTripRouteActivation } from './useTripRouteActivation'
 
 interface TripScreenProps {
@@ -42,6 +44,11 @@ export function TripScreen({
   const baseline = baselineTripData ?? tripData
   const { search } = useLocation()
   const [editingDayId, setEditingDayId] = useState<string | null>(null)
+  const [addingMomentDayId, setAddingMomentDayId] =
+    useState<string | null>(null)
+  const [dinnerDayId, setDinnerDayId] = useState<string | null>(null)
+  const [editingDinnerId, setEditingDinnerId] =
+    useState<string | null>(null)
   const [savedConfirmationVisible, setSavedConfirmationVisible] =
     useState(false)
   const [awaitingSyncConfirmation, setAwaitingSyncConfirmation] =
@@ -60,6 +67,9 @@ export function TripScreen({
         tripOverrides,
         syncMetadata?.syncState,
       )
+  const dinnerDay = dinnerDayId
+    ? tripData.days.find(({ id }) => id === dinnerDayId)
+    : undefined
   const syncConfirmation =
     awaitingSyncConfirmation &&
     syncMetadata?.syncState === 'synced'
@@ -99,6 +109,22 @@ export function TripScreen({
         </p>
       ) : null}
       <TripView
+        onAddMoment={
+          !reviewState && canEdit && tripOverrideRepository
+            ? setAddingMomentDayId
+            : undefined
+        }
+        onEditDinner={
+          !reviewState && canEdit && tripOverrideRepository
+            ? (eventId) => {
+                const event = tripOverrides?.addedEvents?.[eventId]
+                if (event) {
+                  setDinnerDayId(event.dayId)
+                  setEditingDinnerId(event.id)
+                }
+              }
+            : undefined
+        }
         onEditDay={
           !reviewState && canEdit && tripOverrideRepository
             ? (dayId) => {
@@ -121,6 +147,36 @@ export function TripScreen({
           }}
           overrides={tripOverrides}
           repository={tripOverrideRepository}
+        />
+      ) : null}
+      {addingMomentDayId ? (
+        <TripMomentTypeSheet
+          onClose={() => setAddingMomentDayId(null)}
+          onSelectDinner={() => {
+            setDinnerDayId(addingMomentDayId)
+            setEditingDinnerId(null)
+            setAddingMomentDayId(null)
+          }}
+        />
+      ) : null}
+      {dinnerDay && tripOverrideRepository ? (
+        <DinnerEventSheet
+          day={dinnerDay}
+          event={
+            editingDinnerId
+              ? tripOverrides?.addedEvents?.[editingDinnerId]
+              : undefined
+          }
+          onClose={() => {
+            setDinnerDayId(null)
+            setEditingDinnerId(null)
+          }}
+          onSaved={() => {
+            setSavedConfirmationVisible(true)
+            setAwaitingSyncConfirmation(true)
+          }}
+          repository={tripOverrideRepository}
+          restaurants={tripData.dinnerRestaurants ?? []}
         />
       ) : null}
     </>

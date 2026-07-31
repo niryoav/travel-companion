@@ -4,10 +4,17 @@ import { TripDayDetails } from './TripDayDetails'
 
 interface TripDayCardProps {
   day: TripDayViewModel
+  onAddMoment?: (dayId: string) => void
+  onEditDinner?: (eventId: string) => void
   onEdit?: (dayId: string) => void
 }
 
-export function TripDayCard({ day, onEdit }: TripDayCardProps) {
+export function TripDayCard({
+  day,
+  onAddMoment,
+  onEditDinner,
+  onEdit,
+}: TripDayCardProps) {
   const additionalLabel =
     day.additionalEventCount === 1
       ? '1 more event'
@@ -125,7 +132,11 @@ export function TripDayCard({ day, onEdit }: TripDayCardProps) {
         </span>
       </summary>
 
-      <TripDayDetails day={day} />
+      <TripDayDetails
+        day={day}
+        onAddMoment={onAddMoment}
+        onEditDinner={onEditDinner}
+      />
     </details>
   )
 }

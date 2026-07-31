@@ -1,4 +1,5 @@
 import type {
+  AddedDinnerEventInput,
   DayOperationalOverrideInput,
   EventOperationalOverrideInput,
   TripOverrideBundle,
@@ -98,6 +99,25 @@ implements TripOverrideRepository {
 
   resetDay(dayId: TripDayId, eventIds: EventId[]): void {
     this.localRepository.resetDay(dayId, eventIds)
+    void this.synchronizeForCurrentRole()
+  }
+
+  addDinnerEvent(input: AddedDinnerEventInput): EventId {
+    const eventId = this.localRepository.addDinnerEvent(input)
+    void this.synchronizeForCurrentRole()
+    return eventId
+  }
+
+  updateDinnerEvent(
+    eventId: EventId,
+    input: AddedDinnerEventInput,
+  ): void {
+    this.localRepository.updateDinnerEvent(eventId, input)
+    void this.synchronizeForCurrentRole()
+  }
+
+  removeDinnerEvent(eventId: EventId): void {
+    this.localRepository.removeDinnerEvent(eventId)
     void this.synchronizeForCurrentRole()
   }
 

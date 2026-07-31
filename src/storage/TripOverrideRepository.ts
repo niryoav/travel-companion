@@ -1,4 +1,5 @@
 import type {
+  AddedDinnerEventInput,
   DayOperationalOverrideInput,
   EventOperationalOverrideInput,
   TripOverrideBundle,
@@ -19,6 +20,12 @@ export interface TripOverrideRepository {
     dayId: TripDayId,
     eventIds: EventId[],
   ): void
+  addDinnerEvent(input: AddedDinnerEventInput): EventId
+  updateDinnerEvent(
+    eventId: EventId,
+    input: AddedDinnerEventInput,
+  ): void
+  removeDinnerEvent(eventId: EventId): void
   getSyncMetadata?(): LocalTripOverrideMetadata
   synchronizeForCurrentRole?(): Promise<void>
   travelerChanged?(): void
@@ -29,6 +36,7 @@ const unavailableSnapshot: TripOverrideBundle = {
   tripId: '',
   dayOverrides: {},
   eventOverrides: {},
+  addedEvents: {},
 }
 
 export const unavailableTripOverrideRepository: TripOverrideRepository = {
@@ -37,4 +45,7 @@ export const unavailableTripOverrideRepository: TripOverrideRepository = {
   saveDayEdits: () => {},
   resetEvent: () => {},
   resetDay: () => {},
+  addDinnerEvent: () => '',
+  updateDinnerEvent: () => {},
+  removeDinnerEvent: () => {},
 }

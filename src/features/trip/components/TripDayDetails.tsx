@@ -10,6 +10,8 @@ import { DestinationImage } from './DestinationImage'
 
 interface TripDayDetailsProps {
   day: TripDayViewModel
+  onAddMoment?: (dayId: string) => void
+  onEditDinner?: (eventId: string) => void
 }
 
 function Sources({
@@ -86,7 +88,13 @@ function DestinationContent({
   )
 }
 
-function TripEventDetail({ event }: { event: TripEventViewModel }) {
+function TripEventDetail({
+  event,
+  onEditDinner,
+}: {
+  event: TripEventViewModel
+  onEditDinner?: (eventId: string) => void
+}) {
   return (
     <li className="trip-event">
       <div className="trip-event-time">
@@ -191,6 +199,20 @@ function TripEventDetail({ event }: { event: TripEventViewModel }) {
           </p>
         ) : null}
         {event.location ? <p>{event.location}</p> : null}
+        {event.dinnerLabels?.length ? (
+          <p className="trip-dinner-labels">
+            {event.dinnerLabels.join(' · ')}
+          </p>
+        ) : null}
+        {event.isUserCreatedDinner && onEditDinner ? (
+          <button
+            className="trip-edit-action trip-dinner-edit-action"
+            type="button"
+            onClick={() => onEditDinner(event.id)}
+          >
+            Edit dinner
+          </button>
+        ) : null}
         {event.transport ? <p>{event.transport}</p> : null}
         {event.experience ? (
           <details className="trip-enrichment trip-experience">
@@ -229,7 +251,11 @@ function TripEventDetail({ event }: { event: TripEventViewModel }) {
   )
 }
 
-export function TripDayDetails({ day }: TripDayDetailsProps) {
+export function TripDayDetails({
+  day,
+  onAddMoment,
+  onEditDinner,
+}: TripDayDetailsProps) {
   const hasPortTimes =
     day.port?.arrivalTime ||
     day.port?.departureTime ||
@@ -237,6 +263,15 @@ export function TripDayDetails({ day }: TripDayDetailsProps) {
 
   return (
     <div className="trip-day-details">
+      {onAddMoment ? (
+        <button
+          className="trip-add-moment-action"
+          type="button"
+          onClick={() => onAddMoment(day.id)}
+        >
+          + Add moment
+        </button>
+      ) : null}
       {day.port ? (
         <section aria-labelledby={`${day.id}-port-title`}>
           <p className="trip-card-label">Port context</p>
@@ -416,7 +451,11 @@ export function TripDayDetails({ day }: TripDayDetailsProps) {
           <h4 id={`${day.id}-events-title`}>Events</h4>
           <ol className="trip-event-list">
             {day.events.map((event) => (
-              <TripEventDetail key={event.id} event={event} />
+              <TripEventDetail
+                key={event.id}
+                event={event}
+                onEditDinner={onEditDinner}
+              />
             ))}
           </ol>
         </section>

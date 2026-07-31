@@ -45,6 +45,7 @@ export interface TodayEventViewModel {
   operationalStatusLabel?: string
   operationalNotes?: string[]
   localOperationalNote?: string
+  dinnerLabels?: string[]
   isCancelled?: boolean
   leaveBy?: TodayLeaveByViewModel
   hasRelatedDocuments: boolean

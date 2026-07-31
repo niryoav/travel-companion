@@ -18,6 +18,7 @@ import {
 } from '../storage/LocalTripOverrideRepository'
 import type { TripSnapshotCache } from '../storage/TripSnapshotCache'
 import { tripFixture } from '../test/fixtures/tripFixture'
+import { oceaniaMarinaDinnerRestaurants } from '../trips/oceania-marina-2026/dinnerRestaurants'
 import { SyncedTripOverrideRepository } from './SyncedTripOverrideRepository'
 
 function bundle(note?: string): TripOverrideBundle {
@@ -62,6 +63,7 @@ function deferred<T>() {
 
 const productionTrip: TripData = {
   ...tripFixture,
+  dinnerRestaurants: [...oceaniaMarinaDinnerRestaurants],
   trip: {
     ...tripFixture.trip,
     id: 'trip-oceania-marina-2026',
@@ -211,6 +213,63 @@ describe('SyncedTripOverrideRepository role-based sync', () => {
 
     upload.resolve(snapshot(2, repository.getSnapshot()))
     await repository.synchronizeForCurrentRole()
+  })
+
+  it('uploads a user-created Dinner in the existing complete snapshot', async () => {
+    const putTripSnapshot = vi.fn(
+      async (
+        _tripId: string,
+        baseRevision: number,
+        operationalOverrides: TripOverrideBundle,
+      ) => productionSnapshot(baseRevision + 1, operationalOverrides),
+    )
+    const initial = productionBundle('Saved on device')
+    const local = new LocalTripOverrideRepository(
+      window.localStorage,
+      productionTrip,
+      () => new Date('2030-05-10T13:00:00Z'),
+      initial,
+      {
+        baseRevision: 1,
+        lastModified: '2030-05-10T12:00:00Z',
+        syncState: 'synced',
+      },
+      () => 'dinner-sync',
+    )
+    const repository = new SyncedTripOverrideRepository(
+      local,
+      local.getSnapshot(),
+      {
+        apiClient: {
+          getTripSnapshot: vi.fn(async () => null),
+          putTripSnapshot,
+        },
+        cache: {
+          getAcceptedSnapshot: vi.fn(async () => null),
+          saveAcceptedSnapshot: vi.fn(async () => {}),
+          getPendingSnapshot: vi.fn(async () => null),
+          savePendingSnapshot: vi.fn(async () => {}),
+          deletePendingSnapshot: vi.fn(async () => {}),
+        },
+        getTravelerId: () => 'traveler-yoav',
+        tripId: productionTrip.trip.id,
+      },
+    )
+
+    repository.addDinnerEvent({
+      dayId: 'day-2030-05-11',
+      restaurantId: 'terrace-cafe',
+      startsAt: '2030-05-11T17:30:00Z',
+    })
+    await repository.synchronizeForCurrentRole()
+
+    expect(putTripSnapshot).toHaveBeenCalledOnce()
+    expect(putTripSnapshot.mock.calls[0]?.[2].addedEvents).toEqual({
+      'user-event-dinner-sync': expect.objectContaining({
+        restaurantId: 'terrace-cafe',
+      }),
+    })
+    expect(local.getMetadata().syncState).toBe('synced')
   })
 
   it('persists the exact accepted revision and changes status to synced', async () => {
@@ -616,6 +675,63 @@ describe('SyncedTripOverrideRepository role-based sync', () => {
       syncState: 'synced',
     })
     expect(cache.saveAcceptedSnapshot).toHaveBeenCalledWith(remote)
+  })
+
+  it('downloads a shared Dinner for Isabel without uploading', async () => {
+    const remoteOverrides = emptyTripOverrideBundle(
+      productionTrip.trip.id,
+    )
+    remoteOverrides.addedEvents = {
+      'user-event-shared-dinner': {
+        id: 'user-event-shared-dinner',
+        dayId: 'day-2030-05-11',
+        kind: 'DINNER',
+        restaurantId: 'la-reserve',
+        startsAt: '2030-05-11T17:30:00Z',
+        timeZone: 'Europe/Brussels',
+        updatedAt: '2030-05-10T12:00:00Z',
+      },
+    }
+    const putTripSnapshot = vi.fn()
+    const local = new LocalTripOverrideRepository(
+      window.localStorage,
+      productionTrip,
+      undefined,
+      emptyTripOverrideBundle(productionTrip.trip.id),
+      {
+        baseRevision: 1,
+        lastModified: '2030-05-10T11:00:00Z',
+        syncState: 'synced',
+      },
+    )
+    const repository = new SyncedTripOverrideRepository(
+      local,
+      local.getSnapshot(),
+      {
+        apiClient: {
+          getTripSnapshot: vi.fn(async () => ({
+            snapshot: productionSnapshot(2, remoteOverrides),
+          })),
+          putTripSnapshot,
+        },
+        cache: {
+          getAcceptedSnapshot: vi.fn(async () => null),
+          saveAcceptedSnapshot: vi.fn(async () => {}),
+          getPendingSnapshot: vi.fn(async () => null),
+          savePendingSnapshot: vi.fn(async () => {}),
+          deletePendingSnapshot: vi.fn(async () => {}),
+        },
+        getTravelerId: () => 'traveler-isabel',
+        tripId: productionTrip.trip.id,
+      },
+    )
+
+    await repository.synchronizeForCurrentRole()
+
+    expect(repository.getSnapshot().addedEvents).toHaveProperty(
+      'user-event-shared-dinner',
+    )
+    expect(putTripSnapshot).not.toHaveBeenCalled()
   })
 
   it('keeps Isabel cached data while offline', async () => {
