@@ -149,18 +149,19 @@ describe('bootstrapTripSync role-based startup', () => {
   })
 
   it('reopens with a locally Saved Dinner and uploads it automatically when triggered', async () => {
-    const operationalOverrides = emptyTripOverrideBundle(
-      oceaniaMarina2026TripData.trip.id,
-    )
-    operationalOverrides.addedEvents = {
-      'user-event-startup-dinner': {
-        id: 'user-event-startup-dinner',
-        dayId: 'day-2026-08-25',
-        kind: 'DINNER',
-        restaurantId: 'terrace-cafe',
-        startsAt: '2026-08-25T18:30:00Z',
-        timeZone: 'Atlantic/Reykjavik',
-        updatedAt: '2026-08-20T12:00:00Z',
+    const operationalOverrides = {
+      ...emptyTripOverrideBundle(oceaniaMarina2026TripData.trip.id),
+      addedEvents: {
+        'user-event-startup-dinner': {
+          id: 'user-event-startup-dinner',
+          dayId: 'day-2026-08-25',
+          kind: 'DINNER',
+          restaurantId: 'terrace-cafe',
+          startsAt: '2026-08-25T18:30:00Z',
+          timeZone: 'Atlantic/Reykjavik',
+          reservationNumber: 'FICTIONAL-SAVED-7',
+          updatedAt: '2026-08-20T12:00:00Z',
+        },
       },
     }
     window.localStorage.setItem(
@@ -214,7 +215,10 @@ describe('bootstrapTripSync role-based startup', () => {
       expect.objectContaining({
         addedEvents: expect.objectContaining({
           'user-event-startup-dinner': expect.objectContaining({
+            kind: 'MEAL',
+            mealType: 'DINNER',
             restaurantId: 'terrace-cafe',
+            notes: 'Reservation: FICTIONAL-SAVED-7',
           }),
         }),
       }),

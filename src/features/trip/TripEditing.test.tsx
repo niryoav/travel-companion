@@ -238,9 +238,11 @@ describe('Trip operational editing', () => {
       saveDayEdits: local.saveDayEdits.bind(local),
       resetEvent: local.resetEvent.bind(local),
       resetDay: local.resetDay.bind(local),
-      addDinnerEvent: local.addDinnerEvent.bind(local),
-      updateDinnerEvent: local.updateDinnerEvent.bind(local),
-      removeDinnerEvent: local.removeDinnerEvent.bind(local),
+      addMealEvent: local.addMealEvent.bind(local),
+      updateMealEvent: local.updateMealEvent.bind(local),
+      addHighTeaEvent: local.addHighTeaEvent.bind(local),
+      updateHighTeaEvent: local.updateHighTeaEvent.bind(local),
+      removeAddedEvent: local.removeAddedEvent.bind(local),
       getSyncMetadata: () => ({
         baseRevision: null,
         lastModified: '2030-05-10T12:00:00Z',
@@ -425,9 +427,11 @@ describe('Trip operational editing', () => {
       saveDayEdits,
       resetEvent: local.resetEvent.bind(local),
       resetDay: local.resetDay.bind(local),
-      addDinnerEvent: local.addDinnerEvent.bind(local),
-      updateDinnerEvent: local.updateDinnerEvent.bind(local),
-      removeDinnerEvent: local.removeDinnerEvent.bind(local),
+      addMealEvent: local.addMealEvent.bind(local),
+      updateMealEvent: local.updateMealEvent.bind(local),
+      addHighTeaEvent: local.addHighTeaEvent.bind(local),
+      updateHighTeaEvent: local.updateHighTeaEvent.bind(local),
+      removeAddedEvent: local.removeAddedEvent.bind(local),
     }
     render(
       <TripEditingHarness

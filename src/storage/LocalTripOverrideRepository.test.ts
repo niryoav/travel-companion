@@ -133,8 +133,9 @@ describe('LocalTripOverrideRepository', () => {
       undefined,
       () => 'dinner-fixture',
     )
-    const eventId = first.addDinnerEvent({
+    const eventId = first.addMealEvent({
       dayId: 'day-2026-08-25',
+      mealType: 'DINNER',
       restaurantId: 'terrace-cafe',
       startsAt: '2026-08-25T18:30:00Z',
       notes: 'Window table if available.',
@@ -153,25 +154,139 @@ describe('LocalTripOverrideRepository', () => {
       notes: 'Window table if available.',
     })
 
-    restarted.updateDinnerEvent(eventId, {
+    restarted.updateMealEvent(eventId, {
       dayId: 'day-2026-08-25',
+      mealType: 'DINNER',
       restaurantId: 'toscana',
       startsAt: '2026-08-25T19:30:00Z',
-      reservationNumber: 'TEST-42',
+      notes: 'Fictional reservation TEST-42.',
     })
     expect(restarted.getSnapshot().addedEvents?.[eventId]).toMatchObject({
       restaurantId: 'toscana',
-      reservationNumber: 'TEST-42',
+      notes: 'Fictional reservation TEST-42.',
       startsAt: '2026-08-25T19:30:00Z',
     })
 
-    restarted.removeDinnerEvent(eventId)
+    restarted.removeAddedEvent(eventId)
     expect(restarted.getSnapshot().addedEvents).toEqual({})
     const reopened = new LocalTripOverrideRepository(
       window.localStorage,
       oceaniaMarina2026TripData,
     )
     expect(reopened.getSnapshot().addedEvents).toEqual({})
+  })
+
+  it('enforces meal service windows at the repository boundary', () => {
+    const repository = new LocalTripOverrideRepository(
+      window.localStorage,
+      oceaniaMarina2026TripData,
+    )
+
+    expect(() =>
+      repository.addMealEvent({
+        dayId: 'day-2026-08-25',
+        mealType: 'DINNER',
+        restaurantId: 'toscana',
+        startsAt: '2026-08-25T18:15:00Z',
+      }),
+    ).toThrow('Meal day, restaurant, or time is unavailable')
+  })
+
+  it('preserves added moments when canonical day overrides are saved', () => {
+    const repository = new LocalTripOverrideRepository(
+      window.localStorage,
+      oceaniaMarina2026TripData,
+      undefined,
+      undefined,
+      undefined,
+      () => 'preserved-meal',
+    )
+    const eventId = repository.addMealEvent({
+      dayId: 'day-2026-08-25',
+      mealType: 'DINNER',
+      restaurantId: 'terrace-cafe',
+      startsAt: '2026-08-25T18:30:00Z',
+    })
+
+    repository.saveDayEdits(
+      'day-2026-08-25',
+      { note: 'Operational note.' },
+      {},
+    )
+
+    expect(repository.getSnapshot().addedEvents?.[eventId]).toBeDefined()
+    expect(
+      repository.getSnapshot().dayOverrides['day-2026-08-25']?.note,
+    ).toBe('Operational note.')
+  })
+
+  it('creates High Tea at 16:00 and prevents a duplicate on one day', () => {
+    const repository = new LocalTripOverrideRepository(
+      window.localStorage,
+      oceaniaMarina2026TripData,
+      undefined,
+      undefined,
+      undefined,
+      vi.fn()
+        .mockReturnValueOnce('high-tea-one')
+        .mockReturnValueOnce('high-tea-two'),
+    )
+    const eventId = repository.addHighTeaEvent({
+      dayId: 'day-2026-08-25',
+      notes: 'Meet by the windows.',
+    })
+
+    expect(repository.getSnapshot().addedEvents?.[eventId]).toMatchObject({
+      kind: 'HIGH_TEA',
+      startsAt: '2026-08-25T16:00:00.000Z',
+      timeZone: 'Atlantic/Reykjavik',
+      notes: 'Meet by the windows.',
+    })
+    expect(() =>
+      repository.addHighTeaEvent({ dayId: 'day-2026-08-25' }),
+    ).toThrow('High Tea already exists for this day')
+  })
+
+  it('rejects onboard moments before embarkation and non-Breakfast final-day moments', () => {
+    const repository = new LocalTripOverrideRepository(
+      window.localStorage,
+      oceaniaMarina2026TripData,
+      undefined,
+      undefined,
+      undefined,
+      () => 'day-boundary',
+    )
+
+    expect(() =>
+      repository.addMealEvent({
+        dayId: 'day-2026-08-22',
+        mealType: 'BREAKFAST',
+        restaurantId: 'waves-grill',
+        startsAt: '2026-08-22T05:00:00Z',
+      }),
+    ).toThrow('Meal day, restaurant, or time is unavailable')
+    expect(() =>
+      repository.addHighTeaEvent({ dayId: 'day-2026-08-22' }),
+    ).toThrow('High Tea is unavailable for this day')
+
+    expect(() =>
+      repository.addMealEvent({
+        dayId: 'day-2026-09-04',
+        mealType: 'LUNCH',
+        restaurantId: 'waves-grill',
+        startsAt: '2026-09-04T10:30:00Z',
+      }),
+    ).toThrow('Meal day, restaurant, or time is unavailable')
+    expect(() =>
+      repository.addHighTeaEvent({ dayId: 'day-2026-09-04' }),
+    ).toThrow('High Tea is unavailable for this day')
+
+    expect(repository.addMealEvent({
+      dayId: 'day-2026-09-04',
+      mealType: 'BREAKFAST',
+      restaurantId: 'waves-grill',
+      startsAt: '2026-09-04T06:00:00Z',
+    })).toBe('user-event-day-boundary')
   })
 
   it('reads a valid local override bundle for later migration', () => {

@@ -15,7 +15,7 @@ import {
   type PortOperationalStatus,
   type ReturnBufferResult,
 } from '../../../domain/trip/operationalTiming'
-import { dinnerEventPresentation } from '../../../domain/trip/dinnerEvents'
+import { mealEventPresentation } from '../../../domain/trip/mealEvents'
 import {
   formatLocalTime,
 } from '../../../domain/trip/tripTime'
@@ -247,7 +247,7 @@ function eventViewModel(
   state: TodayEventState,
   portAccess?: PortAccess,
 ): TodayEventViewModel {
-  const dinner = dinnerEventPresentation(data, event)
+  const meal = mealEventPresentation(data, event)
   const location = data.locations.find(({ id }) => id === event.locationId)
   const transport =
     'transportId' in event
@@ -263,9 +263,9 @@ function eventViewModel(
 
   return {
     id: event.id,
-    kindLabel: dinner ? 'Dinner' : eventKindLabel(event),
+    kindLabel: meal?.kindLabel ?? eventKindLabel(event),
     publicCode: event.publicCode,
-    title: dinner?.title ?? event.title,
+    title: meal?.title ?? event.title,
     state,
     stateLabel:
       event.operationalStatus === 'CANCELLED'
@@ -284,7 +284,7 @@ function eventViewModel(
           )
         : undefined,
     endsAt: event.endsAt,
-    location: dinner?.location ?? location?.name,
+    location: meal?.location ?? location?.name,
     transport: transport?.label,
     timingLabel: !event.startsAt
       ? event.operationalStatus === 'TO_BE_CONFIRMED' ||
@@ -330,7 +330,7 @@ function eventViewModel(
           : undefined,
     operationalNotes: event.operationalNotes,
     localOperationalNote: event.localOperationalNote,
-    dinnerLabels: dinner?.labels,
+    mealLabels: meal?.labels,
     isCancelled: event.operationalStatus === 'CANCELLED',
     leaveBy,
     hasRelatedDocuments: relatedDocuments.length > 0,

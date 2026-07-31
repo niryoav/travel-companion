@@ -9,9 +9,10 @@ import type {
 import { DestinationImage } from './DestinationImage'
 
 interface TripDayDetailsProps {
+  canAddMoment?: (dayId: string) => boolean
   day: TripDayViewModel
   onAddMoment?: (dayId: string) => void
-  onEditDinner?: (eventId: string) => void
+  onEditMoment?: (eventId: string) => void
 }
 
 function Sources({
@@ -90,10 +91,10 @@ function DestinationContent({
 
 function TripEventDetail({
   event,
-  onEditDinner,
+  onEditMoment,
 }: {
   event: TripEventViewModel
-  onEditDinner?: (eventId: string) => void
+  onEditMoment?: (eventId: string) => void
 }) {
   return (
     <li className="trip-event">
@@ -199,18 +200,18 @@ function TripEventDetail({
           </p>
         ) : null}
         {event.location ? <p>{event.location}</p> : null}
-        {event.dinnerLabels?.length ? (
+        {event.mealLabels?.length ? (
           <p className="trip-dinner-labels">
-            {event.dinnerLabels.join(' · ')}
+            {event.mealLabels.join(' · ')}
           </p>
         ) : null}
-        {event.isUserCreatedDinner && onEditDinner ? (
+        {event.isUserCreatedMoment && onEditMoment ? (
           <button
             className="trip-edit-action trip-dinner-edit-action"
             type="button"
-            onClick={() => onEditDinner(event.id)}
+            onClick={() => onEditMoment(event.id)}
           >
-            Edit dinner
+            Edit moment
           </button>
         ) : null}
         {event.transport ? <p>{event.transport}</p> : null}
@@ -252,9 +253,10 @@ function TripEventDetail({
 }
 
 export function TripDayDetails({
+  canAddMoment,
   day,
   onAddMoment,
-  onEditDinner,
+  onEditMoment,
 }: TripDayDetailsProps) {
   const hasPortTimes =
     day.port?.arrivalTime ||
@@ -263,7 +265,7 @@ export function TripDayDetails({
 
   return (
     <div className="trip-day-details">
-      {onAddMoment ? (
+      {onAddMoment && (canAddMoment?.(day.id) ?? true) ? (
         <button
           className="trip-add-moment-action"
           type="button"
@@ -454,7 +456,7 @@ export function TripDayDetails({
               <TripEventDetail
                 key={event.id}
                 event={event}
-                onEditDinner={onEditDinner}
+                onEditMoment={onEditMoment}
               />
             ))}
           </ol>

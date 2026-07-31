@@ -184,88 +184,132 @@ ashore is derived in memory from the planned outbound tender and crossing
 duration. This device-local layer performs no network request and introduces
 no account, collaboration, or synchronization behavior. See ADR-003.
 
-## User-created Dinner moments
+## User-created meal and High Tea moments
 
-All itinerary mutations originate from Trip. Yoav can add a Dinner from an
-opened Trip day and can edit or remove only user-created Dinner events. Isabel
-is read-only. Today has no mutation controls: it derives its timeline from the
-same effective event collection as Trip.
+All itinerary mutations originate from an opened Trip day. Yoav can add, edit,
+and remove Breakfast, Lunch, Dinner, and High Tea. Isabel is read-only. Today
+has no mutation controls and derives its timeline from the same effective event
+collection as Trip.
 
-The operational override bundle keeps changes to canonical events in
-`eventOverrides` and stores new Dinner events separately in `addedEvents`.
-`applyTripOverrides` combines canonical events, canonical overrides, and added
-events into one deterministic effective timeline. Removing a user-created
-Dinner deletes it from `addedEvents`; canonical events are not deleted.
-User-created IDs are generated locally with `crypto.randomUUID()`, use the
-`user-event-` prefix, and remain stable through reload and synchronization.
+The operational override bundle keeps canonical changes in `eventOverrides`
+and user-created moments in `addedEvents`. Breakfast, Lunch, and Dinner share
+one `MEAL` record with a meal type, restaurant ID, start time, timezone,
+optional Notes, and the existing update timestamp. High Tea uses a small
+separate added-event kind because its time and location are fixed. Removing a
+user-created moment deletes only that `addedEvents` entry; canonical events
+cannot be deleted. Stable `user-event-` IDs continue through reload and sync.
 
-The Oceania Marina trip configuration owns one fixed nine-venue Dinner catalog.
-An added event stores the catalog restaurant ID, day and start time, and
-optional reservation number and notes. Restaurant name, deck, reservation
-label, and extra-fee label are derived from the catalog. Location is not
-editable. Dinner has no artificial end time. Party size is understood to be two
-for this product workflow but is not stored, displayed, or editable because the
-event model does not require it.
+The Oceania Marina trip configuration owns one canonical nine-restaurant meal
+catalog: The Grand Dining Room, Terrace Café, Waves Grill, Aquamar Kitchen,
+Polo Grill, Toscana, Jacques, Red Ginger, and Privée. Baristas and La Reserve
+are not catalog venues. Structured service windows are filtered with the
+existing `TripDay.kind`: `PORT_DAY` maps to port service and `SEA_DAY` maps to
+sea service. The active cruise's canonical `embarkationDate` and
+`disembarkationDate` bound onboard planning: days before embarkation expose no
+onboard moments, while the disembarkation date exposes Breakfast only. The
+final day is not reclassified as a port or sea day.
 
-`addedEvents` remains part of the existing complete operational JSON snapshot
-and therefore uses the existing local-first persistence, automatic upload,
-follower refresh, retry, and Saved-to-Synced feedback. State written before
-`addedEvents` existed loads it as an empty collection without changing existing
-day or event overrides.
+On disembarkation morning, only breakfast service windows without a port/sea
+condition are used: The Grand Dining Room 08:00–09:30, Terrace Café
+07:30–10:00, and Waves Grill 07:00–11:00. Aquamar Kitchen is excluded because
+its canonical breakfast hours differ by port and sea day and the final travel
+day is neither; no unsupported hours are guessed. Lunch, Dinner, and High Tea
+are unavailable on the final day.
 
-This increment deliberately adds no dining subsystem, attachment storage,
-notifications, reminders, calendar integration, new backend, authentication,
-queue, conflict interface, conditional-write mechanism, or general-purpose
-event editor.
+Meal times are controlled 15-minute choices, including both service-window
+boundaries. UI changes clear an incompatible selection, and the storage
+validation boundary rejects a new or edited combination outside the applicable
+window. Restaurant name, deck, hours, reservation requirement, fee, and service
+notes such as Waves Grill's Pizzeria label remain canonical derived facts.
+Location is read-only. No end time, party size, or reservation-number field is
+stored or displayed; Notes may hold reservation details.
 
-### Dinner real-environment acceptance
+Legacy `kind: DINNER` records normalize when an override bundle is parsed.
+Their meal type remains Dinner, existing Notes remain intact, and an old
+reservation number is appended to Notes. A legacy La Reserve record is retained
+with an explicit legacy/unknown-location presentation and can be edited by
+choosing a current catalog venue. It is never silently deleted and La Reserve
+is not reintroduced into the catalog. Legacy invalid Dinner times are retained
+as legacy records but must be replaced with a valid current venue/time before
+an edit can be saved.
+
+High Tea is always created at 16:00 in Horizons Lounge, Deck 15. Only Notes are
+editable, and the repository plus Trip selector prevent a second High Tea on
+the same day.
+
+`addedEvents` remains in the existing complete operational JSON snapshot, so
+local-first persistence, automatic upload, follower refresh, retry, and
+Saved-to-Synced feedback are unchanged. Old bundles without `addedEvents`
+still default to an empty collection.
+
+This increment deliberately adds no Show or Activity planning, Baristas,
+general dining subsystem, reminders, notifications, recurring events,
+attachments, calendar integration, new backend, new sync mechanism,
+authentication, queue, conflict UI, or general-purpose event editor.
+
+### Meal-planning real-environment acceptance
 
 This vertical slice must be checked on the installed PWA and matching
 production logs before production behavior is claimed as verified.
 
-Yoav:
+Breakfast:
 
 1. Open Trip.
-2. Open a cruise day.
-3. Tap `+ Add moment`.
-4. Select Dinner.
-5. Select Terrace Café.
-6. Confirm Deck 12 appears automatically.
-7. Confirm no reservation-number field appears.
-8. Enter a time and optional note.
-9. Save.
-10. Confirm the Dinner appears immediately in the correct chronological
-    position.
-11. Confirm temporary Saved changes to Synced.
-12. Close and reopen the PWA.
-13. Confirm the Dinner remains.
-14. Edit it and change the restaurant to Toscana.
-15. Confirm Deck 14 appears and the optional reservation-number field becomes
-    visible.
-16. Add a fictional reservation number.
-17. Save and confirm the event updates.
-18. Change the time and confirm it re-sorts.
-19. Remove the Dinner and confirm it disappears.
+2. Confirm the pre-embarkation travel day has no `+ Add moment`.
+3. Open a port day and add Breakfast.
+4. Select Aquamar Kitchen.
+5. Confirm Deck 12, 07:00–10:00, and only valid 15-minute choices.
+6. Save 08:00 and confirm temporary Saved changes to Synced.
+
+Disembarkation:
+
+1. Open the final travel day and tap `+ Add moment`.
+2. Confirm Breakfast is the only available moment type.
+3. Confirm The Grand Dining Room, Terrace Café, and Waves Grill are the only
+   restaurants.
+4. Confirm Lunch, Dinner, High Tea, and Aquamar Kitchen are unavailable.
+
+Lunch:
+
+1. On a port day, confirm The Grand Dining Room is absent.
+2. On a sea day, confirm it is available from 12:00–13:30.
+
+Dinner:
+
+1. Add Dinner at Toscana and confirm Deck 14 and 18:30–21:00.
+2. Confirm 18:15 and 21:15 cannot be saved.
+3. Put a fictional reservation reference in Notes.
+4. Save and confirm synchronization.
+
+High Tea:
+
+1. Add High Tea and confirm 16:00, Horizons Lounge, Deck 15.
+2. Save and confirm a second High Tea on that day is prevented.
+
+Edit and remove:
+
+1. Edit a meal and change restaurant.
+2. Confirm available times update and an incompatible selection clears.
+3. Remove the meal and confirm it disappears from Trip and Today.
 
 Isabel in Chrome:
 
-1. Add and sync a Dinner as Yoav.
+1. Add and sync each moment type as Yoav.
 2. Open or resume Chrome as Isabel.
-3. Confirm the Dinner appears automatically.
-4. Confirm she cannot edit or remove it.
+3. Confirm the moments appear automatically.
+4. Confirm she cannot add, edit, or remove them.
 5. Confirm she sees no `+ Add moment` action.
 
 Today:
 
-1. Use the existing review tools to make the Dinner date active and confirm
-   the Dinner appears in Today.
+1. Make the created-moment date active and confirm all moments appear in Today.
 2. Confirm Today contains no modification controls.
 
 Offline:
 
 1. Go offline as Yoav.
-2. Add a Dinner.
-3. Confirm it appears locally and remains after reopening.
+2. Add a meal.
+3. Close and reopen the PWA and confirm it remains locally.
 4. Restore connectivity.
 5. Confirm it synchronizes automatically in the corresponding production
    request sequence and logs.

@@ -1,5 +1,6 @@
 import type {
-  AddedDinnerEventInput,
+  AddedHighTeaEventInput,
+  AddedMealEventInput,
   DayOperationalOverrideInput,
   EventOperationalOverrideInput,
   TripOverrideBundle,
@@ -102,22 +103,36 @@ implements TripOverrideRepository {
     void this.synchronizeForCurrentRole()
   }
 
-  addDinnerEvent(input: AddedDinnerEventInput): EventId {
-    const eventId = this.localRepository.addDinnerEvent(input)
+  addMealEvent(input: AddedMealEventInput): EventId {
+    const eventId = this.localRepository.addMealEvent(input)
     void this.synchronizeForCurrentRole()
     return eventId
   }
 
-  updateDinnerEvent(
+  updateMealEvent(
     eventId: EventId,
-    input: AddedDinnerEventInput,
+    input: AddedMealEventInput,
   ): void {
-    this.localRepository.updateDinnerEvent(eventId, input)
+    this.localRepository.updateMealEvent(eventId, input)
     void this.synchronizeForCurrentRole()
   }
 
-  removeDinnerEvent(eventId: EventId): void {
-    this.localRepository.removeDinnerEvent(eventId)
+  addHighTeaEvent(input: AddedHighTeaEventInput): EventId {
+    const eventId = this.localRepository.addHighTeaEvent(input)
+    void this.synchronizeForCurrentRole()
+    return eventId
+  }
+
+  updateHighTeaEvent(
+    eventId: EventId,
+    input: AddedHighTeaEventInput,
+  ): void {
+    this.localRepository.updateHighTeaEvent(eventId, input)
+    void this.synchronizeForCurrentRole()
+  }
+
+  removeAddedEvent(eventId: EventId): void {
+    this.localRepository.removeAddedEvent(eventId)
     void this.synchronizeForCurrentRole()
   }
 

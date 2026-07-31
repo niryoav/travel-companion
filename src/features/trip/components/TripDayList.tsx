@@ -2,16 +2,18 @@ import type { TripDayViewModel } from '../tripTypes'
 import { TripDayCard } from './TripDayCard'
 
 interface TripDayListProps {
+  canAddMoment?: (dayId: string) => boolean
   days: TripDayViewModel[]
   onAddMoment?: (dayId: string) => void
-  onEditDinner?: (eventId: string) => void
+  onEditMoment?: (eventId: string) => void
   onEditDay?: (dayId: string) => void
 }
 
 export function TripDayList({
+  canAddMoment,
   days,
   onAddMoment,
-  onEditDinner,
+  onEditMoment,
   onEditDay,
 }: TripDayListProps) {
   return (
@@ -24,9 +26,10 @@ export function TripDayList({
         {days.map((day) => (
           <li key={day.id}>
             <TripDayCard
+              canAddMoment={canAddMoment}
               day={day}
               onAddMoment={onAddMoment}
-              onEditDinner={onEditDinner}
+              onEditMoment={onEditMoment}
               onEdit={onEditDay}
             />
           </li>

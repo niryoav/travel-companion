@@ -148,7 +148,8 @@ describe('trip operational overrides', () => {
       'user-event-dinner-fixture': {
         id: 'user-event-dinner-fixture',
         dayId: day.id,
-        kind: 'DINNER',
+        kind: 'MEAL',
+        mealType: 'DINNER',
         restaurantId: 'terrace-cafe',
         startsAt: '2026-08-25T18:30:00Z',
         timeZone: day.timeZone,
@@ -178,12 +179,120 @@ describe('trip operational overrides', () => {
       events.find(({ id }) => id === 'user-event-dinner-fixture'),
     ).toMatchObject({
       title: 'Terrace Café',
-      dinnerRestaurantId: 'terrace-cafe',
+      mealRestaurantId: 'terrace-cafe',
+      mealType: 'DINNER',
       localOperationalNote: 'A quiet table if available.',
       userCreated: true,
     })
     expect(oceaniaMarina2026TripData.events).not.toContainEqual(
       expect.objectContaining({ id: 'user-event-dinner-fixture' }),
     )
+  })
+
+  it('migrates legacy Dinner notes and reservation information without loss', () => {
+    const parsed = parseTripOverrideBundle(
+      JSON.stringify({
+        schemaVersion: 1,
+        tripId: oceaniaMarina2026TripData.trip.id,
+        dayOverrides: {},
+        eventOverrides: {},
+        addedEvents: {
+          'user-event-legacy-dinner': {
+            id: 'user-event-legacy-dinner',
+            dayId: 'day-2026-08-25',
+            kind: 'DINNER',
+            restaurantId: 'toscana',
+            startsAt: '2026-08-25T19:30:00Z',
+            timeZone: 'Atlantic/Reykjavik',
+            reservationNumber: 'FICTIONAL-42',
+            notes: 'Window table.',
+            updatedAt: '2026-08-20T12:00:00Z',
+          },
+        },
+      }),
+      oceaniaMarina2026TripData,
+    )
+
+    expect(parsed?.addedEvents?.['user-event-legacy-dinner'])
+      .toEqual({
+        id: 'user-event-legacy-dinner',
+        dayId: 'day-2026-08-25',
+        kind: 'MEAL',
+        mealType: 'DINNER',
+        restaurantId: 'toscana',
+        startsAt: '2026-08-25T19:30:00Z',
+        timeZone: 'Atlantic/Reykjavik',
+        notes: 'Window table.\nReservation: FICTIONAL-42',
+        updatedAt: '2026-08-20T12:00:00Z',
+      })
+  })
+
+  it('preserves legacy La Reserve as an editable fallback outside the catalog', () => {
+    const parsed = parseTripOverrideBundle(
+      JSON.stringify({
+        schemaVersion: 1,
+        tripId: oceaniaMarina2026TripData.trip.id,
+        dayOverrides: {},
+        eventOverrides: {},
+        addedEvents: {
+          'user-event-legacy-la-reserve': {
+            id: 'user-event-legacy-la-reserve',
+            dayId: 'day-2026-08-25',
+            kind: 'DINNER',
+            restaurantId: 'la-reserve',
+            startsAt: '2026-08-25T19:30:00Z',
+            timeZone: 'Atlantic/Reykjavik',
+            notes: 'Legacy note.',
+            updatedAt: '2026-08-20T12:00:00Z',
+          },
+        },
+      }),
+      oceaniaMarina2026TripData,
+    )
+    const added = parsed?.addedEvents?.['user-event-legacy-la-reserve']
+    expect(added).toMatchObject({
+      kind: 'MEAL',
+      mealType: 'DINNER',
+      restaurantId: 'la-reserve',
+      notes: 'Legacy note.',
+      legacy: true,
+    })
+    const effective = applyTripOverrides(
+      oceaniaMarina2026TripData,
+      parsed!,
+    )
+    expect(
+      effective.events.find(
+        ({ id }) => id === 'user-event-legacy-la-reserve',
+      ),
+    ).toMatchObject({
+      title: 'La Reserve',
+      mealRestaurantId: 'la-reserve',
+      userCreated: true,
+    })
+  })
+
+  it('rejects a new persisted meal outside its service window', () => {
+    const invalid = {
+      ...emptyTripOverrideBundle(oceaniaMarina2026TripData.trip.id),
+      addedEvents: {
+        'user-event-invalid-time': {
+          id: 'user-event-invalid-time',
+          dayId: 'day-2026-08-25',
+          kind: 'MEAL',
+          mealType: 'DINNER',
+          restaurantId: 'toscana',
+          startsAt: '2026-08-25T18:15:00Z',
+          timeZone: 'Atlantic/Reykjavik',
+          updatedAt: '2026-08-20T12:00:00Z',
+        },
+      },
+    }
+    expect(
+      parseTripOverrideBundle(
+        JSON.stringify(invalid),
+        oceaniaMarina2026TripData,
+      ),
+    ).toBeNull()
   })
 })

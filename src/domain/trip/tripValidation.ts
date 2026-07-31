@@ -49,7 +49,7 @@ export function validateTripData(data: TripData): string[] {
     data.travelers,
     data.days,
     data.events,
-    data.dinnerRestaurants ?? [],
+    data.mealRestaurants ?? [],
     data.locations,
     data.transports,
     data.cruises,
@@ -66,8 +66,8 @@ export function validateTripData(data: TripData): string[] {
 
   const dayIds = new Set(data.days.map(({ id }) => id))
   const eventIds = new Set(data.events.map(({ id }) => id))
-  const dinnerRestaurantIds = new Set(
-    (data.dinnerRestaurants ?? []).map(({ id }) => id),
+  const mealRestaurantIds = new Set<string>(
+    (data.mealRestaurants ?? []).map(({ id }) => id),
   )
   const travelerIds = new Set(data.travelers.map(({ id }) => id))
   const locationIds = new Set(data.locations.map(({ id }) => id))
@@ -186,23 +186,24 @@ export function validateTripData(data: TripData): string[] {
       errors.push(`Unknown location ${event.locationId} on event ${event.id}`)
     }
     if (
-      event.dinnerRestaurantId &&
-      !dinnerRestaurantIds.has(event.dinnerRestaurantId)
+      event.mealRestaurantId &&
+      !mealRestaurantIds.has(event.mealRestaurantId) &&
+      !(event.userCreated === true && event.mealRestaurantId === 'la-reserve')
     ) {
       errors.push(
-        `Unknown Dinner restaurant ${event.dinnerRestaurantId} on event ${event.id}`,
+        `Unknown meal restaurant ${event.mealRestaurantId} on event ${event.id}`,
       )
     }
     if (
       (event.userCreated === true &&
         (!event.id.startsWith('user-event-') ||
           event.kind !== 'MEAL' ||
-          !event.dinnerRestaurantId)) ||
-      (event.dinnerReservationNumber !== undefined &&
-        (!event.dinnerRestaurantId ||
-          !event.dinnerReservationNumber.trim()))
+          !(
+            event.highTea === true ||
+            (event.mealType && event.mealRestaurantId)
+          )))
     ) {
-      errors.push(`Invalid user-created Dinner event: ${event.id}`)
+      errors.push(`Invalid user-created moment: ${event.id}`)
     }
     if (
       event.travelOriginLocationId &&
