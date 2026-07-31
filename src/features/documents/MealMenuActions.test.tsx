@@ -6,6 +6,7 @@ import type { TodayEventViewModel } from '../today/todayTypes'
 import { TimelineEvent } from '../today/components/TimelineEvent'
 import type { TripDayViewModel } from '../trip/tripTypes'
 import { TripDayDetails } from '../trip/components/TripDayDetails'
+import { oceaniaMarinaMealRestaurants } from '../../trips/oceania-marina-2026/mealRestaurants'
 import { RestaurantMenuProvider } from './RestaurantMenuProvider'
 import type { RestaurantMenuGroup } from './restaurantMenus'
 
@@ -63,9 +64,19 @@ const todayEvent: TodayEventViewModel = {
   hasRelatedDocuments: false,
 }
 
+const legacyTodayEvent: TodayEventViewModel = {
+  ...todayEvent,
+  id: 'legacy-dinner-today',
+  kindLabel: 'Meal',
+  mealLabels: undefined,
+}
+
 function Provider({ children }: { children: ReactNode }) {
   return (
-    <RestaurantMenuProvider loadManifest={async () => menuGroups}>
+    <RestaurantMenuProvider
+      loadManifest={async () => menuGroups}
+      mealRestaurants={oceaniaMarinaMealRestaurants}
+    >
       {children}
     </RestaurantMenuProvider>
   )
@@ -90,6 +101,45 @@ describe('meal menu actions', () => {
     render(
       <RestaurantMenuProvider loadManifest={async () => menuGroups}>
         <ol><TimelineEvent event={todayEvent} /></ol>
+      </RestaurantMenuProvider>,
+    )
+
+    expect(await screen.findByRole('link', { name: 'View menu' }))
+      .toHaveAttribute(
+        'href',
+        '/documents/restaurant-menus/Toscana/Dinner.pdf',
+      )
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+  })
+
+  it('shows legacy dinner actions through the same Trip component', async () => {
+    const legacyTripDay = {
+      ...tripDay,
+      events: [{
+        ...tripDay.events[0],
+        id: 'legacy-dinner-trip',
+        kindLabel: 'Meal',
+        mealLabels: undefined,
+      }],
+    }
+    render(<TripDayDetails day={legacyTripDay} />, { wrapper: Provider })
+
+    expect(await screen.findByRole('link', { name: 'View menu' }))
+      .toHaveAttribute(
+        'href',
+        '/documents/restaurant-menus/Toscana/Dinner.pdf',
+      )
+    expect(screen.getByRole('link', { name: 'Dessert' }))
+      .toBeInTheDocument()
+  })
+
+  it('shows legacy dinner actions through the same read-only Today component', async () => {
+    render(
+      <RestaurantMenuProvider
+        loadManifest={async () => menuGroups}
+        mealRestaurants={oceaniaMarinaMealRestaurants}
+      >
+        <ol><TimelineEvent event={legacyTodayEvent} /></ol>
       </RestaurantMenuProvider>,
     )
 

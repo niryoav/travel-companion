@@ -87,7 +87,7 @@ export function NextEventCard({
       ) : null}
       {showMenuAction ? (
         <MealMenuActions
-          isMeal={event.mealLabels !== undefined}
+          localStartTime={event.time}
           mealType={event.kindLabel}
           restaurantName={event.title}
         />
