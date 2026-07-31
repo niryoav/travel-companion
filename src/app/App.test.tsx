@@ -344,6 +344,47 @@ describe('App', () => {
     ).not.toHaveLength(0)
   })
 
+  it('keeps menu actions out of Home and shows them in simulated Today', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
+      menus: [{
+        restaurant: 'Red Ginger',
+        menuType: 'Dinner',
+        file: 'Red Ginger/Dinner.pdf',
+      }],
+    }), { status: 200 })))
+    const repository = new MemoryTripStateRepository()
+    repository.travelerId = 'traveler-yoav'
+    window.history.replaceState({}, '', '/home?simulation=sea-day')
+    renderSimulationApp(repository)
+
+    expect(
+      await screen.findByRole('heading', { name: 'Red Ginger' }),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'View menu' }))
+      .not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('link', { name: 'Today' }))
+
+    const reservation = await screen.findByRole('heading', {
+      name: 'Red Ginger',
+    })
+    const eventCard = reservation.closest('li')
+    expect(eventCard).not.toBeNull()
+    expect(
+      await within(eventCard as HTMLElement).findByRole('link', {
+        name: 'View menu',
+      }),
+    ).toHaveAttribute(
+      'href',
+      '/documents/restaurant-menus/Red Ginger/Dinner.pdf',
+    )
+    expect(
+      within(eventCard as HTMLElement).queryByRole('link', {
+        name: 'Dessert',
+      }),
+    ).not.toBeInTheDocument()
+  })
+
   it('restores normal Home and Today when simulation returns to live', async () => {
     const repository = new MemoryTripStateRepository()
     repository.travelerId = 'traveler-yoav'

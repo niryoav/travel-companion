@@ -3,28 +3,49 @@ import type { ReactNode } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
 import type { TodayEventViewModel } from '../today/todayTypes'
+import { createTodaySimulationScenarios } from '../today/simulation/todaySimulationScenarios'
+import { NextEventCard } from '../today/components/NextEventCard'
 import { TimelineEvent } from '../today/components/TimelineEvent'
 import type { TripDayViewModel } from '../trip/tripTypes'
 import { TripDayDetails } from '../trip/components/TripDayDetails'
 import { oceaniaMarinaMealRestaurants } from '../../trips/oceania-marina-2026/mealRestaurants'
 import { RestaurantMenuProvider } from './RestaurantMenuProvider'
+import { oceaniaMarina2026TripData } from '../../trips/oceania-marina-2026/tripData'
 import type { RestaurantMenuGroup } from './restaurantMenus'
 
-const menuGroups: RestaurantMenuGroup[] = [{
-  restaurant: 'Toscana',
-  menus: [
-    {
-      restaurant: 'Toscana',
+const menuGroups: RestaurantMenuGroup[] = [
+  {
+    restaurant: 'Toscana',
+    menus: [
+      {
+        restaurant: 'Toscana',
+        menuType: 'Dinner',
+        href: '/documents/restaurant-menus/Toscana/Dinner.pdf',
+      },
+      {
+        restaurant: 'Toscana',
+        menuType: 'Dessert',
+        href: '/documents/restaurant-menus/Toscana/Dessert.pdf',
+      },
+    ],
+  },
+  {
+    restaurant: 'Red Ginger',
+    menus: [{
+      restaurant: 'Red Ginger',
       menuType: 'Dinner',
-      href: '/documents/restaurant-menus/Toscana/Dinner.pdf',
-    },
-    {
-      restaurant: 'Toscana',
-      menuType: 'Dessert',
-      href: '/documents/restaurant-menus/Toscana/Dessert.pdf',
-    },
-  ],
-}]
+      href: '/documents/restaurant-menus/Red Ginger/Dinner.pdf',
+    }],
+  },
+]
+
+const simulationScenarios = createTodaySimulationScenarios(
+  oceaniaMarina2026TripData,
+)
+const simulatedRedGinger = simulationScenarios['sea-day'].timeline[0]
+const simulatedToscana = simulationScenarios['tender-port-day'].timeline.find(
+  ({ id }) => id === 'event-toscana-dinner',
+)
 
 const tripDay: TripDayViewModel = {
   id: 'day-test',
@@ -151,6 +172,69 @@ describe('meal menu actions', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 
+  it('shows Red Ginger in the actual Today simulation TimelineEvent shape', async () => {
+    expect(simulatedRedGinger).toMatchObject({
+      kindLabel: 'Dining',
+      time: '20:00',
+      title: 'Red Ginger',
+    })
+    render(
+      <RestaurantMenuProvider
+        loadManifest={async () => menuGroups}
+        mealRestaurants={oceaniaMarinaMealRestaurants}
+      >
+        <ol><TimelineEvent event={simulatedRedGinger} /></ol>
+      </RestaurantMenuProvider>,
+    )
+
+    expect(await screen.findByRole('link', { name: 'View menu' }))
+      .toHaveAttribute(
+        'href',
+        '/documents/restaurant-menus/Red Ginger/Dinner.pdf',
+      )
+    expect(screen.queryByRole('link', { name: 'Dessert' }))
+      .not.toBeInTheDocument()
+  })
+
+  it('shows Red Ginger in the Today NextEventCard variant', async () => {
+    render(
+      <RestaurantMenuProvider
+        loadManifest={async () => menuGroups}
+        mealRestaurants={oceaniaMarinaMealRestaurants}
+      >
+        <NextEventCard event={simulatedRedGinger} showMenuAction />
+      </RestaurantMenuProvider>,
+    )
+
+    expect(await screen.findByRole('link', { name: 'View menu' }))
+      .toHaveAttribute(
+        'href',
+        '/documents/restaurant-menus/Red Ginger/Dinner.pdf',
+      )
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+  })
+
+  it('shows Dinner and Dessert for the actual simulated Toscana reservation', async () => {
+    expect(simulatedToscana).toMatchObject({
+      kindLabel: 'Dining',
+      time: '20:00',
+      title: 'Toscana',
+    })
+    render(
+      <RestaurantMenuProvider
+        loadManifest={async () => menuGroups}
+        mealRestaurants={oceaniaMarinaMealRestaurants}
+      >
+        <ol><TimelineEvent event={simulatedToscana!} /></ol>
+      </RestaurantMenuProvider>,
+    )
+
+    expect(await screen.findByRole('link', { name: 'View menu' }))
+      .toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Dessert' }))
+      .toBeInTheDocument()
+  })
+
   it('loads the manifest once for multiple event cards', async () => {
     const loadManifest = vi.fn(async () => menuGroups)
     render(
@@ -174,25 +258,25 @@ describe('meal menu actions', () => {
           throw new Error('offline')
         }}
       >
-        <ol><TimelineEvent event={todayEvent} /></ol>
+        <ol><TimelineEvent event={simulatedRedGinger} /></ol>
       </RestaurantMenuProvider>,
     )
 
-    expect(await screen.findByRole('heading', { name: 'Toscana' }))
+    expect(await screen.findByRole('heading', { name: 'Red Ginger' }))
       .toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'View menu' }))
       .not.toBeInTheDocument()
   })
 
   it('hides actions when the restaurant has no matching menu', async () => {
-    const event = { ...todayEvent, title: 'Red Ginger' }
+    const event = { ...todayEvent, title: 'Polo Grill' }
     render(
       <RestaurantMenuProvider loadManifest={async () => menuGroups}>
         <ol><TimelineEvent event={event} /></ol>
       </RestaurantMenuProvider>,
     )
 
-    expect(await screen.findByRole('heading', { name: 'Red Ginger' }))
+    expect(await screen.findByRole('heading', { name: 'Polo Grill' }))
       .toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'View menu' }))
       .not.toBeInTheDocument()

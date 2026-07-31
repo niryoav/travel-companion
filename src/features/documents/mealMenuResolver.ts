@@ -6,6 +6,7 @@ import { generateServiceTimes } from '../../domain/trip/mealPlanning'
 import type { MealRestaurant } from '../../domain/trip/tripTypes'
 
 const MEAL_MENU_TYPES = ['Breakfast', 'Lunch', 'Dinner'] as const
+const LEGACY_MEAL_KIND_LABELS = ['Meal', 'Dining'] as const
 
 export type MealMenuType = (typeof MEAL_MENU_TYPES)[number]
 
@@ -35,7 +36,10 @@ function legacyDinnerType(
   restaurantKey: string,
   mealRestaurants: readonly MealRestaurant[],
 ): MealMenuType | null {
-  if (mealTypeValue !== 'Meal' || !localStartTime) {
+  if (
+    !LEGACY_MEAL_KIND_LABELS.some((label) => label === mealTypeValue) ||
+    !localStartTime
+  ) {
     return null
   }
 
