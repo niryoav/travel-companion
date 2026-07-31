@@ -1,8 +1,9 @@
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { withPlanningAllAboardEstimates } from '../../domain/trip/allAboardPlanning'
+import { applyTripOverrides } from '../../domain/trip/tripOverrides'
 import { tripFixture } from '../../test/fixtures/tripFixture'
 import { oceaniaMarina2026TripData } from '../../trips/oceania-marina-2026/tripData'
 import { oceaniaMarina2026DailyLoveMessages } from '../../content/oceania-marina-2026/dailyLoveMessages'
@@ -29,6 +30,78 @@ function renderHome(route: string) {
 }
 
 describe('HomeScreen', () => {
+  it('shows the operational countdown only during the active trip', () => {
+    render(
+      <MemoryRouter initialEntries={['/home']}>
+        <HomeScreen
+          loveMessageSchedule={oceaniaMarina2026DailyLoveMessages}
+          now={new Date('2030-05-11T08:00:00+02:00')}
+          travelerName="Alex"
+          tripData={tripFixture}
+        />
+      </MemoryRouter>,
+    )
+    expect(screen.getByText('Next important moment')).toBeInTheDocument()
+    expect(screen.getByText('1h 30m')).toBeInTheDocument()
+  })
+
+  it('advances immediately to the next candidate at the target minute', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2030-05-11T07:29:00Z'))
+    const data = structuredClone(tripFixture)
+    data.portCalls[0].portAccess = { status: 'DOCKED' }
+    render(
+      <MemoryRouter initialEntries={['/home']}>
+        <HomeScreen
+          loveMessageSchedule={oceaniaMarina2026DailyLoveMessages}
+          now={new Date('2030-05-11T09:29:00+02:00')}
+          travelerName="Alex"
+          tripData={data}
+        />
+      </MemoryRouter>,
+    )
+    const card = screen.getByText('Next important moment').closest('section')!
+    expect(within(card).getByRole('heading', { name: 'Coastal walk' })).toBeInTheDocument()
+    act(() => vi.advanceTimersByTime(60_000))
+    expect(within(card).getByRole('heading', { name: 'All Aboard' })).toBeInTheDocument()
+    vi.useRealTimers()
+  })
+
+  it('uses the same resolver for a user-added show in simulation', () => {
+    const data = applyTripOverrides(oceaniaMarina2026TripData, {
+      schemaVersion: 1,
+      tripId: oceaniaMarina2026TripData.trip.id,
+      dayOverrides: {},
+      eventOverrides: {},
+      addedEvents: {
+        'simulation-user-show': {
+          id: 'simulation-user-show',
+          dayId: 'day-2026-08-28',
+          kind: 'SHOW_ACTIVITY',
+          title: 'Morning lecture',
+          startsAt: '2026-08-28T10:00:00+01:00',
+          timeZone: 'Atlantic/Faroe',
+          locationId: 'the-lounge',
+          updatedAt: '2026-08-20T10:00:00Z',
+        },
+      },
+    })
+    render(
+      <MemoryRouter initialEntries={['/home?simulation=sea-day']}>
+        <HomeScreen
+          loveMessageSchedule={oceaniaMarina2026DailyLoveMessages}
+          now={new Date('2026-07-27T12:00:00Z')}
+          travelerName="Alex"
+          tripData={data}
+        />
+      </MemoryRouter>,
+    )
+    const card = screen.getByText('Next important moment').closest('section')!
+    expect(within(card).getByRole('heading', { name: 'Morning lecture' }))
+      .toBeInTheDocument()
+    expect(within(card).getByText('The Lounge · Deck 5')).toBeInTheDocument()
+  })
+
   it('does not show the Simulation Preview entry point on live Home', () => {
     renderHome('/home')
 
@@ -91,7 +164,7 @@ describe('HomeScreen', () => {
       </MemoryRouter>,
     )
 
-    expect(screen.getByText('12:15')).toBeInTheDocument()
+    expect(screen.getAllByText('12:15')).toHaveLength(2)
     expect(screen.queryByText('12:00')).not.toBeInTheDocument()
   })
 

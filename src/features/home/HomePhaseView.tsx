@@ -10,6 +10,7 @@ import { QuickWeatherCard } from './components/QuickWeatherCard'
 
 interface HomePhaseViewProps {
   greeting: string
+  importantMoment?: ReactNode
   loveMessage?: DailyLoveMessageViewModel | null
   reviewControl?: ReactNode
   viewModel: HomeViewModel
@@ -17,6 +18,7 @@ interface HomePhaseViewProps {
 
 export function HomePhaseView({
   greeting,
+  importantMoment,
   loveMessage,
   reviewControl,
   viewModel,
@@ -38,6 +40,7 @@ export function HomePhaseView({
       ) : null}
 
       <div className="home-briefing-grid">
+        {importantMoment}
         {viewModel.milestone ? (
           <NextMilestoneCard milestone={viewModel.milestone} />
         ) : null}

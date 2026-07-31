@@ -344,7 +344,7 @@ describe('App', () => {
     ).not.toHaveLength(0)
   })
 
-  it('keeps menu actions out of Home and shows them in simulated Today', async () => {
+  it('reuses menu actions in the Home countdown and simulated Today', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
       menus: [{
         restaurant: 'Red Ginger',
@@ -358,13 +358,22 @@ describe('App', () => {
     renderSimulationApp(repository)
 
     expect(
-      await screen.findByRole('heading', { name: 'Red Ginger' }),
-    ).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'View menu' }))
-      .not.toBeInTheDocument()
+      await screen.findAllByRole('heading', { name: 'Red Ginger' }),
+    ).toHaveLength(2)
+    const countdown = screen.getByText('Next important moment').closest('section')
+    expect(countdown).not.toBeNull()
+    expect(
+      await within(countdown as HTMLElement).findByRole('link', {
+        name: 'View menu',
+      }),
+    ).toHaveAttribute(
+      'href',
+      '/documents/restaurant-menus/Red Ginger/Dinner.pdf',
+    )
 
     fireEvent.click(screen.getByRole('link', { name: 'Today' }))
 
+    expect(screen.queryByText('Next important moment')).not.toBeInTheDocument()
     const reservation = await screen.findByRole('heading', {
       name: 'Red Ginger',
     })
@@ -860,7 +869,7 @@ describe('App', () => {
         name: /Good (morning|afternoon|evening), Alex/,
       }),
     ).toBeInTheDocument()
-    expect(screen.getByText('10:15')).toBeInTheDocument()
+    expect(screen.getAllByText('10:15')).toHaveLength(2)
   })
 
   it('opens Home on a fresh launch after the trip', async () => {

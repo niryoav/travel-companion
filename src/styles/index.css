@@ -2440,6 +2440,42 @@ a:focus-visible {
   border-color: color-mix(in srgb, var(--champagne) 38%, transparent);
 }
 
+.important-moment-card {
+  grid-column: 1 / -1;
+  border-color: color-mix(in srgb, var(--champagne) 52%, transparent);
+}
+
+.important-moment-card h2 a {
+  color: inherit;
+  text-decoration-color: color-mix(in srgb, var(--champagne) 50%, transparent);
+  text-underline-offset: 0.2em;
+}
+
+.important-moment-when,
+.important-moment-location,
+.important-moment-note {
+  margin: 0.55rem 0 0;
+}
+
+.important-moment-when,
+.important-moment-note {
+  color: var(--text-muted);
+}
+
+.important-moment-countdown {
+  margin: 0.75rem 0 0;
+  color: var(--champagne);
+  font-size: clamp(1.9rem, 9vw, 2.8rem);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
+.important-moment-location {
+  color: var(--text);
+  font-weight: 700;
+}
+
 .milestone-card::before {
   position: absolute;
   top: 4.7rem;
