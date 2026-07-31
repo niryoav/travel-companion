@@ -142,22 +142,40 @@ describe('resolveMealMenuActions', () => {
   })
 
   it('does not infer legacy Dinner outside the canonical dinner window', () => {
-    expect(resolveMealMenuActions(
-      groups,
-      'Toscana',
-      'Meal',
-      '17:00',
-      oceaniaMarina2026TripData.mealRestaurants,
-    )).toBeNull()
+    for (const kindLabel of ['Meal', 'Dining']) {
+      expect(resolveMealMenuActions(
+        groups,
+        'Toscana',
+        kindLabel,
+        '17:00',
+        oceaniaMarina2026TripData.mealRestaurants,
+      )).toBeNull()
+    }
   })
 
   it('does not infer legacy Dinner for an unknown restaurant in the window', () => {
-    expect(resolveMealMenuActions(
-      groups,
-      'Unknown Restaurant',
-      'Meal',
-      '20:00',
-      oceaniaMarina2026TripData.mealRestaurants,
-    )).toBeNull()
+    for (const kindLabel of ['Meal', 'Dining']) {
+      expect(resolveMealMenuActions(
+        groups,
+        'Unknown Restaurant',
+        kindLabel,
+        '20:00',
+        oceaniaMarina2026TripData.mealRestaurants,
+      )).toBeNull()
+    }
+  })
+
+  it('supports the confirmed live and simulation legacy kind labels', () => {
+    for (const kindLabel of ['Meal', 'Dining']) {
+      expect(resolveMealMenuActions(
+        groups,
+        'Red Ginger',
+        kindLabel,
+        '20:00',
+        oceaniaMarina2026TripData.mealRestaurants,
+      )?.menu.href).toBe(
+        '/documents/restaurant-menus/Red Ginger/Dinner.pdf',
+      )
+    }
   })
 })
