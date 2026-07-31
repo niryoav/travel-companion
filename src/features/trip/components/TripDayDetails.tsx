@@ -1,4 +1,5 @@
 import { DocumentActionLink } from '../../documents/components/DocumentActionLink'
+import { MealMenuActions } from '../../documents/components/MealMenuActions'
 import { PortAccessIndicator } from '../../../components/PortAccessIndicator'
 import type {
   TripContentSourceViewModel,
@@ -205,6 +206,11 @@ function TripEventDetail({
             {event.mealLabels.join(' · ')}
           </p>
         ) : null}
+        <MealMenuActions
+          isMeal={event.mealLabels !== undefined}
+          mealType={event.kindLabel}
+          restaurantName={event.title}
+        />
         {event.isUserCreatedMoment && onEditMoment ? (
           <button
             className="trip-edit-action trip-dinner-edit-action"
