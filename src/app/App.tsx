@@ -120,12 +120,14 @@ export function App({
             <Route
               path="home"
               element={
-                <HomeProfileGate
-                  loveMessageSchedule={loveMessageSchedule}
-                  now={now}
-                  tripData={tripData}
-                  tripStateRepository={tripStateRepository}
-                />
+                <RestaurantMenuProvider mealRestaurants={tripData.mealRestaurants}>
+                  <HomeProfileGate
+                    loveMessageSchedule={loveMessageSchedule}
+                    now={now}
+                    tripData={tripData}
+                    tripStateRepository={tripStateRepository}
+                  />
+                </RestaurantMenuProvider>
               }
             />
             <Route
@@ -144,13 +146,15 @@ export function App({
             <Route
               path="more/simulation-preview"
               element={
-                <HomeProfileGate
-                  loveMessageSchedule={loveMessageSchedule}
-                  now={now}
-                  showSimulationPreview
-                  tripData={tripData}
-                  tripStateRepository={tripStateRepository}
-                />
+                <RestaurantMenuProvider mealRestaurants={tripData.mealRestaurants}>
+                  <HomeProfileGate
+                    loveMessageSchedule={loveMessageSchedule}
+                    now={now}
+                    showSimulationPreview
+                    tripData={tripData}
+                    tripStateRepository={tripStateRepository}
+                  />
+                </RestaurantMenuProvider>
               }
             />
             <Route
