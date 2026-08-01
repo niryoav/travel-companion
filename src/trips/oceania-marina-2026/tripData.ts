@@ -923,6 +923,8 @@ export const oceaniaMarina2026TripData: TripData = {
       timeZone: 'Atlantic/Reykjavik',
       bookingStatus: 'CONFIRMED',
       meetingContext: 'Shared table',
+      mealType: 'DINNER',
+      mealRestaurantId: 'toscana',
     },
     {
       id: 'event-red-ginger-dinner',
@@ -933,6 +935,8 @@ export const oceaniaMarina2026TripData: TripData = {
       timeZone: 'Atlantic/Faroe',
       bookingStatus: 'CONFIRMED',
       meetingContext: 'Shared table',
+      mealType: 'DINNER',
+      mealRestaurantId: 'red-ginger',
     },
     {
       id: 'event-polo-grill-dinner',
@@ -943,6 +947,8 @@ export const oceaniaMarina2026TripData: TripData = {
       timeZone: 'Europe/Dublin',
       bookingStatus: 'CONFIRMED',
       meetingContext: 'Shared table',
+      mealType: 'DINNER',
+      mealRestaurantId: 'polo-grill',
     },
     {
       id: 'event-jacques-dinner',
@@ -953,6 +959,8 @@ export const oceaniaMarina2026TripData: TripData = {
       timeZone: 'Europe/London',
       bookingStatus: 'CONFIRMED',
       meetingContext: 'Shared table',
+      mealType: 'DINNER',
+      mealRestaurantId: 'jacques',
     },
   ],
   locations,

@@ -359,7 +359,10 @@ describe('App', () => {
 
     expect(
       await screen.findAllByRole('heading', { name: 'Red Ginger' }),
-    ).toHaveLength(2)
+    ).toHaveLength(1)
+    expect(
+      screen.getByRole('heading', { name: 'Red Ginger · Deck 5' }),
+    ).toBeInTheDocument()
     const countdown = screen.getByText('Next important moment').closest('section')
     expect(countdown).not.toBeNull()
     expect(

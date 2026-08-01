@@ -424,10 +424,10 @@ describe('TodayScreen', () => {
   })
 
   it.each([
-    ['2026-08-25T06:00:00Z', 'Toscana', '20:00'],
-    ['2026-08-28T06:00:00Z', 'Red Ginger', '20:00'],
-    ['2026-08-31T06:00:00Z', 'Polo Grill', '19:30'],
-    ['2026-09-03T06:00:00Z', 'Jacques', '19:30'],
+    ['2026-08-25T06:00:00Z', 'Toscana · Deck 14', '20:00'],
+    ['2026-08-28T06:00:00Z', 'Red Ginger · Deck 5', '20:00'],
+    ['2026-08-31T06:00:00Z', 'Polo Grill · Deck 14', '19:30'],
+    ['2026-09-03T06:00:00Z', 'Jacques · Deck 5', '19:30'],
   ])(
     'renders the confirmed dining reservation on %s',
     (now, title, time) => {
