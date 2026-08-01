@@ -484,6 +484,24 @@ describe('TodayScreen', () => {
     ).toBeInTheDocument()
   })
 
+  it('shows the voyage progress card with the correct daily image and ports', () => {
+    render(
+      <MemoryRouter initialEntries={['/today']}>
+        <TodayScreen
+          now={new Date('2026-08-25T08:00:00Z')}
+          tripData={oceaniaMarina2026TripData}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Voyage progress')).toBeInTheDocument()
+    expect(
+      screen.getByRole('img', { name: 'Voyage progress map for day 4' }),
+    ).toHaveAttribute('src', '/images/voyage-progress/voyage-day-04.png')
+    expect(screen.getByText('Today: Húsavík')).toBeInTheDocument()
+    expect(screen.getByText('Next: Djúpivogur')).toBeInTheDocument()
+  })
+
   it('renders verified port information and semantic times', () => {
     renderToday('/today?state=port-day')
 

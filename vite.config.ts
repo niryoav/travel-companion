@@ -4,7 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vitest/config'
 
 import { resolveDeploymentBuildValues } from './build/deploymentBuildInfo'
-import { DOCUMENT_CACHE_NAME } from './src/pwa/documentCache'
+import { OFFLINE_ASSET_CACHE_NAME } from './src/pwa/offlineAssetCache'
 
 const deploymentBuild = resolveDeploymentBuildValues(process.env)
 
@@ -53,19 +53,23 @@ export default defineConfig({
         navigateFallbackDenylist: [
           /^\/api\//,
           /^\/documents\/.*\.(pdf|json)$/,
+          /^\/images\/voyage-progress\/.*\.png$/,
         ],
         globPatterns: [
           '**/*.{js,css,html,svg,png,jpg,jpeg,webp,woff2}',
         ],
+        globIgnores: ['images/voyage-progress/**'],
         runtimeCaching: [
           {
             urlPattern: ({ url }: { url: URL }) =>
-              url.pathname.startsWith('/documents/') &&
-              (url.pathname.endsWith('.pdf') ||
-                url.pathname.endsWith('.json')),
+              (url.pathname.startsWith('/documents/') &&
+                (url.pathname.endsWith('.pdf') ||
+                  url.pathname.endsWith('.json'))) ||
+              (url.pathname.startsWith('/images/voyage-progress/') &&
+                url.pathname.endsWith('.png')),
             handler: 'CacheFirst',
             options: {
-              cacheName: DOCUMENT_CACHE_NAME,
+              cacheName: OFFLINE_ASSET_CACHE_NAME,
               cacheableResponse: { statuses: [0, 200] },
             },
           },

@@ -24,6 +24,7 @@ import {
 } from '../storage/TripOverrideRepository'
 import { applyTripOverrides } from '../domain/trip/tripOverrides'
 import { withPlanningAllAboardEstimates } from '../domain/trip/allAboardPlanning'
+import { listVoyageProgressImagePaths } from '../domain/trip/selectors/selectVoyageProgress'
 import { StartupRouteGate } from './StartupRouteGate'
 import { TripLifecycleProvider } from './TripLifecycleProvider'
 import {
@@ -83,6 +84,7 @@ export function App({
       >
         <DocumentOfflineSync
           documentReferences={tripData.documentReferences}
+          additionalHrefs={listVoyageProgressImagePaths(tripData)}
         />
         <StartupRouteGate
           tripData={tripData}

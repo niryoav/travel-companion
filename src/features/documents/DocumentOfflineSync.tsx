@@ -8,12 +8,14 @@ import { loadRestaurantMenuManifest } from './restaurantMenus'
 
 interface DocumentOfflineSyncProps {
   documentReferences: readonly DocumentReference[]
+  additionalHrefs?: readonly string[]
   loadManifest?: typeof loadRestaurantMenuManifest
   windowTarget?: Window
 }
 
 export function DocumentOfflineSync({
   documentReferences,
+  additionalHrefs = [],
   loadManifest = loadRestaurantMenuManifest,
   windowTarget = window,
 }: DocumentOfflineSyncProps) {
@@ -30,7 +32,10 @@ export function DocumentOfflineSync({
         restaurantMenuGroups,
         documentReferences,
       })
-      const hrefs = registry.map(({ href }) => href)
+      const hrefs = [
+        ...registry.map(({ href }) => href),
+        ...additionalHrefs,
+      ]
       await documentOfflineService.removeStale(hrefs)
       await documentOfflineService.syncMissing(hrefs)
     }
@@ -41,7 +46,7 @@ export function DocumentOfflineSync({
       active = false
       windowTarget.removeEventListener('online', sync)
     }
-  }, [documentReferences, loadManifest, windowTarget])
+  }, [documentReferences, additionalHrefs, loadManifest, windowTarget])
 
   return null
 }
