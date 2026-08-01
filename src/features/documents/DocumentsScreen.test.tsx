@@ -26,13 +26,16 @@ describe('DocumentsScreen', () => {
     expect(
       screen.getByRole('heading', { name: 'Independent excursions' }),
     ).toBeInTheDocument()
-    expect(screen.getAllByText('Available offline')).toHaveLength(8)
+    expect(screen.getAllByText('Available offline')).toHaveLength(9)
     expect(
       screen.getByRole('link', { name: 'Restaurant menus' }),
     ).toHaveAttribute('href', '/documents/restaurant-menus')
     expect(
       screen.getByRole('link', { name: 'Activities & entertainment' }),
     ).toHaveAttribute('href', '/documents/activities')
+    expect(
+      screen.getByRole('link', { name: 'Deck plans' }),
+    ).toHaveAttribute('href', '/documents/deckplans')
     expect(screen.queryByRole('heading', { name: 'Flights' })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Cruise' })).not.toBeInTheDocument()
   })

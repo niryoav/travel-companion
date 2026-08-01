@@ -3,6 +3,8 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 
 import { AppShell } from './AppShell'
 import { ActivitiesEntertainmentScreen } from '../features/documents/ActivitiesEntertainmentScreen'
+import { DeckPlansScreen } from '../features/documents/DeckPlansScreen'
+import { DocumentOfflineSync } from '../features/documents/DocumentOfflineSync'
 import { DocumentsScreen } from '../features/documents/DocumentsScreen'
 import { RestaurantMenusScreen } from '../features/documents/RestaurantMenusScreen'
 import { RestaurantMenuProvider } from '../features/documents/RestaurantMenuProvider'
@@ -79,6 +81,9 @@ export function App({
         activeTripId={tripData.trip.id}
         tripStateRepository={tripStateRepository}
       >
+        <DocumentOfflineSync
+          documentReferences={tripData.documentReferences}
+        />
         <StartupRouteGate
           tripData={tripData}
           tripStateRepository={tripStateRepository}
@@ -202,6 +207,10 @@ export function App({
             <Route
               path="documents/activities"
               element={<ActivitiesEntertainmentScreen />}
+            />
+            <Route
+              path="documents/deckplans"
+              element={<DeckPlansScreen />}
             />
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Route>

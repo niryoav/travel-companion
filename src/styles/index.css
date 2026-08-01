@@ -2168,6 +2168,60 @@ a:focus-visible {
   text-transform: none;
 }
 
+.document-offline-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.document-offline-icon .app-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  color: var(--text-muted);
+}
+
+.document-offline-icon-cached .app-icon {
+  fill: currentColor;
+  color: var(--positive);
+}
+
+.document-offline-spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid color-mix(in srgb, var(--champagne) 45%, transparent);
+  border-top-color: var(--champagne);
+  border-radius: 50%;
+  animation: document-offline-spin 0.8s linear infinite;
+}
+
+@keyframes document-offline-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.document-offline-retry {
+  border: none;
+  background: none;
+  color: var(--champagne);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 0.2rem;
+  padding: 0;
+  cursor: pointer;
+}
+
+.document-action-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 100%;
+}
+
 .document-card h3 {
   margin: 0.55rem 0 0;
   color: var(--text);

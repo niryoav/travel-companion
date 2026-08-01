@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 
 import { PageHeader } from '../../components/PageHeader'
+import { DocumentOfflineStatusIcon } from './components/DocumentOfflineStatusIcon'
+import { documentOfflineService } from './documentOfflineService'
 import {
   loadRestaurantMenuManifest,
   type RestaurantMenuGroup,
@@ -39,6 +41,15 @@ export function RestaurantMenusScreen({
       active = false
     }
   }, [loadManifest])
+
+  useEffect(() => {
+    if (state.status !== 'loaded') {
+      return
+    }
+    void documentOfflineService.syncMissing(
+      state.groups.flatMap((group) => group.menus.map(({ href }) => href)),
+    )
+  }, [state])
 
   return (
     <main className="page-container documents-screen" id="main-content">
@@ -88,9 +99,7 @@ export function RestaurantMenusScreen({
                   <li className="document-card" key={menu.menuType}>
                     <div className="document-card-meta">
                       <span>Restaurant menu</span>
-                      <span className="document-offline-status">
-                        Available offline
-                      </span>
+                      <DocumentOfflineStatusIcon href={menu.href} />
                     </div>
                     <h3>{menu.menuType}</h3>
                     <a
@@ -98,6 +107,9 @@ export function RestaurantMenusScreen({
                       href={menu.href}
                       rel="noreferrer"
                       target="_blank"
+                      onClick={() =>
+                        void documentOfflineService.ensureCached(menu.href)
+                      }
                     >
                       Open {menu.menuType} menu
                     </a>

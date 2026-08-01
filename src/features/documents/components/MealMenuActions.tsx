@@ -1,5 +1,7 @@
 import { resolveMealMenuActions } from '../mealMenuResolver'
 import { useRestaurantMenus } from '../restaurantMenuContext'
+import { DocumentOfflineStatusIcon } from './DocumentOfflineStatusIcon'
+import { documentOfflineService } from '../documentOfflineService'
 
 interface MealMenuActionsProps {
   localStartTime?: string
@@ -25,6 +27,8 @@ export function MealMenuActions({
     return null
   }
 
+  const dessertHref = actions.dessert?.href
+
   return (
     <div className="meal-menu-actions">
       <a
@@ -32,18 +36,26 @@ export function MealMenuActions({
         href={actions.menu.href}
         rel="noreferrer"
         target="_blank"
+        onClick={() =>
+          void documentOfflineService.ensureCached(actions.menu.href)
+        }
       >
         View menu
       </a>
-      {actions.dessert ? (
-        <a
-          className="meal-menu-action meal-menu-dessert-action"
-          href={actions.dessert.href}
-          rel="noreferrer"
-          target="_blank"
-        >
-          Dessert
-        </a>
+      <DocumentOfflineStatusIcon href={actions.menu.href} />
+      {dessertHref ? (
+        <>
+          <a
+            className="meal-menu-action meal-menu-dessert-action"
+            href={dessertHref}
+            rel="noreferrer"
+            target="_blank"
+            onClick={() => void documentOfflineService.ensureCached(dessertHref)}
+          >
+            Dessert
+          </a>
+          <DocumentOfflineStatusIcon href={dessertHref} />
+        </>
       ) : null}
     </div>
   )

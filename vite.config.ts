@@ -4,6 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vitest/config'
 
 import { resolveDeploymentBuildValues } from './build/deploymentBuildInfo'
+import { DOCUMENT_CACHE_NAME } from './src/pwa/documentCache'
 
 const deploymentBuild = resolveDeploymentBuildValues(process.env)
 
@@ -49,12 +50,25 @@ export default defineConfig({
       workbox: {
         cleanupOutdatedCaches: true,
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api\//],
+        navigateFallbackDenylist: [
+          /^\/api\//,
+          /^\/documents\/.*\.(pdf|json)$/,
+        ],
         globPatterns: [
           '**/*.{js,css,html,svg,png,jpg,jpeg,webp,woff2}',
-          'documents/travel/**/*.pdf',
-          'documents/restaurant-menus/**/*.pdf',
-          'documents/restaurant-menus/manifest.json',
+        ],
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }: { url: URL }) =>
+              url.pathname.startsWith('/documents/') &&
+              (url.pathname.endsWith('.pdf') ||
+                url.pathname.endsWith('.json')),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: DOCUMENT_CACHE_NAME,
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
         ],
       },
       devOptions: {
