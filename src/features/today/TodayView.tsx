@@ -13,6 +13,7 @@ import { TodayEmptyState } from './components/TodayEmptyState'
 import { TodayHeader } from './components/TodayHeader'
 import { TodayPreparationCard } from './components/TodayPreparationCard'
 import { TodayWeatherCard } from './components/TodayWeatherCard'
+import { VoyageProgressCard } from './components/VoyageProgressCard'
 
 interface TodayViewProps {
   viewModel: TodayViewModel
@@ -66,6 +67,10 @@ export function TodayView({
 
       {viewModel.priorities ? (
         <OperationalPriorities priorities={viewModel.priorities} />
+      ) : null}
+
+      {viewModel.voyageProgress ? (
+        <VoyageProgressCard voyageProgress={viewModel.voyageProgress} />
       ) : null}
 
       {viewModel.weather ? (

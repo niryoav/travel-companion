@@ -59,6 +59,34 @@ describe('DocumentOfflineSync', () => {
     syncSpy.mockRestore()
   })
 
+  it('includes any additional hrefs (e.g. voyage-progress images) in the same sync', async () => {
+    const loadManifest = vi.fn(async () => [])
+    const syncSpy = vi.spyOn(documentOfflineService, 'syncMissing')
+      .mockResolvedValue()
+    const removeStaleSpy = vi.spyOn(documentOfflineService, 'removeStale')
+      .mockResolvedValue()
+
+    render(
+      <DocumentOfflineSync
+        documentReferences={documentReferences}
+        additionalHrefs={['/images/voyage-progress/voyage-day-01.png']}
+        loadManifest={loadManifest}
+        windowTarget={fakeWindow() as unknown as Window}
+      />,
+    )
+
+    await vi.waitFor(() => expect(syncSpy).toHaveBeenCalledTimes(1))
+    const [hrefs] = syncSpy.mock.calls[0]
+    expect(hrefs).toContain('/documents/travel/hotel.pdf')
+    expect(hrefs).toContain('/images/voyage-progress/voyage-day-01.png')
+
+    const [staleHrefs] = removeStaleSpy.mock.calls[0]
+    expect(staleHrefs).toContain('/images/voyage-progress/voyage-day-01.png')
+
+    syncSpy.mockRestore()
+    removeStaleSpy.mockRestore()
+  })
+
   it('retries missing documents again when the browser comes online', async () => {
     const loadManifest = vi.fn(async () => [])
     const syncSpy = vi.spyOn(documentOfflineService, 'syncMissing')
@@ -77,6 +105,31 @@ describe('DocumentOfflineSync', () => {
 
     testWindow.dispatchOnline()
     await vi.waitFor(() => expect(syncSpy).toHaveBeenCalledTimes(2))
+
+    syncSpy.mockRestore()
+  })
+
+  it('retries additional hrefs again when the browser comes online', async () => {
+    const loadManifest = vi.fn(async () => [])
+    const syncSpy = vi.spyOn(documentOfflineService, 'syncMissing')
+      .mockResolvedValue()
+    vi.spyOn(documentOfflineService, 'removeStale').mockResolvedValue()
+    const testWindow = fakeWindow()
+
+    render(
+      <DocumentOfflineSync
+        documentReferences={documentReferences}
+        additionalHrefs={['/images/voyage-progress/voyage-day-01.png']}
+        loadManifest={loadManifest}
+        windowTarget={testWindow as unknown as Window}
+      />,
+    )
+    await vi.waitFor(() => expect(syncSpy).toHaveBeenCalledTimes(1))
+
+    testWindow.dispatchOnline()
+    await vi.waitFor(() => expect(syncSpy).toHaveBeenCalledTimes(2))
+    const [hrefs] = syncSpy.mock.calls[1]
+    expect(hrefs).toContain('/images/voyage-progress/voyage-day-01.png')
 
     syncSpy.mockRestore()
   })

@@ -1,4 +1,4 @@
-import { DOCUMENT_CACHE_NAME } from '../../pwa/documentCache'
+import { OFFLINE_ASSET_CACHE_NAME } from '../../pwa/offlineAssetCache'
 
 export type DocumentStatus = 'not-cached' | 'downloading' | 'cached' | 'failed'
 
@@ -20,7 +20,7 @@ export class DocumentOfflineService {
   private cachePromise: Promise<Cache | null> | null = null
 
   constructor(options: DocumentOfflineServiceOptions = {}) {
-    this.cacheName = options.cacheName ?? DOCUMENT_CACHE_NAME
+    this.cacheName = options.cacheName ?? OFFLINE_ASSET_CACHE_NAME
     this.concurrency = options.concurrency ?? 2
     this.fetchImpl = options.fetchImpl ?? globalThis.fetch?.bind(globalThis)
     this.cacheStorage =

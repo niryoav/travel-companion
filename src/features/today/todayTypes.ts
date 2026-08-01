@@ -1,4 +1,5 @@
 import type { TripDayKind } from '../../domain/trip/tripTypes'
+import type { VoyageProgressViewModel } from '../../domain/trip/selectors/selectVoyageProgress'
 import type { DocumentActionViewModel } from '../documents/documentTypes'
 
 export type TodayState =
@@ -193,5 +194,6 @@ export interface TodayViewModel {
   preparation?: TodayPreparationViewModel
   returnGuidance?: TodayReturnGuidanceViewModel
   tomorrow?: TomorrowPreparationViewModel
+  voyageProgress?: VoyageProgressViewModel
   emptyMessage?: string
 }
