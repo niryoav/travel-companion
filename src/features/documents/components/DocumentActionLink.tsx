@@ -1,5 +1,7 @@
 import type { DocumentActionViewModel } from '../documentTypes'
 import { useTripLifecycle } from '../../../app/TripLifecycleContext'
+import { DocumentOfflineStatusIcon } from './DocumentOfflineStatusIcon'
+import { documentOfflineService } from '../documentOfflineService'
 
 interface DocumentActionLinkProps {
   action: DocumentActionViewModel
@@ -13,14 +15,20 @@ export function DocumentActionLink({
   const { recordDocumentOpen } = useTripLifecycle()
 
   return (
-    <a
-      className={className}
-      href={action.href}
-      target="_blank"
-      rel="noreferrer"
-      onClick={() => recordDocumentOpen(action.id)}
-    >
-      {action.label}
-    </a>
+    <span className="document-action-row">
+      <a
+        className={className}
+        href={action.href}
+        target="_blank"
+        rel="noreferrer"
+        onClick={() => {
+          recordDocumentOpen(action.id)
+          void documentOfflineService.ensureCached(action.href)
+        }}
+      >
+        {action.label}
+      </a>
+      <DocumentOfflineStatusIcon href={action.href} />
+    </span>
   )
 }

@@ -1,8 +1,13 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router'
 
 import { PageHeader } from '../../components/PageHeader'
 import type { TripData } from '../../domain/trip/tripTypes'
 import { DocumentActionLink } from './components/DocumentActionLink'
+import { deckPlans } from './deckPlans'
+import { buildDocumentRegistry } from './documentRegistry'
+import { documentOfflineService } from './documentOfflineService'
+import { loadRestaurantMenuManifest } from './restaurantMenus'
 import { selectDocumentsViewModel } from './selectors/selectDocumentsViewModel'
 
 interface DocumentsScreenProps {
@@ -11,6 +16,28 @@ interface DocumentsScreenProps {
 
 export function DocumentsScreen({ tripData }: DocumentsScreenProps) {
   const viewModel = selectDocumentsViewModel(tripData)
+
+  useEffect(() => {
+    let active = true
+    void loadRestaurantMenuManifest()
+      .catch(() => [])
+      .then((restaurantMenuGroups) => {
+        if (!active) {
+          return
+        }
+        const registry = buildDocumentRegistry({
+          deckPlans,
+          restaurantMenuGroups,
+          documentReferences: tripData.documentReferences,
+        })
+        void documentOfflineService.syncMissing(
+          registry.map(({ href }) => href),
+        )
+      })
+    return () => {
+      active = false
+    }
+  }, [tripData])
 
   return (
     <main className="page-container documents-screen" id="main-content">
@@ -58,6 +85,19 @@ export function DocumentsScreen({ tripData }: DocumentsScreenProps) {
             <p>Browse onboard activity and entertainment locations by deck.</p>
             <Link className="document-action" to="/documents/activities">
               Activities & entertainment
+            </Link>
+          </li>
+          <li className="document-card">
+            <div className="document-card-meta">
+              <span>Ship</span>
+              <span className="document-offline-status">
+                Available offline
+              </span>
+            </div>
+            <h3>Deck plans</h3>
+            <p>Browse the Oceania Marina deck plans by deck number.</p>
+            <Link className="document-action" to="/documents/deckplans">
+              Deck plans
             </Link>
           </li>
         </ul>
