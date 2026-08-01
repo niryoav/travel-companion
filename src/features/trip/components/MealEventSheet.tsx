@@ -16,6 +16,7 @@ import {
   instantFromLocalTime,
   timeInputValue,
 } from '../../../domain/trip/localTimeInput'
+import { formatRestaurantTitle } from '../../../domain/trip/mealEvents'
 import type { AddedMealEvent } from '../../../domain/trip/tripOverrides'
 import type {
   MealRestaurantId,
@@ -215,7 +216,7 @@ export function MealEventSheet({
                   ) : null}
                   {availableRestaurants.map((restaurant) => (
                     <option key={restaurant.id} value={restaurant.id}>
-                      {restaurant.name}
+                      {formatRestaurantTitle(restaurant.name, restaurant.deck)}
                     </option>
                   ))}
                 </select>

@@ -18,6 +18,7 @@ export interface ImportantMoment {
   dayId: string
   kind: ImportantMomentKind
   title: string
+  deck?: number
   startsAt: string
   timeZone: string
   location?: string
@@ -79,6 +80,7 @@ function eventMoment(data: TripData, event: TripEvent): ImportantMoment | null {
     dayId: event.dayId,
     kind,
     title,
+    deck: meal?.deck,
     startsAt: event.startsAt,
     timeZone,
     location: meal?.location ?? show?.location ?? location,

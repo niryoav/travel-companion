@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 
 import { AppShell } from './AppShell'
+import { ActivitiesEntertainmentScreen } from '../features/documents/ActivitiesEntertainmentScreen'
 import { DocumentsScreen } from '../features/documents/DocumentsScreen'
 import { RestaurantMenusScreen } from '../features/documents/RestaurantMenusScreen'
 import { RestaurantMenuProvider } from '../features/documents/RestaurantMenuProvider'
@@ -197,6 +198,10 @@ export function App({
             <Route
               path="documents/restaurant-menus"
               element={<RestaurantMenusScreen />}
+            />
+            <Route
+              path="documents/activities"
+              element={<ActivitiesEntertainmentScreen />}
             />
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Route>

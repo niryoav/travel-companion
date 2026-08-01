@@ -61,6 +61,7 @@ export interface TripEventViewModel {
   id: string
   kindLabel: string
   title: string
+  deck?: number
   time?: string
   startsAt?: string
   endTime?: string

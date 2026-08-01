@@ -1,5 +1,6 @@
 import { DocumentActionLink } from '../../documents/components/DocumentActionLink'
 import { MealMenuActions } from '../../documents/components/MealMenuActions'
+import { formatRestaurantTitle } from '../../../domain/trip/mealEvents'
 import { PortAccessIndicator } from '../../../components/PortAccessIndicator'
 import type {
   TripContentSourceViewModel,
@@ -115,7 +116,7 @@ function TripEventDetail({
       </div>
       <div>
         <span className="trip-event-kind">{event.kindLabel}</span>
-        <h4>{event.title}</h4>
+        <h4>{formatRestaurantTitle(event.title, event.deck)}</h4>
         {event.organizer ? <p>{event.organizer}</p> : null}
         {event.timingConfidenceLabel ? (
           <p>{event.timingConfidenceLabel}</p>

@@ -222,6 +222,7 @@ function eventViewModel(
       meal?.kindLabel ??
       eventKindLabel(event),
     title: meal?.title ?? event.title,
+    deck: meal?.deck,
     time:
       event.startsAt
         ? formatLocalTime(event.startsAt, timeZone.timeZone)

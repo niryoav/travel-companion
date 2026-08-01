@@ -5,6 +5,10 @@ function mealTypeLabel(value: 'BREAKFAST' | 'LUNCH' | 'DINNER'): string {
   return value.charAt(0) + value.slice(1).toLowerCase()
 }
 
+export function formatRestaurantTitle(name: string, deck?: number): string {
+  return deck ? `${name} · Deck ${deck}` : name
+}
+
 export function mealEventPresentation(
   data: TripData,
   event: TripEvent,
@@ -13,6 +17,7 @@ export function mealEventPresentation(
     return {
       kindLabel: 'High Tea',
       title: 'High Tea',
+      deck: undefined as number | undefined,
       location: 'Horizons Lounge · Deck 15',
       labels: [] as string[],
     }
@@ -28,12 +33,14 @@ export function mealEventPresentation(
       ? {
           kindLabel: 'Dinner',
           title: 'La Reserve',
+          deck: undefined as number | undefined,
           location: 'Legacy venue · location unavailable',
           labels: ['Legacy venue'],
         }
       : {
           kindLabel: mealTypeLabel(event.mealType),
           title: 'Unknown venue',
+          deck: undefined as number | undefined,
           location: 'Venue unavailable',
           labels: ['Legacy venue'],
         }
@@ -46,6 +53,7 @@ export function mealEventPresentation(
   return {
     kindLabel: mealTypeLabel(event.mealType),
     title: restaurant.name,
+    deck: restaurant.deck,
     location: restaurant.location,
     labels: [
       ...(

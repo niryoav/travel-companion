@@ -135,6 +135,7 @@ export interface MealRestaurant {
   id: MealRestaurantId
   name: string
   location: string
+  deck?: number
   reservationRequiredForDinner: boolean
   extraFee: boolean
   services: Partial<Record<MealType, MealServiceWindow[]>>

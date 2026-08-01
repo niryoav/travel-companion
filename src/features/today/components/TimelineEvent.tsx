@@ -1,5 +1,6 @@
 import { DocumentActionLink } from '../../documents/components/DocumentActionLink'
 import { MealMenuActions } from '../../documents/components/MealMenuActions'
+import { formatRestaurantTitle } from '../../../domain/trip/mealEvents'
 import type { TodayEventViewModel } from '../todayTypes'
 
 interface TimelineEventProps {
@@ -28,7 +29,7 @@ export function TimelineEvent({ event }: TimelineEventProps) {
           {event.publicCode ? <span>{event.publicCode}</span> : null}
           <span className="timeline-state">{event.stateLabel}</span>
         </div>
-        <h3>{event.title}</h3>
+        <h3>{formatRestaurantTitle(event.title, event.deck)}</h3>
         {event.operationalStatusLabel ? (
           <p>{event.operationalStatusLabel}</p>
         ) : null}

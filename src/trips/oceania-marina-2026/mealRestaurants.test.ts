@@ -64,6 +64,21 @@ describe('Oceania Marina meal restaurant catalog', () => {
       'Red Ginger': 'Deck 5',
       Privée: 'Deck 14',
     })
+    expect(
+      Object.fromEntries(
+        oceaniaMarinaMealRestaurants.map(({ name, deck }) => [name, deck]),
+      ),
+    ).toEqual({
+      'The Grand Dining Room': 6,
+      'Terrace Café': 12,
+      'Waves Grill': 12,
+      'Aquamar Kitchen': 12,
+      'Polo Grill': 14,
+      Toscana: 14,
+      Jacques: 5,
+      'Red Ginger': 5,
+      Privée: 14,
+    })
   })
 
   it('stores reservation, fee, and dinner-note facts canonically', () => {

@@ -39,6 +39,7 @@ describe('next important moment resolver', () => {
         id: 'privee',
         name: 'Privée',
         location: 'Deck 14',
+        deck: 14,
         reservationRequiredForDinner: true,
         extraFee: true,
         services: {},
@@ -97,7 +98,7 @@ describe('next important moment resolver', () => {
       location: 'Marina Lounge · Deck 5',
     })
     expect(moments.find(({ id }) => id === 'user-dinner-without-menu'))
-      .toMatchObject({ kind: 'MEAL', title: 'Privée' })
+      .toMatchObject({ kind: 'MEAL', title: 'Privée', deck: 14 })
     expect(selectNextImportantMoment(
       moments,
       new Date('2030-05-12T19:01:00+02:00'),

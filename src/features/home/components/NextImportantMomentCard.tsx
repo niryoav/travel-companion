@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 
 import { MealMenuActions } from '../../documents/components/MealMenuActions'
+import { formatRestaurantTitle } from '../../../domain/trip/mealEvents'
 import type { ImportantMoment } from '../nextImportantMoment'
 import { formatRemainingDuration } from '../nextImportantMoment'
 
@@ -33,7 +34,9 @@ export function NextImportantMomentCard({ moment, now }: Props) {
     <section className="home-card important-moment-card" aria-labelledby="important-moment-title">
       <p className="home-card-label">Next important moment</p>
       <h2 id="important-moment-title">
-        <Link to={`/trip#${moment.dayId}`}>{moment.title}</Link>
+        <Link to={`/trip#${moment.dayId}`}>
+          {formatRestaurantTitle(moment.title, moment.deck)}
+        </Link>
       </h2>
       <p className="important-moment-when">
         {dateLabel(moment, now)} at <time dateTime={moment.startsAt}>{eventTime(moment)}</time>
