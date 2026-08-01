@@ -62,13 +62,14 @@ describe('resolveMealMenuActions', () => {
     ['event-polo-grill-dinner', true],
     ['event-jacques-dinner', true],
   ] as const)(
-    'infers Dinner for existing legacy reservation %s',
+    'resolves Dinner for the canonical confirmed reservation %s',
     (eventId, hasDessert) => {
       const event = oceaniaMarina2026TripData.events.find(
         ({ id }) => id === eventId,
       )
       expect(event?.kind).toBe('MEAL')
-      expect(event?.mealType).toBeUndefined()
+      expect(event?.mealType).toBe('DINNER')
+      expect(event?.mealRestaurantId).toBeTruthy()
 
       const manifest = JSON.parse(readFileSync(
         'public/documents/restaurant-menus/manifest.json',
@@ -78,7 +79,7 @@ describe('resolveMealMenuActions', () => {
       const result = resolveMealMenuActions(
         manifestGroups,
         event!.title,
-        'Meal',
+        'Dinner',
         formatLocalTime(event!.startsAt!, event!.timeZone!),
         oceaniaMarina2026TripData.mealRestaurants,
       )
