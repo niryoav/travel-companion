@@ -473,6 +473,23 @@ Label assumptions as one of:
 Several test browsers or test devices do not by themselves establish a need for
 multi-editor, multi-master, or enterprise-scale behavior.
 
+### Simulation and review-mode parity
+
+Every user-facing feature must be testable in simulation/review mode using the
+same production selectors, view models and components. Simulation may inject
+state, time or failures, but must not duplicate business logic.
+
+In practice this means: the app's `?simulation=`/review-mode paths (see
+`src/features/simulation/`) may control inputs such as the simulated clock,
+the active trip day, connectivity, or induced failures — but the resulting
+screen must be produced by calling the same selector (e.g.
+`selectTodayViewModel`) and rendering the same components the live app uses.
+A feature that only renders correctly on the real production date, and cannot
+be reviewed before it occurs, is not complete. A hand-authored fixture that
+duplicates a selector's output for a specific scenario is a sign the
+simulation has drifted from production and should be replaced with a real
+selector call driven by simulated input.
+
 ### Smallest sufficient architecture
 
 Choose the smallest design that satisfies confirmed product requirements.

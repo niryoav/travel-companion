@@ -4,6 +4,7 @@ import { useLocation } from 'react-router'
 import type { DailyLoveMessageSchedule } from '../../domain/content/dailyLoveMessage'
 import { selectDailyLoveMessage } from '../../domain/content/dailyLoveMessage'
 import { selectCurrentLocalDate } from '../../domain/trip/selectors/selectCurrentLocalDate'
+import { selectTripDays } from '../../domain/trip/selectors/selectTripDays'
 import type { TripData } from '../../domain/trip/tripTypes'
 import { SimulationScenarioSwitcher } from '../simulation/SimulationScenarioSwitcher'
 import { simulationScenarioFromSearch } from '../simulation/simulationScenarios'
@@ -124,7 +125,11 @@ export function HomeScreen({
         loveMessage={visibleLoveMessage}
         reviewControl={
           showSimulationPreview || simulationScenario
-            ? <SimulationScenarioSwitcher />
+            ? (
+              <SimulationScenarioSwitcher
+                tripDayCount={selectTripDays(tripData).length}
+              />
+            )
             : undefined
         }
         viewModel={viewModel}

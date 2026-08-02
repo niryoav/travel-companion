@@ -1,6 +1,10 @@
 import { Outlet, useLocation } from 'react-router'
 
 import { BottomNavigation } from '../components/BottomNavigation'
+import {
+  cruiseDayFromSearch,
+  cruiseDaySearchParam,
+} from '../features/simulation/cruiseDaySimulation'
 import { simulationScenarioFromSearch } from '../features/simulation/simulationScenarios'
 import { RouteErrorBoundary } from './RouteErrorBoundary'
 import { primaryNavigation } from './navigation/primaryNavigation'
@@ -10,6 +14,7 @@ export function AppShell() {
   const isHome =
     pathname === '/home' || pathname === '/more/simulation-preview'
   const simulationScenario = simulationScenarioFromSearch(search)
+  const cruiseDayNumber = cruiseDayFromSearch(search)
 
   return (
     <div className={`app-shell${isHome ? ' app-shell-home' : ''}`}>
@@ -34,7 +39,9 @@ export function AppShell() {
         preservedSearch={
           simulationScenario
             ? `?simulation=${simulationScenario}`
-            : undefined
+            : cruiseDayNumber
+              ? cruiseDaySearchParam(cruiseDayNumber)
+              : undefined
         }
       />
     </div>

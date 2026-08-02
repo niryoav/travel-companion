@@ -344,6 +344,41 @@ describe('App', () => {
     ).not.toHaveLength(0)
   })
 
+  it('previews any cruise day via the shared Cruise day control, using the real Today selector', async () => {
+    const repository = new MemoryTripStateRepository()
+    repository.travelerId = 'traveler-yoav'
+    window.history.replaceState({}, '', '/more/simulation-preview')
+    renderSimulationApp(repository)
+
+    expect(screen.getByLabelText('Cruise day')).toHaveValue('live')
+
+    fireEvent.change(screen.getByLabelText('Cruise day'), {
+      target: { value: '4' },
+    })
+
+    expect(window.location.search).toBe('?cruiseDay=4')
+
+    const navigation = screen.getByRole('navigation', {
+      name: 'Primary navigation',
+    })
+    fireEvent.click(within(navigation).getByRole('link', { name: 'Today' }))
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Húsavík' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Voyage progress')).toBeInTheDocument()
+    expect(
+      screen.getByRole('img', { name: 'Voyage progress map for day 4' }),
+    ).toHaveAttribute('src', '/images/voyage-progress/voyage-day-04.png')
+    expect(screen.getByText('Today: Húsavík')).toBeInTheDocument()
+    expect(screen.getByText('Next: Djúpivogur')).toBeInTheDocument()
+    expect(window.location.search).toBe('?cruiseDay=4')
+    expect(screen.getByLabelText('Cruise day')).toHaveValue('4')
+
+    fireEvent.click(screen.getByRole('link', { name: 'Home' }))
+    expect(window.location.search).toBe('?cruiseDay=4')
+  })
+
   it('reuses menu actions in the Home countdown and simulated Today', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
       menus: [{
