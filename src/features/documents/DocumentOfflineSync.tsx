@@ -4,6 +4,7 @@ import type { DocumentReference } from '../../domain/trip/tripTypes'
 import { buildDocumentRegistry } from './documentRegistry'
 import { deckPlans } from './deckPlans'
 import { documentOfflineService } from './documentOfflineService'
+import { finalCruiseSummaryDocuments } from './finalCruiseSummary'
 import { loadRestaurantMenuManifest } from './restaurantMenus'
 
 interface DocumentOfflineSyncProps {
@@ -30,6 +31,7 @@ export function DocumentOfflineSync({
       const registry = buildDocumentRegistry({
         deckPlans,
         restaurantMenuGroups,
+        finalCruiseSummaryDocuments,
         documentReferences,
       })
       const hrefs = [

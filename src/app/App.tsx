@@ -6,6 +6,7 @@ import { ActivitiesEntertainmentScreen } from '../features/documents/ActivitiesE
 import { DeckPlansScreen } from '../features/documents/DeckPlansScreen'
 import { DocumentOfflineSync } from '../features/documents/DocumentOfflineSync'
 import { DocumentsScreen } from '../features/documents/DocumentsScreen'
+import { FinalCruiseSummaryScreen } from '../features/documents/FinalCruiseSummaryScreen'
 import { RestaurantMenusScreen } from '../features/documents/RestaurantMenusScreen'
 import { RestaurantMenuProvider } from '../features/documents/RestaurantMenuProvider'
 import { HomeProfileGate } from '../features/profile/HomeProfileGate'
@@ -213,6 +214,10 @@ export function App({
             <Route
               path="documents/deckplans"
               element={<DeckPlansScreen />}
+            />
+            <Route
+              path="documents/final-cruise-vacation-summary"
+              element={<FinalCruiseSummaryScreen />}
             />
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Route>

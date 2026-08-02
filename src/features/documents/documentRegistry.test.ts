@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import type { DocumentReference } from '../../domain/trip/tripTypes'
 import { deckPlans } from './deckPlans'
 import { buildDocumentRegistry } from './documentRegistry'
+import { finalCruiseSummaryDocuments } from './finalCruiseSummary'
 import type { RestaurantMenuGroup } from './restaurantMenus'
 
 const restaurantMenuGroups: RestaurantMenuGroup[] = [
@@ -83,6 +84,23 @@ describe('buildDocumentRegistry', () => {
       title: 'Hotel confirmation',
       category: 'TRAVEL',
       revision: '2026-08-22',
+    })
+  })
+
+  it('includes the Final Cruise Documents — Oceania documents under their own category', () => {
+    const registry = buildDocumentRegistry({ finalCruiseSummaryDocuments })
+
+    expect(registry).toHaveLength(finalCruiseSummaryDocuments.length)
+    expect(registry.every(({ category }) => category === 'CRUISE_SUMMARY'))
+      .toBe(true)
+
+    const boardingPass = registry.find(
+      ({ href }) => href === finalCruiseSummaryDocuments[0].href,
+    )
+    expect(boardingPass).toMatchObject({
+      id: 'cruise-summary-boarding-pass',
+      title: 'Boarding pass',
+      category: 'CRUISE_SUMMARY',
     })
   })
 

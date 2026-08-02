@@ -7,6 +7,7 @@ import { DocumentActionLink } from './components/DocumentActionLink'
 import { deckPlans } from './deckPlans'
 import { buildDocumentRegistry } from './documentRegistry'
 import { documentOfflineService } from './documentOfflineService'
+import { finalCruiseSummaryDocuments } from './finalCruiseSummary'
 import { loadRestaurantMenuManifest } from './restaurantMenus'
 import { selectDocumentsViewModel } from './selectors/selectDocumentsViewModel'
 
@@ -28,6 +29,7 @@ export function DocumentsScreen({ tripData }: DocumentsScreenProps) {
         const registry = buildDocumentRegistry({
           deckPlans,
           restaurantMenuGroups,
+          finalCruiseSummaryDocuments,
           documentReferences: tripData.documentReferences,
         })
         void documentOfflineService.syncMissing(
@@ -51,6 +53,36 @@ export function DocumentsScreen({ tripData }: DocumentsScreenProps) {
         Documents open in your device&apos;s PDF viewer. Return to Travel
         Companion when finished.
       </p>
+
+      <section
+        aria-labelledby="document-group-final-cruise-summary"
+        className="document-group"
+      >
+        <h2 id="document-group-final-cruise-summary">
+          Final Cruise Documents — Oceania
+        </h2>
+        <ul>
+          <li className="document-card">
+            <div className="document-card-meta">
+              <span>Cruise summary</span>
+              <span className="document-offline-status">
+                Available offline
+              </span>
+            </div>
+            <h3>Final Cruise Documents — Oceania</h3>
+            <p>
+              Boarding pass, guest registration, shore excursions guide, and
+              ticket contract issued by Oceania Cruises.
+            </p>
+            <Link
+              className="document-action"
+              to="/documents/final-cruise-vacation-summary"
+            >
+              Final Cruise Documents — Oceania
+            </Link>
+          </li>
+        </ul>
+      </section>
 
       <section
         aria-labelledby="document-group-restaurant-menus"

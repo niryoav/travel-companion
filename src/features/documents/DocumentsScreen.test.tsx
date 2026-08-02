@@ -26,7 +26,10 @@ describe('DocumentsScreen', () => {
     expect(
       screen.getByRole('heading', { name: 'Independent excursions' }),
     ).toBeInTheDocument()
-    expect(screen.getAllByText('Available offline')).toHaveLength(9)
+    expect(screen.getAllByText('Available offline')).toHaveLength(10)
+    expect(
+      screen.getByRole('link', { name: 'Final Cruise Documents — Oceania' }),
+    ).toHaveAttribute('href', '/documents/final-cruise-vacation-summary')
     expect(
       screen.getByRole('link', { name: 'Restaurant menus' }),
     ).toHaveAttribute('href', '/documents/restaurant-menus')
