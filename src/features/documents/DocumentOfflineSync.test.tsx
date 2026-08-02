@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { DocumentReference } from '../../domain/trip/tripTypes'
 import { DocumentOfflineSync } from './DocumentOfflineSync'
 import { documentOfflineService } from './documentOfflineService'
+import { finalCruiseSummaryDocuments } from './finalCruiseSummary'
 
 const documentReferences: DocumentReference[] = [
   {
@@ -85,6 +86,27 @@ describe('DocumentOfflineSync', () => {
 
     syncSpy.mockRestore()
     removeStaleSpy.mockRestore()
+  })
+
+  it('includes the Final Cruise Documents — Oceania documents in the same sync', async () => {
+    const loadManifest = vi.fn(async () => [])
+    const syncSpy = vi.spyOn(documentOfflineService, 'syncMissing')
+      .mockResolvedValue()
+    vi.spyOn(documentOfflineService, 'removeStale').mockResolvedValue()
+
+    render(
+      <DocumentOfflineSync
+        documentReferences={documentReferences}
+        loadManifest={loadManifest}
+        windowTarget={fakeWindow() as unknown as Window}
+      />,
+    )
+
+    await vi.waitFor(() => expect(syncSpy).toHaveBeenCalledTimes(1))
+    const [hrefs] = syncSpy.mock.calls[0]
+    expect(hrefs).toContain(finalCruiseSummaryDocuments[0].href)
+
+    syncSpy.mockRestore()
   })
 
   it('retries missing documents again when the browser comes online', async () => {
