@@ -7,6 +7,7 @@ import { HomeHero } from './components/HomeHero'
 import { NextMilestoneCard } from './components/NextMilestoneCard'
 import { QuickChecklist } from './components/QuickChecklist'
 import { QuickWeatherCard } from './components/QuickWeatherCard'
+import { VoyageProgressCard } from './components/VoyageProgressCard'
 
 interface HomePhaseViewProps {
   greeting: string
@@ -27,7 +28,6 @@ export function HomePhaseView({
     <>
       <HomeHero
         context={viewModel.context}
-        cruiseProgress={viewModel.cruiseProgress}
         greeting={greeting}
         intro={viewModel.intro}
         portAccessStatus={viewModel.portAccessStatus}
@@ -37,6 +37,10 @@ export function HomePhaseView({
 
       {loveMessage ? (
         <DailyLoveMessage message={loveMessage} variant="home" />
+      ) : null}
+
+      {viewModel.voyageProgress ? (
+        <VoyageProgressCard voyageProgress={viewModel.voyageProgress} />
       ) : null}
 
       <div className="home-briefing-grid">

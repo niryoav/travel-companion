@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -282,7 +282,7 @@ describe('HomeScreen', () => {
     expect(
       screen.getByRole('heading', { level: 2, name: 'Harbor City' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('Cruise Day 2 of 4')).toBeInTheDocument()
+    expect(screen.queryByText(/^Cruise Day/)).not.toBeInTheDocument()
     expect(screen.getByText('All aboard')).toBeInTheDocument()
     expect(screen.getByText('17:30')).toBeInTheDocument()
     expect(screen.getByText('Coastal walk')).toBeInTheDocument()
@@ -408,5 +408,105 @@ describe('HomeScreen', () => {
     expect(document.querySelectorAll('.home-alert')).toHaveLength(1)
     expect(document.documentElement.scrollWidth)
       .toBeLessThanOrEqual(document.documentElement.clientWidth)
+  })
+
+  it('shows the Journey progress card for day 1 via ?cruiseDay simulation, using the real Home selector', () => {
+    render(
+      <MemoryRouter initialEntries={['/home?cruiseDay=1']}>
+        <HomeScreen
+          loveMessageSchedule={oceaniaMarina2026DailyLoveMessages}
+          now={new Date('2026-01-01T08:00:00Z')}
+          travelerName="Alex"
+          tripData={oceaniaMarina2026TripData}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Journey progress')).toBeInTheDocument()
+    expect(screen.getByText('Journey day 1 of 14')).toBeInTheDocument()
+    expect(
+      screen.getByRole('img', { name: 'Voyage progress map for day 1' }),
+    ).toHaveAttribute('src', '/images/voyage-progress/voyage-day-01.png')
+    expect(screen.getByText('Today: Travel to Reykjavík')).toBeInTheDocument()
+    expect(screen.getByText('Next: Reykjavík')).toBeInTheDocument()
+    expect(screen.getByLabelText('Cruise day')).toHaveValue('1')
+    expect(screen.queryByText(/^Cruise Day/)).not.toBeInTheDocument()
+  })
+
+  it('shows a middle cruise day (day 4) via ?cruiseDay simulation on Home', () => {
+    render(
+      <MemoryRouter initialEntries={['/home?cruiseDay=4']}>
+        <HomeScreen
+          loveMessageSchedule={oceaniaMarina2026DailyLoveMessages}
+          now={new Date('2026-01-01T08:00:00Z')}
+          travelerName="Alex"
+          tripData={oceaniaMarina2026TripData}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Journey day 4 of 14')).toBeInTheDocument()
+    expect(
+      screen.getByRole('img', { name: 'Voyage progress map for day 4' }),
+    ).toHaveAttribute('src', '/images/voyage-progress/voyage-day-04.png')
+    expect(screen.getByText('Today: Húsavík')).toBeInTheDocument()
+    expect(screen.getByText('Next: Djúpivogur')).toBeInTheDocument()
+    expect(screen.queryByText(/^Cruise Day/)).not.toBeInTheDocument()
+  })
+
+  it('shows the final cruise day (day 14) via ?cruiseDay simulation, with no Next label', () => {
+    render(
+      <MemoryRouter initialEntries={['/home?cruiseDay=14']}>
+        <HomeScreen
+          loveMessageSchedule={oceaniaMarina2026DailyLoveMessages}
+          now={new Date('2026-01-01T08:00:00Z')}
+          travelerName="Alex"
+          tripData={oceaniaMarina2026TripData}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Journey day 14 of 14')).toBeInTheDocument()
+    expect(
+      screen.getByRole('img', { name: 'Voyage progress map for day 14' }),
+    ).toHaveAttribute('src', '/images/voyage-progress/voyage-day-14.png')
+    expect(screen.getByText('Today: Southampton → Home')).toBeInTheDocument()
+    expect(screen.queryByText(/^Next:/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/^Cruise Day/)).not.toBeInTheDocument()
+  })
+
+  it('hides the Journey progress card on the actual trip before departure', () => {
+    render(
+      <MemoryRouter initialEntries={['/home']}>
+        <HomeScreen
+          loveMessageSchedule={oceaniaMarina2026DailyLoveMessages}
+          now={new Date('2026-01-01T08:00:00Z')}
+          travelerName="Alex"
+          tripData={oceaniaMarina2026TripData}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.queryByText('Journey progress')).not.toBeInTheDocument()
+  })
+
+  it('lets the Cruise day control switch which simulated day Home shows', async () => {
+    render(
+      <MemoryRouter initialEntries={['/home?cruiseDay=1']}>
+        <HomeScreen
+          loveMessageSchedule={oceaniaMarina2026DailyLoveMessages}
+          now={new Date('2026-01-01T08:00:00Z')}
+          travelerName="Alex"
+          tripData={oceaniaMarina2026TripData}
+        />
+      </MemoryRouter>,
+    )
+
+    fireEvent.change(screen.getByLabelText('Cruise day'), {
+      target: { value: '4' },
+    })
+
+    expect(await screen.findByText('Journey day 4 of 14')).toBeInTheDocument()
+    expect(screen.getByLabelText('Cruise day')).toHaveValue('4')
   })
 })

@@ -2,6 +2,7 @@ import { resolveTripPhase } from '../../../domain/trip/selectors/resolveTripPhas
 import { selectCruiseContext } from '../../../domain/trip/selectors/selectCruiseContext'
 import { selectNextEvent } from '../../../domain/trip/selectors/selectNextEvent'
 import { selectToday } from '../../../domain/trip/selectors/selectToday'
+import { selectVoyageProgress } from '../../../domain/trip/selectors/selectVoyageProgress'
 import {
   calendarDateInTimeZone,
   formatDateRange,
@@ -294,6 +295,7 @@ export function selectHomeViewModel(
           daysRemaining: cruiseContext.daysRemaining,
         }
       : undefined,
+    voyageProgress: selectVoyageProgress(data, today) ?? undefined,
     milestone,
   }
 }

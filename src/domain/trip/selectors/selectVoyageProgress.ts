@@ -3,6 +3,7 @@ import { selectTripDays } from './selectTripDays.js'
 
 export interface VoyageProgressViewModel {
   dayNumber: number
+  totalDays: number
   imagePath: string
   currentPort: string
   nextPort?: string
@@ -33,6 +34,7 @@ export function selectVoyageProgress(
 
   return {
     dayNumber,
+    totalDays: days.length,
     imagePath: voyageProgressImagePath(dayNumber),
     currentPort: today.title,
     nextPort: nextDay?.title,

@@ -179,4 +179,61 @@ describe('selectHomeViewModel', () => {
       title: 'Flight to Harbor City',
     })
   })
+
+  describe('voyageProgress', () => {
+    it('includes day 1 (Reykjavik embarkation), deriving totalDays from the canonical trip-day list', () => {
+      const viewModel = selectHomeViewModel(
+        oceaniaMarina2026TripData,
+        new Date('2026-08-22T08:00:00Z'),
+      )
+
+      expect(viewModel.voyageProgress).toMatchObject({
+        dayNumber: 1,
+        totalDays: 14,
+        imagePath: '/images/voyage-progress/voyage-day-01.png',
+        currentPort: 'Travel to Reykjavík',
+        nextPort: 'Reykjavík',
+      })
+    })
+
+    it('includes a middle day with the correct image, current, and next labels', () => {
+      const viewModel = selectHomeViewModel(
+        oceaniaMarina2026TripData,
+        new Date('2026-08-25T08:00:00Z'),
+      )
+
+      expect(viewModel.voyageProgress).toMatchObject({
+        dayNumber: 4,
+        totalDays: 14,
+        imagePath: '/images/voyage-progress/voyage-day-04.png',
+        currentPort: 'Húsavík',
+        nextPort: 'Djúpivogur',
+      })
+    })
+
+    it('omits nextPort on the final day', () => {
+      const viewModel = selectHomeViewModel(
+        oceaniaMarina2026TripData,
+        new Date('2026-09-04T08:00:00Z'),
+      )
+
+      expect(viewModel.voyageProgress).toMatchObject({
+        dayNumber: 14,
+        totalDays: 14,
+        imagePath: '/images/voyage-progress/voyage-day-14.png',
+        currentPort: 'Southampton → Home',
+      })
+      expect(viewModel.voyageProgress?.nextPort).toBeUndefined()
+    })
+
+    it('is absent before the cruise (Actual trip pre-departure)', () => {
+      const viewModel = selectHomeViewModel(
+        oceaniaMarina2026TripData,
+        new Date('2026-01-01T08:00:00Z'),
+      )
+
+      expect(viewModel.phase).toBe('PRE_TRIP')
+      expect(viewModel.voyageProgress).toBeUndefined()
+    })
+  })
 })

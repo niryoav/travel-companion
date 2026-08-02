@@ -1,14 +1,9 @@
 import { PortAccessIndicator } from '../../../components/PortAccessIndicator'
 import type { PortAccessStatus } from '../../../domain/trip/tripTypes'
-import type {
-  HomeContext,
-  CruiseProgress as CruiseProgressModel,
-} from '../homeTypes'
-import { CruiseProgress } from './CruiseProgress'
+import type { HomeContext } from '../homeTypes'
 
 interface HomeHeroProps {
   context: HomeContext
-  cruiseProgress?: CruiseProgressModel
   greeting: string
   intro?: string
   portAccessStatus?: PortAccessStatus
@@ -16,7 +11,6 @@ interface HomeHeroProps {
 
 export function HomeHero({
   context,
-  cruiseProgress,
   greeting,
   intro,
   portAccessStatus,
@@ -39,7 +33,6 @@ export function HomeHero({
         {context.tripDates ? (
           <p className="home-context-dates">{context.tripDates}</p>
         ) : null}
-        {cruiseProgress ? <CruiseProgress progress={cruiseProgress} /> : null}
         {context.countdown ? (
           <p className="home-context-countdown">{context.countdown}</p>
         ) : null}

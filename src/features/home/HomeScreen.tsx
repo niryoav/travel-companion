@@ -6,6 +6,10 @@ import { selectDailyLoveMessage } from '../../domain/content/dailyLoveMessage'
 import { selectCurrentLocalDate } from '../../domain/trip/selectors/selectCurrentLocalDate'
 import { selectTripDays } from '../../domain/trip/selectors/selectTripDays'
 import type { TripData } from '../../domain/trip/tripTypes'
+import {
+  cruiseDayFromSearch,
+  resolveCruiseDaySimulationDate,
+} from '../simulation/cruiseDaySimulation'
 import { SimulationScenarioSwitcher } from '../simulation/SimulationScenarioSwitcher'
 import { simulationScenarioFromSearch } from '../simulation/simulationScenarios'
 import { demoHomeStateFromSearch } from './demoPhase'
@@ -93,6 +97,10 @@ export function HomeScreen({
     ? simulationStart(tripData, simulationScenario, moments)
     : now
   const reviewState = demoHomeStateFromSearch(search)
+  const cruiseDayNumber = cruiseDayFromSearch(search)
+  const cruiseDayNow = cruiseDayNumber
+    ? resolveCruiseDaySimulationDate(tripData, cruiseDayNumber)
+    : null
   const simulationScenarios = simulationScenario
     ? createHomeSimulationScenarios(tripData)
     : null
@@ -100,13 +108,15 @@ export function HomeScreen({
     ? simulationScenarios![simulationScenario]
     : reviewState
       ? homeReviewFixtures[reviewState]
-      : selectHomeViewModel(tripData, now)
+      : selectHomeViewModel(tripData, cruiseDayNow ?? now)
   const loveMessage = selectDailyLoveMessage(
     loveMessageSchedule,
     selectCurrentLocalDate(tripData, now),
   )
   const visibleLoveMessage =
-    simulationScenario || viewModel.phase === HOME_PHASES.PRE_TRIP
+    simulationScenario ||
+    cruiseDayNumber ||
+    viewModel.phase === HOME_PHASES.PRE_TRIP
       ? null
       : loveMessage
 
@@ -124,7 +134,7 @@ export function HomeScreen({
         ) : undefined}
         loveMessage={visibleLoveMessage}
         reviewControl={
-          showSimulationPreview || simulationScenario
+          showSimulationPreview || simulationScenario || cruiseDayNumber
             ? (
               <SimulationScenarioSwitcher
                 tripDayCount={selectTripDays(tripData).length}

@@ -18,23 +18,26 @@ export function VoyageProgressCard({
 
   return (
     <section
-      className="today-card today-voyage-progress"
+      className="home-card voyage-progress-card"
       aria-labelledby={titleId}
     >
-      <p className="today-card-label" id={titleId}>
-        Voyage progress
+      <p className="home-card-label" id={titleId}>
+        Journey progress
+      </p>
+      <p className="voyage-progress-day-count">
+        Journey day {voyageProgress.dayNumber} of {voyageProgress.totalDays}
       </p>
       <img
         alt={`Voyage progress map for day ${voyageProgress.dayNumber}`}
-        className="today-voyage-progress-image"
+        className="voyage-progress-image"
         src={voyageProgress.imagePath}
         onError={() => setImageFailed(true)}
       />
-      <p className="today-voyage-progress-detail">
+      <p className="voyage-progress-detail">
         Today: {voyageProgress.currentPort}
       </p>
       {voyageProgress.nextPort ? (
-        <p className="today-voyage-progress-detail">
+        <p className="voyage-progress-detail">
           Next: {voyageProgress.nextPort}
         </p>
       ) : null}
