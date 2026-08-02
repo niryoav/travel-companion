@@ -1,6 +1,11 @@
 import { useLocation } from 'react-router'
 
+import { selectTripDays } from '../../domain/trip/selectors/selectTripDays'
 import type { TripData } from '../../domain/trip/tripTypes'
+import {
+  cruiseDayFromSearch,
+  resolveCruiseDaySimulationDate,
+} from '../simulation/cruiseDaySimulation'
 import { SimulationScenarioSwitcher } from '../simulation/SimulationScenarioSwitcher'
 import { simulationScenarioFromSearch } from '../simulation/simulationScenarios'
 import {
@@ -26,6 +31,10 @@ export function TodayScreen({ now, tripData }: TodayScreenProps) {
   const { search } = useLocation()
   const simulationScenario = simulationScenarioFromSearch(search)
   const reviewState = reviewStateFromSearch(search)
+  const cruiseDayNumber = cruiseDayFromSearch(search)
+  const cruiseDayNow = cruiseDayNumber
+    ? resolveCruiseDaySimulationDate(tripData, cruiseDayNumber)
+    : null
   const simulationScenarios = simulationScenario
     ? createTodaySimulationScenarios(tripData)
     : null
@@ -33,13 +42,17 @@ export function TodayScreen({ now, tripData }: TodayScreenProps) {
     ? simulationScenarios![simulationScenario]
     : reviewState
       ? todayReviewFixtures[reviewState]
-      : selectTodayViewModel(tripData, now)
+      : selectTodayViewModel(tripData, cruiseDayNow ?? now)
 
   return (
     <TodayView
       viewModel={viewModel}
       previewControls={
-        simulationScenario ? <SimulationScenarioSwitcher /> : undefined
+        simulationScenario || cruiseDayNumber ? (
+          <SimulationScenarioSwitcher
+            tripDayCount={selectTripDays(tripData).length}
+          />
+        ) : undefined
       }
     />
   )
