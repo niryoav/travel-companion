@@ -4,6 +4,7 @@ import { BottomNavigation } from '../components/BottomNavigation'
 import {
   cruiseDayFromSearch,
   cruiseDaySearchParam,
+  cruiseTimeFromSearch,
 } from '../features/simulation/cruiseDaySimulation'
 import { simulationScenarioFromSearch } from '../features/simulation/simulationScenarios'
 import { RouteErrorBoundary } from './RouteErrorBoundary'
@@ -15,6 +16,7 @@ export function AppShell() {
     pathname === '/home' || pathname === '/more/simulation-preview'
   const simulationScenario = simulationScenarioFromSearch(search)
   const cruiseDayNumber = cruiseDayFromSearch(search)
+  const cruiseTime = cruiseTimeFromSearch(search)
 
   return (
     <div className={`app-shell${isHome ? ' app-shell-home' : ''}`}>
@@ -40,7 +42,9 @@ export function AppShell() {
           simulationScenario
             ? `?simulation=${simulationScenario}`
             : cruiseDayNumber
-              ? cruiseDaySearchParam(cruiseDayNumber)
+              ? cruiseTime
+                ? `${cruiseDaySearchParam(cruiseDayNumber)}&cruiseTime=${cruiseTime}`
+                : cruiseDaySearchParam(cruiseDayNumber)
               : undefined
         }
       />

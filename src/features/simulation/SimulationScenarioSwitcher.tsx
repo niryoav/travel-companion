@@ -1,7 +1,7 @@
 import type { ChangeEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 
-import { cruiseDayFromSearch } from './cruiseDaySimulation'
+import { cruiseDayFromSearch, cruiseTimeFromSearch } from './cruiseDaySimulation'
 import {
   SIMULATION_SCENARIOS,
   simulationScenarioFromSearch,
@@ -10,6 +10,13 @@ import {
 } from './simulationScenarios'
 
 type SimulationSelection = SimulationScenario | 'live'
+
+const CRUISE_TIME_PRESETS = [
+  { value: 'default', label: 'Default (1 hour after start)' },
+  { value: '09:00', label: '09:00 — before evening' },
+  { value: '18:05', label: '18:05 — evening' },
+  { value: '07:30', label: '07:30 — morning' },
+] as const
 
 interface SimulationScenarioSwitcherProps {
   tripDayCount?: number
@@ -22,6 +29,7 @@ export function SimulationScenarioSwitcher({
   const navigate = useNavigate()
   const selection = simulationScenarioFromSearch(search) ?? 'live'
   const cruiseDaySelection = cruiseDayFromSearch(search)
+  const cruiseTimeSelection = cruiseTimeFromSearch(search) ?? 'default'
 
   function handleScenarioChange(event: ChangeEvent<HTMLSelectElement>) {
     const nextSelection = event.target.value as SimulationSelection
@@ -51,8 +59,25 @@ export function SimulationScenarioSwitcher({
 
     if (value === 'live') {
       parameters.delete('cruiseDay')
+      parameters.delete('cruiseTime')
     } else {
       parameters.set('cruiseDay', value)
+    }
+
+    void navigate({
+      pathname,
+      search: parameters.toString(),
+    })
+  }
+
+  function handleCruiseTimeChange(event: ChangeEvent<HTMLSelectElement>) {
+    const value = event.target.value
+    const parameters = new URLSearchParams(search)
+
+    if (value === 'default') {
+      parameters.delete('cruiseTime')
+    } else {
+      parameters.set('cruiseTime', value)
     }
 
     void navigate({
@@ -97,6 +122,18 @@ export function SimulationScenarioSwitcher({
                 </option>
               ),
             )}
+          </select>
+        </label>
+      ) : null}
+      {tripDayCount > 0 && cruiseDaySelection ? (
+        <label>
+          <span>Time of day</span>
+          <select value={cruiseTimeSelection} onChange={handleCruiseTimeChange}>
+            {CRUISE_TIME_PRESETS.map(({ value, label }) => (
+              <option value={value} key={value}>
+                {label}
+              </option>
+            ))}
           </select>
         </label>
       ) : null}

@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 
 import { DocumentActionLink } from '../../documents/components/DocumentActionLink'
+import { PreparationChecklist } from '../../preparation/components/PreparationChecklist'
 import type { TomorrowPreparationViewModel } from '../todayTypes'
 
 interface PrepareForTomorrowProps {
@@ -87,8 +88,24 @@ export function PrepareForTomorrow({
           />
         ))}
 
+        {tomorrow.motionSicknessReminder ? (
+          <p className="prepare-tomorrow-motion-sickness">
+            {tomorrow.motionSicknessReminder}
+          </p>
+        ) : null}
+
+        {tomorrow.checklist ? (
+          <PreparationChecklist groups={tomorrow.checklist} />
+        ) : null}
+
         <Link className="tomorrow-trip-link" to={tomorrow.tripHref}>
           View tomorrow’s trip day
+        </Link>
+        <Link
+          className="tomorrow-trip-link"
+          to={tomorrow.preparationHref}
+        >
+          Open full preparation
         </Link>
       </div>
     </details>

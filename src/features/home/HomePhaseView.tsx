@@ -5,6 +5,7 @@ import type { HomeViewModel } from './homeTypes'
 import { HomeAlert } from './components/HomeAlert'
 import { HomeHero } from './components/HomeHero'
 import { NextMilestoneCard } from './components/NextMilestoneCard'
+import { PrepareForTomorrowCard } from './components/PrepareForTomorrowCard'
 import { QuickChecklist } from './components/QuickChecklist'
 import { QuickWeatherCard } from './components/QuickWeatherCard'
 import { VoyageProgressCard } from './components/VoyageProgressCard'
@@ -14,6 +15,7 @@ interface HomePhaseViewProps {
   importantMoment?: ReactNode
   loveMessage?: DailyLoveMessageViewModel | null
   reviewControl?: ReactNode
+  search?: string
   viewModel: HomeViewModel
 }
 
@@ -22,6 +24,7 @@ export function HomePhaseView({
   importantMoment,
   loveMessage,
   reviewControl,
+  search,
   viewModel,
 }: HomePhaseViewProps) {
   return (
@@ -41,6 +44,13 @@ export function HomePhaseView({
 
       {viewModel.voyageProgress ? (
         <VoyageProgressCard voyageProgress={viewModel.voyageProgress} />
+      ) : null}
+
+      {viewModel.tomorrowPreparation ? (
+        <PrepareForTomorrowCard
+          card={viewModel.tomorrowPreparation}
+          search={search}
+        />
       ) : null}
 
       <div className="home-briefing-grid">

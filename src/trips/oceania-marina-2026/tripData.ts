@@ -6,6 +6,7 @@ import type {
 } from '../../domain/trip/tripTypes.js'
 import { oceaniaMarinaMealRestaurants } from './mealRestaurants.js'
 import { oceaniaMarinaActivityLocations } from './activityLocations.js'
+import { oceaniaMarinaEventPreparation } from './excursionPreparation.js'
 
 // Public cruise dates, ports, and published arrival/departure times:
 // https://www.oceaniacruises.com/cruises/MNA260823/
@@ -72,7 +73,7 @@ const portCalls: PortCall[] = [
     arrivalAt: '2026-08-23T07:00:00Z',
     departureAt: '2026-08-23T19:00:00Z',
     portAccess: { status: 'DOCKED' },
-    eventIds: ['event-embarkation'],
+    eventIds: ['event-reykjavik-terminal-checkin', 'event-embarkation'],
   },
   {
     id: 'port-call-isafjordur',
@@ -224,6 +225,7 @@ const days: TripDay[] = [
     summary: 'Iceland',
     eventIds: [
       'event-hotel-ship-transfer',
+      'event-reykjavik-terminal-checkin',
       'event-embarkation',
       'event-embarkation-lunch',
     ],
@@ -521,18 +523,34 @@ export const oceaniaMarina2026TripData: TripData = {
       kind: 'TRANSFER',
       title: 'Hotel Viking to Oceania Marina',
       travelerIds: ['traveler-yoav', 'traveler-isabel'],
-      startsAt: '2026-08-23T12:00:00Z',
-      endsAt: '2026-08-23T12:30:00Z',
+      startsAt: '2026-08-23T11:30:00Z',
+      endsAt: '2026-08-23T12:00:00Z',
       timeZone: 'Atlantic/Reykjavik',
       locationId: 'location-hotel-viking',
       transportId: 'transport-hotel-ship',
       timingVerification: 'ESTIMATED',
-      meetingContext:
-        'Hotel Viking lobby · exact Reykjavík berth to be confirmed',
+      meetingContext: 'Hotel Viking lobby · destination Skarfabakki Harbour',
       operationalNotes: [
-        'Planning estimate; keep this time editable in Trip.',
-        'Temporary destination: Marina cruise terminal, Reykjavík.',
-        'Exact berth remains to be confirmed.',
+        'Planning estimate confirmed with Yoav; keep this time editable in Trip.',
+        'Destination: Skarfabakki Harbour, Reykjavík (Skarfabakki 315).',
+        'Planned arrival at the terminal is 12:00, ahead of the 12:00–12:30 check-in window.',
+      ],
+    },
+    {
+      id: 'event-reykjavik-terminal-checkin',
+      dayId: 'day-2026-08-23',
+      kind: 'ACTIVITY',
+      title: 'Check-in at cruise terminal',
+      travelerIds: ['traveler-yoav', 'traveler-isabel'],
+      startsAt: '2026-08-23T12:00:00Z',
+      endsAt: '2026-08-23T12:30:00Z',
+      timeZone: 'Atlantic/Reykjavik',
+      locationId: 'location-reykjavik-cruise-terminal',
+      timingVerification: 'CONFIRMED',
+      meetingContext: 'Skarfabakki 315, Skarfabakki Harbour, 104 Reykjavík',
+      operationalNotes: [
+        'Confirmed on the Oceania boarding pass: Terminal Arrival Time 12:00, Terminal Skarfabakki 315.',
+        'This is separate from embarkation itself, which begins at 13:00.',
       ],
     },
     {
@@ -1111,4 +1129,5 @@ export const oceaniaMarina2026TripData: TripData = {
       verificationStatus: 'ISSUED',
     },
   ],
+  eventPreparation: oceaniaMarinaEventPreparation,
 }

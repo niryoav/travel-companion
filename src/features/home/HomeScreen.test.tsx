@@ -310,10 +310,12 @@ describe('HomeScreen', () => {
     )
 
     render(
-      <HomePhaseView
-        greeting="Good afternoon, Traveler"
-        viewModel={viewModel}
-      />,
+      <MemoryRouter>
+        <HomePhaseView
+          greeting="Good afternoon, Traveler"
+          viewModel={viewModel}
+        />
+      </MemoryRouter>,
     )
 
     expect(
@@ -508,5 +510,108 @@ describe('HomeScreen', () => {
 
     expect(await screen.findByText('Journey day 4 of 14')).toBeInTheDocument()
     expect(screen.getByLabelText('Cruise day')).toHaveValue('4')
+  })
+
+  describe('Prepare for tomorrow', () => {
+    it('shows only a compact preview before 18:00 local time via ?cruiseDay + ?cruiseTime', () => {
+      render(
+        <MemoryRouter initialEntries={['/home?cruiseDay=1&cruiseTime=09:00']}>
+          <HomeScreen
+            loveMessageSchedule={oceaniaMarina2026DailyLoveMessages}
+            now={new Date('2026-01-01T08:00:00Z')}
+            travelerName="Alex"
+            tripData={oceaniaMarina2026TripData}
+          />
+        </MemoryRouter>,
+      )
+
+      expect(screen.getByText('Prepare for tomorrow')).toBeInTheDocument()
+      expect(
+        screen.getByRole('link', { name: /Preview Reykjavík/ }),
+      ).toBeInTheDocument()
+      expect(
+        screen.queryByRole('link', { name: 'View full preparation' }),
+      ).not.toBeInTheDocument()
+    })
+
+    it('becomes a prominent card with a summary from 18:00 local time onward', () => {
+      render(
+        <MemoryRouter initialEntries={['/home?cruiseDay=1&cruiseTime=18:05']}>
+          <HomeScreen
+            loveMessageSchedule={oceaniaMarina2026DailyLoveMessages}
+            now={new Date('2026-01-01T08:00:00Z')}
+            travelerName="Alex"
+            tripData={oceaniaMarina2026TripData}
+          />
+        </MemoryRouter>,
+      )
+
+      expect(
+        screen.getByRole('heading', {
+          level: 2,
+          name: 'Travel to Reykjavík',
+        }),
+      ).toBeInTheDocument()
+      expect(screen.getByText('Reykjavík')).toBeInTheDocument()
+      expect(
+        screen.getByRole('link', { name: 'View full preparation' }),
+      ).toBeInTheDocument()
+    })
+
+    it('shows the Reykjavík check-in window and embarkation as separate moments the evening before', () => {
+      render(
+        <MemoryRouter
+          initialEntries={['/more/simulation-preview?cruiseDay=1&cruiseTime=18:05']}
+        >
+          <HomeScreen
+            loveMessageSchedule={oceaniaMarina2026DailyLoveMessages}
+            now={new Date('2026-01-01T08:00:00Z')}
+            showSimulationPreview
+            travelerName="Alex"
+            tripData={oceaniaMarina2026TripData}
+          />
+        </MemoryRouter>,
+      )
+
+      expect(
+        screen.getByText(/Hotel Viking to Oceania Marina.*11:30/),
+      ).toBeInTheDocument()
+      expect(
+        screen.getByText(/Check-in at cruise terminal.*12:00/),
+      ).toBeInTheDocument()
+      expect(
+        screen.getByText(/Embark Oceania Marina.*13:00/),
+      ).toBeInTheDocument()
+    })
+
+    it('shows the correct restaurant reservation the evening before (Toscana, day before Húsavík)', () => {
+      render(
+        <MemoryRouter initialEntries={['/home?cruiseDay=3&cruiseTime=18:05']}>
+          <HomeScreen
+            loveMessageSchedule={oceaniaMarina2026DailyLoveMessages}
+            now={new Date('2026-01-01T08:00:00Z')}
+            travelerName="Alex"
+            tripData={oceaniaMarina2026TripData}
+          />
+        </MemoryRouter>,
+      )
+
+      expect(screen.getByText(/Dinner at Toscana.*20:00/)).toBeInTheDocument()
+    })
+
+    it('is absent on the final day of the trip', () => {
+      render(
+        <MemoryRouter initialEntries={['/home?cruiseDay=14&cruiseTime=18:05']}>
+          <HomeScreen
+            loveMessageSchedule={oceaniaMarina2026DailyLoveMessages}
+            now={new Date('2026-01-01T08:00:00Z')}
+            travelerName="Alex"
+            tripData={oceaniaMarina2026TripData}
+          />
+        </MemoryRouter>,
+      )
+
+      expect(screen.queryByText('Prepare for tomorrow')).not.toBeInTheDocument()
+    })
   })
 })

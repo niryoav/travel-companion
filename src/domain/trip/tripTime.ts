@@ -37,6 +37,19 @@ export function formatLocalDate(
   }).format(new Date(instant))
 }
 
+export function formatCalendarDate(
+  localDate: string,
+  locale = 'en-GB',
+): string {
+  return new Intl.DateTimeFormat(locale, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(`${localDate}T12:00:00Z`))
+}
+
 export function formatDateRange(
   startDate: string,
   endDate: string,
@@ -73,4 +86,51 @@ export function calendarDateInTimeZone(
   )
 
   return `${values.year}-${values.month}-${values.day}`
+}
+
+export function hourInTimeZone(instant: Date | string, timeZone: string): number {
+  const date = instant instanceof Date ? instant : new Date(instant)
+  const hour = new Intl.DateTimeFormat('en', {
+    hour: '2-digit',
+    hourCycle: 'h23',
+    timeZone,
+  })
+    .formatToParts(date)
+    .find(({ type }) => type === 'hour')?.value
+
+  return Number(hour)
+}
+
+export function minuteInTimeZone(
+  instant: Date | string,
+  timeZone: string,
+): number {
+  const date = instant instanceof Date ? instant : new Date(instant)
+  const minute = new Intl.DateTimeFormat('en', {
+    minute: '2-digit',
+    timeZone,
+  })
+    .formatToParts(date)
+    .find(({ type }) => type === 'minute')?.value
+
+  return Number(minute)
+}
+
+/**
+ * True when `instant` falls at or after `hour:minute` local time in
+ * `timeZone`, on whatever calendar day it happens to be. Used to gate
+ * evening-only features (e.g. "Prepare for tomorrow") on the active trip
+ * day's own local clock rather than the device's timezone.
+ */
+export function isAtOrAfterLocalTime(
+  instant: Date,
+  timeZone: string,
+  hour: number,
+  minute = 0,
+): boolean {
+  const currentHour = hourInTimeZone(instant, timeZone)
+  const currentMinute = minuteInTimeZone(instant, timeZone)
+  return (
+    currentHour > hour || (currentHour === hour && currentMinute >= minute)
+  )
 }

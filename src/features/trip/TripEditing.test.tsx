@@ -157,10 +157,10 @@ describe('Trip operational editing', () => {
     expect(within(taxiFields).getByText('Estimated timing')).toBeInTheDocument()
     expect(
       within(taxiFields).getByLabelText('Start / pickup time'),
-    ).toHaveValue('12:00')
+    ).toHaveValue('11:30')
     expect(
       within(taxiFields).getByLabelText('End / arrival time'),
-    ).toHaveValue('12:30')
+    ).toHaveValue('12:00')
   })
 
   it('keeps estimated All Aboard and tender milestones editable only in Trip', () => {

@@ -134,7 +134,7 @@ export function createHomeSimulationScenarios(
       ],
       alert: {
         title: 'Confirm the exact Marina berth',
-        detail: 'Check before the taxi leaves at the estimated 12:00 pickup time.',
+        detail: 'Check before the taxi leaves at the estimated 11:30 pickup time.',
       },
     },
     'tender-port-day': {

@@ -1,3 +1,5 @@
+import type { DocumentActionViewModel } from './documentTypes'
+
 const FINAL_CRUISE_SUMMARY_FOLDER = 'Final Cruise Vacation Summary'
 
 export interface FinalCruiseSummaryDocument {
@@ -75,3 +77,23 @@ export const finalCruiseSummaryDocuments: FinalCruiseSummaryDocument[] =
     description,
     href: finalCruiseSummaryHref(filename),
   }))
+
+export function selectFinalCruiseSummaryDocumentActions(
+  ids: readonly string[],
+): DocumentActionViewModel[] {
+  return ids.flatMap((id) => {
+    const document = finalCruiseSummaryDocuments.find(
+      (candidate) => candidate.id === id,
+    )
+    return document
+      ? [
+          {
+            id: `final-cruise-summary-${document.id}`,
+            href: document.href,
+            label: `Open ${document.title}`,
+            title: document.title,
+          },
+        ]
+      : []
+  })
+}

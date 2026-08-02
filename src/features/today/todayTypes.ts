@@ -1,5 +1,6 @@
 import type { TripDayKind } from '../../domain/trip/tripTypes'
 import type { DocumentActionViewModel } from '../documents/documentTypes'
+import type { PreparationChecklistGroupViewModel } from '../preparation/preparationTypes'
 
 export type TodayState =
   | 'PRE_TRIP'
@@ -176,6 +177,14 @@ export interface TomorrowPreparationViewModel {
   allAboardNote?: string
   emptyMessage?: string
   tripHref: string
+  checklist?: PreparationChecklistGroupViewModel[]
+  motionSicknessReminder?: string
+  preparationHref: string
+}
+
+export interface BeforeYouLeaveViewModel {
+  title: string
+  items: string[]
 }
 
 export interface TodayViewModel {
@@ -193,5 +202,6 @@ export interface TodayViewModel {
   preparation?: TodayPreparationViewModel
   returnGuidance?: TodayReturnGuidanceViewModel
   tomorrow?: TomorrowPreparationViewModel
+  beforeYouLeave?: BeforeYouLeaveViewModel
   emptyMessage?: string
 }

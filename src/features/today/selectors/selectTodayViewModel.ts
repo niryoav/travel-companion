@@ -18,7 +18,9 @@ import {
 import { mealEventPresentation } from '../../../domain/trip/mealEvents'
 import { showActivityEventPresentation } from '../../../domain/trip/showActivityEvents'
 import {
+  formatCalendarDate,
   formatLocalTime,
+  hourInTimeZone,
 } from '../../../domain/trip/tripTime'
 import { expectedArrivalAshore } from '../../../domain/trip/tenderPlanning'
 import type {
@@ -43,16 +45,7 @@ import type {
   TomorrowPreparationViewModel,
 } from '../todayTypes'
 import { selectDocumentAction } from '../../documents/selectors/selectDocumentsViewModel'
-
-function formatCalendarDate(localDate: string, locale = 'en-GB'): string {
-  return new Intl.DateTimeFormat(locale, {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'UTC',
-  }).format(new Date(`${localDate}T12:00:00Z`))
-}
+import { selectDayPreparation } from '../../preparation/selectors/selectDayPreparation'
 
 function dayKindLabel(day: TripDay): string {
   switch (day.kind) {
@@ -704,18 +697,6 @@ function returnGuidanceViewModel(
   }
 }
 
-function hourInTimeZone(instant: string, timeZone: string): number {
-  const hour = new Intl.DateTimeFormat('en', {
-    hour: '2-digit',
-    hourCycle: 'h23',
-    timeZone,
-  })
-    .formatToParts(new Date(instant))
-    .find(({ type }) => type === 'hour')?.value
-
-  return Number(hour)
-}
-
 function tomorrowViewModel(
   data: TripData,
   today: TripDay,
@@ -726,6 +707,7 @@ function tomorrowViewModel(
     return undefined
   }
 
+  const preparation = selectDayPreparation(data, tomorrow)
   const events = selectDayEvents(data, tomorrow)
   const firstEvent =
     events.find(
@@ -872,6 +854,11 @@ function tomorrowViewModel(
           : 'No specific preparation is configured for tomorrow.'
         : undefined,
     tripHref: `/trip#${tomorrow.id}`,
+    checklist: preparation.checklist.length > 0
+      ? preparation.checklist
+      : undefined,
+    motionSicknessReminder: preparation.motionSicknessReminder,
+    preparationHref: '/prepare-tomorrow',
   }
 }
 
@@ -1050,6 +1037,18 @@ export function selectTodayViewModel(
     tomorrow,
     now,
   )
+  const todayPreparation = selectDayPreparation(data, today)
+  const beforeYouLeave =
+    todayPreparation.timeline.length > 0 &&
+    todayPreparation.timeline.some(
+      (item) => Date.parse(item.dateTime) > now.getTime(),
+    ) &&
+    todayPreparation.beforeYouLeave.length > 0
+      ? {
+          title: 'Before you leave',
+          items: todayPreparation.beforeYouLeave,
+        }
+      : undefined
 
   return {
     state: 'ACTIVE_DAY',
@@ -1069,6 +1068,7 @@ export function selectTodayViewModel(
     priorities,
     returnGuidance,
     tomorrow,
+    beforeYouLeave,
     emptyMessage:
       events.length === 0
         ? 'No timed plans are configured for today.'

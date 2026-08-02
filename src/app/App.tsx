@@ -11,6 +11,7 @@ import { RestaurantMenusScreen } from '../features/documents/RestaurantMenusScre
 import { RestaurantMenuProvider } from '../features/documents/RestaurantMenuProvider'
 import { HomeProfileGate } from '../features/profile/HomeProfileGate'
 import { MoreScreen } from '../features/profile/MoreScreen'
+import { PreparationScreen } from '../features/preparation/PreparationScreen'
 import { TodayScreen } from '../features/today/TodayScreen'
 import { TripScreen } from '../features/trip/TripScreen'
 import { TravelerSetupScreen } from '../features/profile/TravelerSetupScreen'
@@ -174,6 +175,12 @@ export function App({
                 >
                   <TodayScreen now={now} tripData={tripData} />
                 </RestaurantMenuProvider>
+              }
+            />
+            <Route
+              path="prepare-tomorrow"
+              element={
+                <PreparationScreen now={now} tripData={tripData} />
               }
             />
             <Route

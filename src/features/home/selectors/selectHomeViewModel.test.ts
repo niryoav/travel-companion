@@ -236,4 +236,54 @@ describe('selectHomeViewModel', () => {
       expect(viewModel.voyageProgress).toBeUndefined()
     })
   })
+
+  describe('tomorrowPreparation', () => {
+    it('is not prominent before 18:00 local time on the departure day (22 Aug, Europe/Brussels)', () => {
+      const viewModel = selectHomeViewModel(
+        oceaniaMarina2026TripData,
+        new Date('2026-08-22T15:59:00Z'),
+      )
+
+      expect(viewModel.tomorrowPreparation?.prominent).toBe(false)
+      expect(viewModel.tomorrowPreparation?.preparation.dayId).toBe(
+        'day-2026-08-23',
+      )
+    })
+
+    it('becomes prominent at 18:00 local time on the departure day', () => {
+      const viewModel = selectHomeViewModel(
+        oceaniaMarina2026TripData,
+        new Date('2026-08-22T16:00:00Z'),
+      )
+
+      expect(viewModel.tomorrowPreparation?.prominent).toBe(true)
+      expect(viewModel.tomorrowPreparation?.preparation.dayId).toBe(
+        'day-2026-08-23',
+      )
+    })
+
+    it('includes the Reykjavík check-in and embarkation as separate timeline moments the evening before', () => {
+      const viewModel = selectHomeViewModel(
+        oceaniaMarina2026TripData,
+        new Date('2026-08-22T16:05:00Z'),
+      )
+
+      const timeline = viewModel.tomorrowPreparation?.preparation.timeline ?? []
+      expect(
+        timeline.find(({ id }) => id === 'event-reykjavik-terminal-checkin'),
+      ).toMatchObject({ timeLabel: '12:00' })
+      expect(
+        timeline.find(({ id }) => id === 'event-embarkation'),
+      ).toMatchObject({ timeLabel: '13:00' })
+    })
+
+    it('is absent on the final day of the trip (no tomorrow)', () => {
+      const viewModel = selectHomeViewModel(
+        oceaniaMarina2026TripData,
+        new Date('2026-09-04T16:05:00+01:00'),
+      )
+
+      expect(viewModel.tomorrowPreparation).toBeUndefined()
+    })
+  })
 })
