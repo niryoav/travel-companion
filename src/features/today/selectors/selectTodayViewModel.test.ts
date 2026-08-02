@@ -41,23 +41,12 @@ describe('selectTodayViewModel', () => {
     )
   })
 
-  it('includes voyage progress for the active cruise day, but not before the trip', () => {
+  it('does not include voyage progress on the Today view model (moved to Home)', () => {
     const activeDay = selectTodayViewModel(
       oceaniaMarina2026TripData,
       new Date('2026-08-25T08:00:00Z'),
     )
-    expect(activeDay.voyageProgress).toMatchObject({
-      dayNumber: 4,
-      imagePath: '/images/voyage-progress/voyage-day-04.png',
-      currentPort: 'Húsavík',
-      nextPort: 'Djúpivogur',
-    })
-
-    const preTrip = selectTodayViewModel(
-      oceaniaMarina2026TripData,
-      new Date('2026-01-01T08:00:00Z'),
-    )
-    expect(preTrip.voyageProgress).toBeUndefined()
+    expect(activeDay).not.toHaveProperty('voyageProgress')
   })
 
   it('creates a calm pre-trip state with departure and next event', () => {

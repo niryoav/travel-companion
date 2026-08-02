@@ -344,7 +344,7 @@ describe('App', () => {
     ).not.toHaveLength(0)
   })
 
-  it('previews any cruise day via the shared Cruise day control, using the real Today selector', async () => {
+  it('previews any cruise day on Home via the shared Cruise day control, using the real Home selector', async () => {
     const repository = new MemoryTripStateRepository()
     repository.travelerId = 'traveler-yoav'
     window.history.replaceState({}, '', '/more/simulation-preview')
@@ -357,6 +357,16 @@ describe('App', () => {
     })
 
     expect(window.location.search).toBe('?cruiseDay=4')
+    expect(
+      await screen.findByText('Journey progress'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Journey day 4 of 14')).toBeInTheDocument()
+    expect(screen.queryByText(/^Cruise Day/)).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('img', { name: 'Voyage progress map for day 4' }),
+    ).toHaveAttribute('src', '/images/voyage-progress/voyage-day-04.png')
+    expect(screen.getByText('Today: Húsavík')).toBeInTheDocument()
+    expect(screen.getByText('Next: Djúpivogur')).toBeInTheDocument()
 
     const navigation = screen.getByRole('navigation', {
       name: 'Primary navigation',
@@ -366,16 +376,15 @@ describe('App', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Húsavík' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('Voyage progress')).toBeInTheDocument()
-    expect(
-      screen.getByRole('img', { name: 'Voyage progress map for day 4' }),
-    ).toHaveAttribute('src', '/images/voyage-progress/voyage-day-04.png')
-    expect(screen.getByText('Today: Húsavík')).toBeInTheDocument()
-    expect(screen.getByText('Next: Djúpivogur')).toBeInTheDocument()
+    expect(screen.queryByText('Journey progress')).not.toBeInTheDocument()
     expect(window.location.search).toBe('?cruiseDay=4')
     expect(screen.getByLabelText('Cruise day')).toHaveValue('4')
 
     fireEvent.click(screen.getByRole('link', { name: 'Home' }))
+
+    expect(await screen.findByText('Journey progress')).toBeInTheDocument()
+    expect(screen.getByText('Journey day 4 of 14')).toBeInTheDocument()
+    expect(screen.queryByText(/^Cruise Day/)).not.toBeInTheDocument()
     expect(window.location.search).toBe('?cruiseDay=4')
   })
 

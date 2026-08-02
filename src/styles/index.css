@@ -523,24 +523,6 @@ a:focus-visible {
   line-height: 1.45;
 }
 
-.today-voyage-progress-image {
-  display: block;
-  width: 100%;
-  max-width: 22rem;
-  height: auto;
-  margin: 0.7rem auto 0;
-  border: 1px solid var(--border);
-  border-radius: 1rem;
-  object-fit: contain;
-}
-
-.today-voyage-progress-detail {
-  margin: 0.6rem 0 0;
-  color: var(--text);
-  font-size: 0.92rem;
-  line-height: 1.45;
-}
-
 .today-preparation-grid {
   display: grid;
   gap: 1rem;
@@ -2504,6 +2486,38 @@ a:focus-visible {
   font-size: clamp(1.15rem, 4.6vw, 1.45rem);
   letter-spacing: -0.02em;
   line-height: 1.25;
+}
+
+.voyage-progress-card {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.voyage-progress-day-count {
+  margin: 0.15rem 0 0;
+  color: var(--text);
+  font-size: clamp(1.15rem, 4.6vw, 1.45rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.voyage-progress-image {
+  display: block;
+  width: 100%;
+  max-width: 22rem;
+  height: auto;
+  max-height: 42vh;
+  margin: 0.6rem auto 0;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  object-fit: contain;
+}
+
+.voyage-progress-detail {
+  margin: 0.5rem 0 0;
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.45;
 }
 
 .milestone-card {

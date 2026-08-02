@@ -6,16 +6,18 @@ import { VoyageProgressCard } from './VoyageProgressCard'
 
 const voyageProgress: VoyageProgressViewModel = {
   dayNumber: 4,
+  totalDays: 14,
   imagePath: '/images/voyage-progress/voyage-day-04.png',
   currentPort: 'Húsavík',
   nextPort: 'Djúpivogur',
 }
 
 describe('VoyageProgressCard', () => {
-  it('shows the title, image, and current and next port', () => {
+  it('shows the title, day count, image, and current and next port', () => {
     render(<VoyageProgressCard voyageProgress={voyageProgress} />)
 
-    expect(screen.getByText('Voyage progress')).toBeInTheDocument()
+    expect(screen.getByText('Journey progress')).toBeInTheDocument()
+    expect(screen.getByText('Journey day 4 of 14')).toBeInTheDocument()
     const image = screen.getByRole('img', {
       name: 'Voyage progress map for day 4',
     })
@@ -27,13 +29,18 @@ describe('VoyageProgressCard', () => {
     expect(screen.getByText('Next: Djúpivogur')).toBeInTheDocument()
   })
 
-  it('omits the next-port line on the final day of the trip', () => {
+  it('shows Journey day 14 of 14 and omits the next-port line on the final day of the trip', () => {
     render(
       <VoyageProgressCard
-        voyageProgress={{ ...voyageProgress, nextPort: undefined }}
+        voyageProgress={{
+          ...voyageProgress,
+          dayNumber: 14,
+          nextPort: undefined,
+        }}
       />,
     )
 
+    expect(screen.getByText('Journey day 14 of 14')).toBeInTheDocument()
     expect(screen.getByText('Today: Húsavík')).toBeInTheDocument()
     expect(screen.queryByText(/^Next:/)).not.toBeInTheDocument()
   })
@@ -46,6 +53,6 @@ describe('VoyageProgressCard', () => {
     })
     fireEvent.error(image)
 
-    expect(screen.queryByText('Voyage progress')).not.toBeInTheDocument()
+    expect(screen.queryByText('Journey progress')).not.toBeInTheDocument()
   })
 })

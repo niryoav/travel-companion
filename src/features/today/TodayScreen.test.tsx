@@ -484,7 +484,7 @@ describe('TodayScreen', () => {
     ).toBeInTheDocument()
   })
 
-  it('shows the voyage progress card with the correct daily image and ports', () => {
+  it('no longer shows a voyage progress card on Today (moved to Home)', () => {
     render(
       <MemoryRouter initialEntries={['/today']}>
         <TodayScreen
@@ -494,30 +494,14 @@ describe('TodayScreen', () => {
       </MemoryRouter>,
     )
 
-    expect(screen.getByText('Voyage progress')).toBeInTheDocument()
+    expect(screen.queryByText('Voyage progress')).not.toBeInTheDocument()
+    expect(screen.queryByText('Journey progress')).not.toBeInTheDocument()
     expect(
-      screen.getByRole('img', { name: 'Voyage progress map for day 4' }),
-    ).toHaveAttribute('src', '/images/voyage-progress/voyage-day-04.png')
-    expect(screen.getByText('Today: Húsavík')).toBeInTheDocument()
-    expect(screen.getByText('Next: Djúpivogur')).toBeInTheDocument()
+      screen.queryByRole('img', { name: /Voyage progress map for day/ }),
+    ).not.toBeInTheDocument()
   })
 
-  it('shows day 1 of the voyage progress card via ?cruiseDay simulation, using the real selector', () => {
-    render(
-      <MemoryRouter initialEntries={['/today?cruiseDay=1']}>
-        <TodayScreen tripData={oceaniaMarina2026TripData} />
-      </MemoryRouter>,
-    )
-
-    expect(
-      screen.getByRole('img', { name: 'Voyage progress map for day 1' }),
-    ).toHaveAttribute('src', '/images/voyage-progress/voyage-day-01.png')
-    expect(screen.getByText('Today: Travel to Reykjavík')).toBeInTheDocument()
-    expect(screen.getByText('Next: Reykjavík')).toBeInTheDocument()
-    expect(screen.getByLabelText('Cruise day')).toHaveValue('1')
-  })
-
-  it('shows a middle cruise day (day 4) via ?cruiseDay simulation', () => {
+  it('still drives the rest of the Today schedule via ?cruiseDay simulation', () => {
     render(
       <MemoryRouter initialEntries={['/today?cruiseDay=4']}>
         <TodayScreen tripData={oceaniaMarina2026TripData} />
@@ -525,53 +509,13 @@ describe('TodayScreen', () => {
     )
 
     expect(
-      screen.getByRole('img', { name: 'Voyage progress map for day 4' }),
-    ).toHaveAttribute('src', '/images/voyage-progress/voyage-day-04.png')
-    expect(screen.getByText('Today: Húsavík')).toBeInTheDocument()
-    expect(screen.getByText('Next: Djúpivogur')).toBeInTheDocument()
+      screen.getByRole('heading', { level: 1, name: 'Húsavík' }),
+    ).toBeInTheDocument()
+    expect(screen.getByLabelText('Cruise day')).toHaveValue('4')
+    expect(screen.queryByText('Journey progress')).not.toBeInTheDocument()
   })
 
-  it('shows the final cruise day (day 14) via ?cruiseDay simulation, with no Next label', () => {
-    render(
-      <MemoryRouter initialEntries={['/today?cruiseDay=14']}>
-        <TodayScreen tripData={oceaniaMarina2026TripData} />
-      </MemoryRouter>,
-    )
-
-    expect(
-      screen.getByRole('img', { name: 'Voyage progress map for day 14' }),
-    ).toHaveAttribute('src', '/images/voyage-progress/voyage-day-14.png')
-    expect(screen.getByText('Today: Southampton → Home')).toBeInTheDocument()
-    expect(screen.queryByText(/^Next:/)).not.toBeInTheDocument()
-  })
-
-  it('hides the voyage progress card for a pre-cruise cruiseDay out of range', () => {
-    render(
-      <MemoryRouter initialEntries={['/today?cruiseDay=99']}>
-        <TodayScreen
-          now={new Date('2026-01-01T08:00:00Z')}
-          tripData={oceaniaMarina2026TripData}
-        />
-      </MemoryRouter>,
-    )
-
-    expect(screen.queryByText('Voyage progress')).not.toBeInTheDocument()
-  })
-
-  it('hides the voyage progress card before the cruise when no cruiseDay is simulated', () => {
-    render(
-      <MemoryRouter initialEntries={['/today']}>
-        <TodayScreen
-          now={new Date('2026-01-01T08:00:00Z')}
-          tripData={oceaniaMarina2026TripData}
-        />
-      </MemoryRouter>,
-    )
-
-    expect(screen.queryByText('Voyage progress')).not.toBeInTheDocument()
-  })
-
-  it('lets the Cruise day control switch between simulated days', async () => {
+  it('lets the Cruise day control switch which simulated day Today shows', async () => {
     render(
       <MemoryRouter initialEntries={['/today?cruiseDay=1']}>
         <TodayScreen tripData={oceaniaMarina2026TripData} />
@@ -582,7 +526,9 @@ describe('TodayScreen', () => {
       target: { value: '4' },
     })
 
-    expect(await screen.findByText('Today: Húsavík')).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Húsavík' }),
+    ).toBeInTheDocument()
     expect(screen.getByLabelText('Cruise day')).toHaveValue('4')
   })
 

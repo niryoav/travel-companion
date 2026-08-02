@@ -16,7 +16,6 @@ import {
   type ReturnBufferResult,
 } from '../../../domain/trip/operationalTiming'
 import { mealEventPresentation } from '../../../domain/trip/mealEvents'
-import { selectVoyageProgress } from '../../../domain/trip/selectors/selectVoyageProgress'
 import { showActivityEventPresentation } from '../../../domain/trip/showActivityEvents'
 import {
   formatLocalTime,
@@ -1070,7 +1069,6 @@ export function selectTodayViewModel(
     priorities,
     returnGuidance,
     tomorrow,
-    voyageProgress: selectVoyageProgress(data, today) ?? undefined,
     emptyMessage:
       events.length === 0
         ? 'No timed plans are configured for today.'

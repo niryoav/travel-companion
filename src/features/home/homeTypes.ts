@@ -1,4 +1,5 @@
 import type { PortAccessStatus } from '../../domain/trip/tripTypes'
+import type { VoyageProgressViewModel } from '../../domain/trip/selectors/selectVoyageProgress'
 import type { DocumentActionViewModel } from '../documents/documentTypes'
 import type { IconName } from '../../components/AppIcon'
 
@@ -80,6 +81,7 @@ export interface HomeViewModel {
   context: HomeContext
   intro?: string
   cruiseProgress?: CruiseProgress
+  voyageProgress?: VoyageProgressViewModel
   milestone?: Milestone
   weather?: QuickWeather
   checklistTitle?: string

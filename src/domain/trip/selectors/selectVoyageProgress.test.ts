@@ -34,6 +34,7 @@ describe('selectVoyageProgress', () => {
 
     expect(result).toMatchObject({
       dayNumber: 1,
+      totalDays: 14,
       imagePath: '/images/voyage-progress/voyage-day-01.png',
       currentPort: 'Travel to Reykjavík',
       nextPort: 'Reykjavík',
@@ -48,6 +49,7 @@ describe('selectVoyageProgress', () => {
 
     expect(result).toMatchObject({
       dayNumber: 4,
+      totalDays: 14,
       imagePath: '/images/voyage-progress/voyage-day-04.png',
       currentPort: 'Húsavík',
       nextPort: 'Djúpivogur',
@@ -62,6 +64,7 @@ describe('selectVoyageProgress', () => {
 
     expect(result).toMatchObject({
       dayNumber: 14,
+      totalDays: 14,
       imagePath: '/images/voyage-progress/voyage-day-14.png',
       currentPort: 'Southampton → Home',
     })
