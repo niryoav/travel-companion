@@ -1,26 +1,26 @@
-import { selectDayEvents } from '../../../domain/trip/selectors/selectDayEvents'
-import { selectTripDayDocuments } from '../../../domain/trip/selectors/selectTripDayDocuments'
+import { selectDayEvents } from '../../../domain/trip/selectors/selectDayEvents.js'
+import { selectTripDayDocuments } from '../../../domain/trip/selectors/selectTripDayDocuments.js'
 import {
   formatCalendarDate,
   formatLocalTime,
-} from '../../../domain/trip/tripTime'
+} from '../../../domain/trip/tripTime.js'
 import type {
   PortAccessStatus,
   PreparationCategory,
   PreparationRequirementLevel,
   TripData,
   TripDay,
-} from '../../../domain/trip/tripTypes'
-import type { DocumentActionViewModel } from '../../documents/documentTypes'
-import { selectFinalCruiseSummaryDocumentActions } from '../../documents/finalCruiseSummary'
-import { selectDocumentAction } from '../../documents/selectors/selectDocumentsViewModel'
+} from '../../../domain/trip/tripTypes.js'
+import type { DocumentActionViewModel } from '../../documents/documentTypes.js'
+import { selectFinalCruiseSummaryDocumentActions } from '../../documents/finalCruiseSummary.js'
+import { selectDocumentAction } from '../../documents/selectors/selectDocumentsViewModel.js'
 import type {
   DayPreparationViewModel,
   PreparationChecklistGroupViewModel,
   PreparationChecklistItemViewModel,
   PreparationExcursionViewModel,
   PreparationTimelineItemViewModel,
-} from '../preparationTypes'
+} from '../preparationTypes.js'
 
 const CATEGORY_ORDER: PreparationCategory[] = [
   'TIMING',

@@ -769,9 +769,7 @@ describe('App', () => {
       await screen.findByRole('heading', { name: 'App version' }),
     ).toBeInTheDocument()
     expect(screen.getByText('fixture-1')).toBeInTheDocument()
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'Browser-managed updates',
-    )
+    expect(screen.getByText('Browser-managed updates')).toBeInTheDocument()
     expect(document.body).not.toHaveTextContent(/(?:github|Users\/|booking reference)/i)
   })
 

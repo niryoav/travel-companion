@@ -2,8 +2,8 @@ import type {
   PortAccessStatus,
   PreparationCategory,
   PreparationRequirementLevel,
-} from '../../domain/trip/tripTypes'
-import type { DocumentActionViewModel } from '../documents/documentTypes'
+} from '../../domain/trip/tripTypes.js'
+import type { DocumentActionViewModel } from '../documents/documentTypes.js'
 
 export interface PreparationChecklistItemViewModel {
   id: string

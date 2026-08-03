@@ -14,6 +14,7 @@ import type { AppBuildInfo } from '../../app/buildInfo'
 import type { PwaUpdateManager } from '../../pwa/PwaUpdateManager'
 import { AppInformationCard } from './AppInformationCard'
 import { PwaStatusCard } from './PwaStatusCard'
+import { TravelNotificationsCard } from './TravelNotificationsCard'
 import type { TripOverrideRepository } from '../../storage/TripOverrideRepository'
 import { TripDataSyncStatus } from './TripDataSyncStatus'
 
@@ -82,6 +83,7 @@ export function MoreScreen({
           travelerId={travelerId}
         />
       ) : null}
+      <TravelNotificationsCard travelerId={travelerId} />
       <PwaStatusCard manager={pwaUpdateManager} />
       <AppInformationCard
         buildInfo={appBuildInfo}

@@ -1,10 +1,10 @@
-import { selectDayDocuments } from './selectDayDocuments'
+import { selectDayDocuments } from './selectDayDocuments.js'
 import type {
   DocumentReference,
   TripData,
   TripDay,
   TripEvent,
-} from '../tripTypes'
+} from '../tripTypes.js'
 
 export function selectTripDayDocuments(
   data: TripData,
