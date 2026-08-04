@@ -354,7 +354,7 @@ describe('POST /api/cron/send-reminders — daily pre-trip test', () => {
       expect(payload.body).toBe(
         'Dit is de dagelijkse testmelding. Reismeldingen werken op dit toestel.',
       )
-      expect(payload.targetPath).toBe('/more')
+      expect(payload.targetPath).toBe('/more?source=notification')
     }
   })
 

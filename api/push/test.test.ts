@@ -63,6 +63,9 @@ describe('POST /api/push/test', () => {
       expect.objectContaining({
         title: 'Travel Companion',
         body: 'Reismeldingen werken op dit toestel.',
+        // Marked so a cold app launch lands on More instead of being
+        // redirected by StartupRouteGate's normal trip-phase routing.
+        targetPath: '/more?source=notification',
       }),
     )
   })

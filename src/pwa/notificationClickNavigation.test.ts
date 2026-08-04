@@ -193,3 +193,38 @@ describe('handleNotificationClickNavigation', () => {
     expect(openWindow).toHaveBeenCalledWith('https://travel-companion.example/more')
   })
 })
+
+describe('handleNotificationClickNavigation — notification-launch-marked URLs', () => {
+  // The daily test push and "Send test notification" both target
+  // /more?source=notification (see webPushPayload.ts) so a cold app launch
+  // preserves /more instead of being redirected by StartupRouteGate. This
+  // module doesn't need to know about the marker at all — it should just
+  // treat the marked URL like any other target.
+  const markedUrl = new URL(
+    'https://travel-companion.example/more?source=notification',
+  )
+
+  it('opens a new window at the marked URL when no client is open', async () => {
+    const matchClients = vi.fn(async () => [])
+    const openWindow = vi.fn(async () => undefined)
+
+    await handleNotificationClickNavigation(markedUrl, matchClients, openWindow)
+
+    expect(openWindow).toHaveBeenCalledWith(markedUrl.href)
+  })
+
+  it('navigates an existing welcome-screen client to the marked URL and focuses it', async () => {
+    const navigatedClient = fakeClient(markedUrl.href)
+    const welcomeClient = fakeClient('https://travel-companion.example/welcome', {
+      navigate: vi.fn(async () => navigatedClient),
+    })
+    const matchClients = vi.fn(async () => [welcomeClient])
+    const openWindow = vi.fn(async () => undefined)
+
+    await handleNotificationClickNavigation(markedUrl, matchClients, openWindow)
+
+    expect(welcomeClient.navigate).toHaveBeenCalledWith(markedUrl.href)
+    expect(navigatedClient.focus).toHaveBeenCalledTimes(1)
+    expect(openWindow).not.toHaveBeenCalled()
+  })
+})

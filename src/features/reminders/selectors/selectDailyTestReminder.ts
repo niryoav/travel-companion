@@ -2,6 +2,7 @@ import { instantFromLocalTime } from '../../../domain/trip/localTimeInput.js'
 import { calendarDateInTimeZone } from '../../../domain/trip/tripTime.js'
 import type { TripData } from '../../../domain/trip/tripTypes.js'
 import type { TripReminder } from '../reminderTypes.js'
+import { withNotificationLaunchMarker } from '../webPushPayload.js'
 import { selectCruiseWindow } from './selectCruiseWindow.js'
 
 export const DAILY_TEST_LOCAL_TIME = '10:00'
@@ -44,7 +45,7 @@ export function selectDailyTestReminder(
     timeZone,
     title: 'Travel Companion test',
     body: 'Dit is de dagelijkse testmelding. Reismeldingen werken op dit toestel.',
-    targetPath: '/more',
+    targetPath: withNotificationLaunchMarker('/more'),
     status: 'confirmed',
   }
 }

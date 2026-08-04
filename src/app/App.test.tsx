@@ -976,6 +976,60 @@ describe('App', () => {
     expect(window.location.search).toBe('?phase=sea-day')
   })
 
+  it('preserves a notification-launched /more on a cold start, even when selectStartupPath would otherwise pick Welcome', async () => {
+    const repository = new MemoryTripStateRepository()
+    repository.travelerId = 'traveler-alex'
+    window.history.replaceState({}, '', '/more?source=notification')
+
+    // Before the trip start date — selectStartupPath would normally send a
+    // cold launch to /welcome, exactly the real-device bug this covers.
+    renderApp(repository, new Date('2030-05-01T12:00:00Z'))
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'More' }),
+    ).toBeInTheDocument()
+    expect(window.location.pathname).toBe('/more')
+
+    // Cosmetic cleanup: the marker is dropped from the visible URL once
+    // startup has settled, without another redirect or route change.
+    await waitFor(() => expect(window.location.search).toBe(''))
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'More' }),
+    ).toBeInTheDocument()
+  })
+
+  it('still redirects a plain /more (no notification marker) away from Welcome-phase startup', async () => {
+    const repository = new MemoryTripStateRepository()
+    repository.travelerId = 'traveler-alex'
+    window.history.replaceState({}, '', '/more')
+
+    renderApp(repository, new Date('2030-05-01T12:00:00Z'))
+
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'Northern Coast Journey',
+      }),
+    ).toBeInTheDocument()
+    expect(window.location.pathname).toBe('/welcome')
+  })
+
+  it('still sends a plain manual launch through the normal selectStartupPath before the trip', async () => {
+    const repository = new MemoryTripStateRepository()
+    repository.travelerId = 'traveler-alex'
+    window.history.replaceState({}, '', '/')
+
+    renderApp(repository, new Date('2030-05-01T12:00:00Z'))
+
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'Northern Coast Journey',
+      }),
+    ).toBeInTheDocument()
+    expect(window.location.pathname).toBe('/welcome')
+  })
+
   it.each([
     ['/trip', 'Aboard MV Example'],
     ['/documents', 'Documents'],

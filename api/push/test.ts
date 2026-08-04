@@ -8,6 +8,7 @@ import {
   type PushSendResult,
   type WebPushNotificationPayload,
 } from '../lib/webPushSender.js'
+import { withNotificationLaunchMarker } from '../../src/features/reminders/webPushPayload.js'
 
 const RESPONSE_HEADERS = {
   'Cache-Control': 'no-store',
@@ -18,7 +19,7 @@ const TEST_NOTIFICATION_PAYLOAD: WebPushNotificationPayload = {
   reminderId: 'test-notification',
   title: 'Travel Companion',
   body: 'Reismeldingen werken op dit toestel.',
-  targetPath: '/more',
+  targetPath: withNotificationLaunchMarker('/more'),
   tag: 'test-notification',
 }
 

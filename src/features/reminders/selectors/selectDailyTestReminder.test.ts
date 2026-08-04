@@ -15,7 +15,9 @@ describe('selectDailyTestReminder', () => {
       sourceEntityId: '2026-08-15',
       title: 'Travel Companion test',
       body: 'Dit is de dagelijkse testmelding. Reismeldingen werken op dit toestel.',
-      targetPath: '/more',
+      // Marked so StartupRouteGate preserves /more on a cold launch instead
+      // of redirecting to whatever selectStartupPath would otherwise pick.
+      targetPath: '/more?source=notification',
       status: 'confirmed',
     })
     // 10:00 Europe/Brussels (CEST, UTC+2) on 2026-08-15.
