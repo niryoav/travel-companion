@@ -248,3 +248,66 @@ describe('TravelNotificationsCard — phase copy', () => {
     expect(await screen.findByText('Notifications enabled.')).toBeInTheDocument()
   })
 })
+
+describe('TravelNotificationsCard — mobile button presentation', () => {
+  it('gives the primary "Turn on" action a clearly button-like style, not plain text', async () => {
+    mocked.detectPushReadiness.mockReturnValue('READY')
+    mocked.getPushSubscriptionStatus.mockResolvedValue('INACTIVE')
+
+    render(
+      <TravelNotificationsCard now={FIXED_NOW} tripData={tripFixture} travelerId="traveler-yoav" />,
+    )
+
+    const enableButton = await screen.findByRole('button', {
+      name: 'Turn on travel notifications',
+    })
+    expect(enableButton).toHaveClass('travel-notifications-button-primary')
+    expect(enableButton.parentElement).toHaveClass('travel-notifications-actions')
+  })
+
+  it('gives both the test-push and disable actions equally clear (but distinct) button styling once subscribed', async () => {
+    mocked.detectPushReadiness.mockReturnValue('READY')
+    mocked.getPushSubscriptionStatus.mockResolvedValue('ACTIVE')
+
+    render(
+      <TravelNotificationsCard now={FIXED_NOW} tripData={tripFixture} travelerId="traveler-yoav" />,
+    )
+
+    const testButton = await screen.findByRole('button', {
+      name: 'Send test notification',
+    })
+    const disableButton = await screen.findByRole('button', {
+      name: 'Turn off notifications',
+    })
+    expect(testButton).toHaveClass('travel-notifications-button-primary')
+    expect(disableButton).toHaveClass('travel-notifications-button-secondary')
+    // Both sit in the same styled action group as the "Turn on" button does.
+    expect(testButton.parentElement).toHaveClass('travel-notifications-actions')
+    expect(disableButton.parentElement).toHaveClass('travel-notifications-actions')
+  })
+
+  it('visibly disables the action while a request is in flight', async () => {
+    mocked.detectPushReadiness.mockReturnValue('READY')
+    mocked.getPushSubscriptionStatus.mockResolvedValue('INACTIVE')
+    let resolveSubscribe: (value: { status: 'SUBSCRIBED' }) => void = () => {}
+    mocked.subscribeToPushNotifications.mockReturnValue(
+      new Promise((resolve) => {
+        resolveSubscribe = resolve
+      }),
+    )
+
+    render(
+      <TravelNotificationsCard now={FIXED_NOW} tripData={tripFixture} travelerId="traveler-yoav" />,
+    )
+
+    const enableButton = await screen.findByRole('button', {
+      name: 'Turn on travel notifications',
+    })
+    fireEvent.click(enableButton)
+
+    await waitFor(() => expect(enableButton).toBeDisabled())
+
+    resolveSubscribe({ status: 'SUBSCRIBED' })
+    await waitFor(() => expect(enableButton).not.toBeInTheDocument())
+  })
+})

@@ -153,17 +153,36 @@ export function TravelNotificationsCard({
                 Notifications enabled.
                 {PHASE_COPY[phase] ? ` ${PHASE_COPY[phase]}` : ''}
               </p>
-              <button type="button" disabled={working} onClick={handleTest}>
-                Send test notification
-              </button>
-              <button type="button" disabled={working} onClick={handleDisable}>
-                Turn off notifications
-              </button>
+              <div className="travel-notifications-actions">
+                <button
+                  type="button"
+                  className="travel-notifications-button-primary"
+                  disabled={working}
+                  onClick={handleTest}
+                >
+                  Send test notification
+                </button>
+                <button
+                  type="button"
+                  className="travel-notifications-button-secondary"
+                  disabled={working}
+                  onClick={handleDisable}
+                >
+                  Turn off notifications
+                </button>
+              </div>
             </>
           ) : (
-            <button type="button" disabled={working} onClick={handleEnable}>
-              Turn on travel notifications
-            </button>
+            <div className="travel-notifications-actions">
+              <button
+                type="button"
+                className="travel-notifications-button-primary"
+                disabled={working}
+                onClick={handleEnable}
+              >
+                Turn on travel notifications
+              </button>
+            </div>
           )}
         </>
       )}
