@@ -4,6 +4,7 @@ import { selectTripDays } from '../../domain/trip/selectors/selectTripDays'
 import type { TripData } from '../../domain/trip/tripTypes'
 import {
   cruiseDayFromSearch,
+  cruiseTimeFromSearch,
   resolveCruiseDaySimulationDate,
 } from '../simulation/cruiseDaySimulation'
 import { SimulationScenarioSwitcher } from '../simulation/SimulationScenarioSwitcher'
@@ -33,7 +34,11 @@ export function TodayScreen({ now, tripData }: TodayScreenProps) {
   const reviewState = reviewStateFromSearch(search)
   const cruiseDayNumber = cruiseDayFromSearch(search)
   const cruiseDayNow = cruiseDayNumber
-    ? resolveCruiseDaySimulationDate(tripData, cruiseDayNumber)
+    ? resolveCruiseDaySimulationDate(
+        tripData,
+        cruiseDayNumber,
+        cruiseTimeFromSearch(search),
+      )
     : null
   const simulationScenarios = simulationScenario
     ? createTodaySimulationScenarios(tripData)

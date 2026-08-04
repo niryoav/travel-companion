@@ -282,6 +282,64 @@ export interface DocumentReference {
   operationalNotice?: string
 }
 
+export type PreparationRequirementLevel =
+  | 'REQUIRED'
+  | 'RECOMMENDED'
+  | 'HELPFUL'
+
+export type PreparationCategory =
+  | 'TIMING'
+  | 'DOCUMENTS'
+  | 'CLOTHING'
+  | 'FOOTWEAR'
+  | 'WEATHER_PROTECTION'
+  | 'WHAT_TO_BRING'
+  | 'FOOD_AND_DRINK'
+  | 'ACCESSIBILITY'
+  | 'BOAT_OR_TRANSFER'
+  | 'BEFORE_YOU_LEAVE'
+
+/**
+ * Where a preparation item's guidance came from, so corrections can be
+ * traced back to the source document rather than re-derived from memory.
+ */
+export type PreparationSource =
+  | 'OCEANIA_SUMMARY'
+  | 'SHORE_EXCURSIONS_GUIDE'
+  | 'EXTERNAL_CONFIRMATION'
+  | 'CURATED'
+
+export type BoatInvolvementType =
+  | 'TENDER'
+  | 'RIB'
+  | 'FERRY'
+  | 'ZODIAC'
+  | 'SMALL_BOAT'
+  | 'SEA_CLIFF_CRUISE'
+  | 'BOAT_CRUISE'
+
+export interface PreparationItem {
+  id: string
+  category: PreparationCategory
+  level: PreparationRequirementLevel
+  text: string
+}
+
+export interface EventPreparationInfo {
+  eventId: EventId
+  source: PreparationSource
+  sourceNote: string
+  boatInvolvement?: BoatInvolvementType
+  items: PreparationItem[]
+  /**
+   * IDs into the separate `finalCruiseSummaryDocuments` registry
+   * (uploaded Oceania PDFs, e.g. the boarding pass) that are relevant
+   * to this event. Kept distinct from `documentReferenceIds` because
+   * that registry uses its own id/href shape, not `DocumentReference`.
+   */
+  finalCruiseSummaryDocumentIds?: string[]
+}
+
 export interface TripData {
   schemaVersion: 1
   dataVersion: string
@@ -298,4 +356,5 @@ export interface TripData {
   portCalls: PortCall[]
   bookingReferences: BookingReference[]
   documentReferences: DocumentReference[]
+  eventPreparation?: Record<EventId, EventPreparationInfo>
 }

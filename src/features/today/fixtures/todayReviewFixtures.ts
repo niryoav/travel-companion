@@ -124,6 +124,7 @@ export const todayReviewFixtures: Record<
       preparationNotes: ['Keep the local plan available offline.'],
       documentActions: [],
       tripHref: '/trip#day-2030-05-11',
+      preparationHref: '/prepare-tomorrow',
     },
   },
   'port-day': {

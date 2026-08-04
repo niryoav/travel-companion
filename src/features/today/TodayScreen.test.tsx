@@ -385,6 +385,7 @@ describe('TodayScreen', () => {
       throw new Error('Embarkation taxi missing')
     }
     taxi.startsAt = '2026-08-23T12:15:00Z'
+    taxi.endsAt = '2026-08-23T12:45:00Z'
 
     render(
       <MemoryRouter initialEntries={['/today?simulation=embarkation-day']}>
@@ -723,6 +724,7 @@ describe('TodayScreen', () => {
         documentActions: [],
         emptyMessage: undefined,
         tripHref: '/trip#day-2030-05-11',
+        preparationHref: '/prepare-tomorrow',
       },
     }
 

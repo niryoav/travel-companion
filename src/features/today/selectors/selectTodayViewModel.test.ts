@@ -716,4 +716,78 @@ describe('selectTodayViewModel', () => {
       'All Aboard 17:00 · Confirmed',
     ])
   })
+
+  describe('tomorrow checklist and motion-sickness reminder', () => {
+    it('includes a categorized checklist and motion-sickness reminder for a tender excursion tomorrow', () => {
+      const result = selectTodayViewModel(
+        oceaniaMarina2026TripData,
+        new Date('2026-08-23T16:05:00Z'),
+      )
+
+      expect(result.tomorrow?.title).toBe('Ísafjörður')
+      expect(result.tomorrow?.motionSicknessReminder).toMatch(
+        /motion-sickness/i,
+      )
+      expect(result.tomorrow?.preparationHref).toBe('/prepare-tomorrow')
+      expect(
+        result.tomorrow?.checklist?.some(
+          (group) => group.category === 'FOOTWEAR',
+        ),
+      ).toBe(true)
+    })
+
+    it('shows no motion-sickness reminder ahead of an ordinary docked excursion day', () => {
+      const result = selectTodayViewModel(
+        oceaniaMarina2026TripData,
+        new Date('2026-08-29T16:05:00+01:00'),
+      )
+
+      expect(result.tomorrow?.title).toBe('Glasgow (Greenock)')
+      expect(result.tomorrow?.motionSicknessReminder).toBeUndefined()
+    })
+  })
+
+  describe('beforeYouLeave', () => {
+    it('shows a compact morning summary before the Reykjavík check-in window has passed', () => {
+      const result = selectTodayViewModel(
+        oceaniaMarina2026TripData,
+        new Date('2026-08-23T08:00:00Z'),
+      )
+
+      expect(result.beforeYouLeave?.title).toBe('Before you leave')
+      expect(
+        result.beforeYouLeave?.items.some((item) =>
+          item.includes('Hotel Viking to Oceania Marina: 11:30'),
+        ),
+      ).toBe(true)
+      expect(
+        result.beforeYouLeave?.items.some((item) =>
+          item.includes('Check-in at cruise terminal'),
+        ),
+      ).toBe(true)
+      expect(
+        result.beforeYouLeave?.items.some((item) =>
+          item.includes('Embark Oceania Marina: 13:00'),
+        ),
+      ).toBe(true)
+    })
+
+    it('stops showing the morning summary once the day’s events have passed', () => {
+      const result = selectTodayViewModel(
+        oceaniaMarina2026TripData,
+        new Date('2026-08-23T14:00:00Z'),
+      )
+
+      expect(result.beforeYouLeave).toBeUndefined()
+    })
+
+    it('does not show a morning summary on a day with no timed items', () => {
+      const result = selectTodayViewModel(
+        oceaniaMarina2026TripData,
+        new Date('2026-08-28T12:00:00+01:00'),
+      )
+
+      expect(result.beforeYouLeave).toBeUndefined()
+    })
+  })
 })

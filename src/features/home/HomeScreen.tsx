@@ -8,6 +8,7 @@ import { selectTripDays } from '../../domain/trip/selectors/selectTripDays'
 import type { TripData } from '../../domain/trip/tripTypes'
 import {
   cruiseDayFromSearch,
+  cruiseTimeFromSearch,
   resolveCruiseDaySimulationDate,
 } from '../simulation/cruiseDaySimulation'
 import { SimulationScenarioSwitcher } from '../simulation/SimulationScenarioSwitcher'
@@ -99,7 +100,11 @@ export function HomeScreen({
   const reviewState = demoHomeStateFromSearch(search)
   const cruiseDayNumber = cruiseDayFromSearch(search)
   const cruiseDayNow = cruiseDayNumber
-    ? resolveCruiseDaySimulationDate(tripData, cruiseDayNumber)
+    ? resolveCruiseDaySimulationDate(
+        tripData,
+        cruiseDayNumber,
+        cruiseTimeFromSearch(search),
+      )
     : null
   const simulationScenarios = simulationScenario
     ? createHomeSimulationScenarios(tripData)
@@ -142,6 +147,7 @@ export function HomeScreen({
             )
             : undefined
         }
+        search={search}
         viewModel={viewModel}
       />
     </main>

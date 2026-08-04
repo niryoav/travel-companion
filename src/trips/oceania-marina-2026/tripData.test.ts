@@ -116,6 +116,7 @@ describe('canonical active trip data', () => {
         'day-2026-08-23',
         [
           'event-hotel-ship-transfer',
+          'event-reykjavik-terminal-checkin',
           'event-embarkation',
           'event-embarkation-lunch',
         ],
@@ -338,8 +339,8 @@ describe('canonical active trip data', () => {
 
     expect(transfer).toMatchObject({
       transportId: 'transport-hotel-ship',
-      startsAt: '2026-08-23T12:00:00Z',
-      endsAt: '2026-08-23T12:30:00Z',
+      startsAt: '2026-08-23T11:30:00Z',
+      endsAt: '2026-08-23T12:00:00Z',
       timingVerification: 'ESTIMATED',
     })
     expect(transfer?.leaveByAt).toBeUndefined()

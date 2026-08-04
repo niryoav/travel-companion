@@ -1,5 +1,6 @@
 import type { PortAccessStatus } from '../../domain/trip/tripTypes'
 import type { VoyageProgressViewModel } from '../../domain/trip/selectors/selectVoyageProgress'
+import type { DayPreparationViewModel } from '../preparation/preparationTypes'
 import type { DocumentActionViewModel } from '../documents/documentTypes'
 import type { IconName } from '../../components/AppIcon'
 
@@ -74,6 +75,11 @@ export interface CruiseProgress {
   daysRemaining: number
 }
 
+export interface TomorrowPreparationCardViewModel {
+  prominent: boolean
+  preparation: DayPreparationViewModel
+}
+
 export interface HomeViewModel {
   phase: HomePhase
   cruiseDayType?: CruiseDayType
@@ -82,6 +88,7 @@ export interface HomeViewModel {
   intro?: string
   cruiseProgress?: CruiseProgress
   voyageProgress?: VoyageProgressViewModel
+  tomorrowPreparation?: TomorrowPreparationCardViewModel
   milestone?: Milestone
   weather?: QuickWeather
   checklistTitle?: string

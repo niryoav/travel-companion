@@ -2520,6 +2520,113 @@ a:focus-visible {
   line-height: 1.45;
 }
 
+.prepare-tomorrow-card {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.prepare-tomorrow-card-compact {
+  padding: 0.9rem 1.15rem;
+}
+
+.prepare-tomorrow-day-title {
+  margin: 0.15rem 0 0;
+  color: var(--text);
+  font-size: clamp(1.1rem, 4.2vw, 1.35rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.prepare-tomorrow-date {
+  margin: 0.1rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.prepare-tomorrow-summary {
+  margin: 0.65rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.4rem;
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.prepare-tomorrow-motion-sickness {
+  margin: 0.65rem 0 0;
+  border-left: 3px solid var(--champagne);
+  color: var(--text);
+  padding-left: 0.7rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.prepare-tomorrow-detail-link,
+.prepare-tomorrow-preview-link {
+  display: inline-flex;
+  min-height: 2.6rem;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--champagne) 72%, transparent);
+  border-radius: 0.85rem;
+  background: var(--accent-soft);
+  color: var(--champagne);
+  padding: 0.55rem 0.85rem;
+  font-size: 0.88rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.preparation-checklist {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.preparation-checklist-group h3 {
+  margin: 0 0 0.4rem;
+  color: var(--text);
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+}
+
+.preparation-checklist-group ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.preparation-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.preparation-item-level {
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.05rem 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.preparation-item-required .preparation-item-level {
+  border-color: color-mix(in srgb, var(--champagne) 60%, transparent);
+  color: var(--champagne);
+}
+
 .milestone-card {
   position: relative;
   grid-column: 1 / -1;

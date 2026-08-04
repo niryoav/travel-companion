@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 
 import type { TodayViewModel } from './todayTypes'
+import { BeforeYouLeaveCard } from './components/BeforeYouLeaveCard'
 import { CriticalInfoBanner } from './components/CriticalInfoBanner'
 import { DayTimeline } from './components/DayTimeline'
 import { NextEventCard } from './components/NextEventCard'
@@ -37,6 +38,10 @@ export function TodayView({
       {previewControls}
 
       <TodayHeader header={viewModel.header} />
+
+      {viewModel.beforeYouLeave ? (
+        <BeforeYouLeaveCard beforeYouLeave={viewModel.beforeYouLeave} />
+      ) : null}
 
       {viewModel.operationalStatus ? (
         <OperationalStatusBanner status={viewModel.operationalStatus} />

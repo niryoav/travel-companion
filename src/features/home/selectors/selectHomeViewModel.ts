@@ -2,12 +2,14 @@ import { resolveTripPhase } from '../../../domain/trip/selectors/resolveTripPhas
 import { selectCruiseContext } from '../../../domain/trip/selectors/selectCruiseContext'
 import { selectNextEvent } from '../../../domain/trip/selectors/selectNextEvent'
 import { selectToday } from '../../../domain/trip/selectors/selectToday'
+import { selectTomorrowTripDay } from '../../../domain/trip/selectors/selectTomorrowTripDay'
 import { selectVoyageProgress } from '../../../domain/trip/selectors/selectVoyageProgress'
 import {
   calendarDateInTimeZone,
   formatDateRange,
   formatLocalDate,
   formatLocalTime,
+  isAtOrAfterLocalTime,
 } from '../../../domain/trip/tripTime'
 import type {
   PortCall,
@@ -15,6 +17,7 @@ import type {
   TripEvent,
 } from '../../../domain/trip/tripTypes'
 import type { IconName } from '../../../components/AppIcon'
+import { selectDayPreparation } from '../../preparation/selectors/selectDayPreparation'
 import {
   CRUISE_DAY_TYPES,
   HOME_PHASES,
@@ -296,6 +299,16 @@ export function selectHomeViewModel(
         }
       : undefined,
     voyageProgress: selectVoyageProgress(data, today) ?? undefined,
+    tomorrowPreparation: (() => {
+      const tomorrow = selectTomorrowTripDay(data, today)
+      if (!tomorrow) {
+        return undefined
+      }
+      return {
+        prominent: isAtOrAfterLocalTime(now, today.timeZone, 18),
+        preparation: selectDayPreparation(data, tomorrow),
+      }
+    })(),
     milestone,
   }
 }
