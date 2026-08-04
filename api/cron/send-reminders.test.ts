@@ -17,13 +17,23 @@ const TRANSFER_REMINDER_ID =
   'trip-oceania-marina-2026:transfer:event-home-brussels-transfer'
 // event-home-brussels-transfer starts 2026-08-22T10:30:00+02:00; the
 // transfer rule fires 60 minutes before that, in UTC. This is inside the
-// cruise window (2026-08-22T07:00Z to 2026-09-04T14:00Z).
+// notification window (2026-08-21T15:45Z to 2026-09-04T14:00Z).
 const TRANSFER_TRIGGER_AT = new Date('2026-08-22T07:30:00Z')
 // The daily test triggers at 10:00 Europe/Brussels = 08:00Z on this date;
 // 08:10Z is 10 minutes into the 15-minute run window that should pick it up.
 const BEFORE_TRIP_NOW = new Date('2026-08-15T08:10:00Z')
 const AFTER_TRIP_NOW = new Date('2026-09-10T09:00:00Z')
 const DAILY_TEST_ID = 'trip-oceania-marina-2026:daily-test:2026-08-15'
+// The notification window opens 2026-08-21T15:45Z (17:45 Europe/Brussels,
+// one day before the canonical trip.startDate of 2026-08-22) specifically so
+// the evening-before "Prepare for tomorrow" reminder for departure day is
+// still inside it.
+const NOTIFICATION_WINDOW_START = new Date('2026-08-21T15:45:00.000Z')
+const PREPARE_FOR_TOMORROW_REMINDER_ID =
+  'trip-oceania-marina-2026:prepare-for-tomorrow:day-2026-08-22'
+// selectDayPreparation(day-2026-08-22) is non-empty (transfer, embarkation,
+// documents), so this reminder is real, not a fixture artifact.
+const PREPARE_FOR_TOMORROW_TRIGGER_AT = new Date('2026-08-21T16:00:00Z') // 18:00 Europe/Brussels, 21 Aug
 
 const installationA = {
   installationId: 'install-yoav-iphone',
@@ -242,12 +252,10 @@ describe('POST /api/cron/send-reminders — cruise window', () => {
     expect(writeLog).not.toHaveBeenCalled()
   })
 
-  it('excludes the not-yet-confirmed evening-before reminder that falls just outside the window start (known limitation)', async () => {
-    // event-outbound-flight day's "prepare for tomorrow" would trigger the
-    // evening before embarkation day, which is before the window opens.
+  it('processes no real reminders before the notification window opens (21 Aug 2026, 17:45 local)', async () => {
     const sendNotification = sentSendNotification()
     const response = await handleSendRemindersRequest(request(), {
-      now: () => new Date('2026-08-21T16:00:00Z'), // 18:00 Europe/Brussels the day before
+      now: () => new Date(NOTIFICATION_WINDOW_START.getTime() - 60_000), // 17:44 local
       subscriptionsBlob: {
         readBlob: subscriptionsReadBlob([installationA]),
         environment: 'production',
@@ -262,6 +270,60 @@ describe('POST /api/cron/send-reminders — cruise window', () => {
 
     expect(await response.json()).toMatchObject({ status: 'outside-trip-window' })
     expect(sendNotification).not.toHaveBeenCalled()
+  })
+
+  it('includes the evening-before "Prepare for tomorrow" reminder now that the window starts at 17:45 the day before departure', async () => {
+    const sendNotification = sentSendNotification()
+    const response = await handleSendRemindersRequest(request(), {
+      now: () => PREPARE_FOR_TOMORROW_TRIGGER_AT, // 18:00 Europe/Brussels, 21 Aug — 15 min after the window opens
+      subscriptionsBlob: {
+        readBlob: subscriptionsReadBlob([installationA]),
+        environment: 'production',
+      },
+      deliveryLogBlob: {
+        readBlob: deliveryLogReadBlob({ lastCheckedAt: null, sent: [] }),
+        writeBlob: vi.fn<typeof put>(),
+        environment: 'production',
+      },
+      sendNotification,
+    })
+
+    const body = await response.json()
+    expect(body.status).toBe('trip-active')
+    expect(sendNotification).toHaveBeenCalledTimes(1)
+    const [, payload] = sendNotification.mock.calls[0]
+    expect(payload.reminderId).toBe(PREPARE_FOR_TOMORROW_REMINDER_ID)
+    expect(payload.title).toBe('Prepare for tomorrow')
+  })
+
+  it('continues processing normal cruise reminders from 22 August onward', async () => {
+    const sendNotification = sentSendNotification()
+    const response = await handleSendRemindersRequest(request(), {
+      now: () => TRANSFER_TRIGGER_AT,
+      subscriptionsBlob: {
+        readBlob: subscriptionsReadBlob([installationA]),
+        environment: 'production',
+      },
+      deliveryLogBlob: {
+        readBlob: deliveryLogReadBlob({ lastCheckedAt: null, sent: [] }),
+        writeBlob: vi.fn<typeof put>(),
+        environment: 'production',
+      },
+      sendNotification,
+    })
+
+    expect(await response.json()).toMatchObject({ status: 'trip-active', sent: 1 })
+  })
+
+  it('becomes fully inert after 4 September 2026, 16:00', async () => {
+    const readSubscriptions = vi.fn()
+    const response = await handleSendRemindersRequest(request(), {
+      now: () => new Date('2026-09-04T14:00:00.001Z'), // 1ms after 16:00 Europe/Brussels
+      subscriptionsBlob: { readBlob: readSubscriptions, environment: 'production' },
+    })
+
+    expect(await response.json()).toMatchObject({ status: 'outside-trip-window', sent: 0 })
+    expect(readSubscriptions).not.toHaveBeenCalled()
   })
 })
 
@@ -334,10 +396,10 @@ describe('POST /api/cron/send-reminders — daily pre-trip test', () => {
     expect(await secondResponse.json()).toMatchObject({ sent: 0 })
   })
 
-  it('stops automatically once the real cruise window starts', async () => {
+  it('stops automatically once the pre-trip notification window opens (21 Aug 2026, 17:45 local)', async () => {
     const sendNotification = sentSendNotification()
     await handleSendRemindersRequest(request(), {
-      now: () => new Date('2026-08-22T07:05:00Z'), // just after the window opens
+      now: () => new Date(NOTIFICATION_WINDOW_START.getTime() + 5 * 60_000), // 17:50 local, just after opening
       subscriptionsBlob: {
         readBlob: subscriptionsReadBlob([installationA]),
         environment: 'production',
@@ -351,8 +413,8 @@ describe('POST /api/cron/send-reminders — daily pre-trip test', () => {
     })
 
     expect(
-      sendNotification.mock.calls.some(
-        ([, payload]) => payload.reminderId === 'trip-oceania-marina-2026:daily-test:2026-08-22',
+      sendNotification.mock.calls.some(([, payload]) =>
+        payload.reminderId.includes('daily-test'),
       ),
     ).toBe(false)
   })
@@ -721,5 +783,202 @@ describe('POST /api/cron/send-reminders — overlapping runs', () => {
     ).rejects.toThrow('network blip')
 
     expect((storedLog as { lockedAt: string | null }).lockedAt).toBeNull()
+  })
+})
+
+describe('POST /api/cron/send-reminders — partial failure preserves successful deliveries', () => {
+  it('keeps a successfully delivered push recorded when a later step throws, so it is not sent again next run', async () => {
+    let storedLog: {
+      lastCheckedAt: string | null
+      sent: { reminderId: string; installationId: string; sentAt: string }[]
+      lockedAt: string | null
+    } = { lastCheckedAt: null, sent: [], lockedAt: null }
+    const readLogBlob = vi.fn(async () => blobResult(JSON.stringify(storedLog)))
+    const writeLogBlob = vi.fn(async (_path: string, body: unknown) => {
+      storedLog = JSON.parse(String(body))
+      return {} as Awaited<ReturnType<typeof put>>
+    })
+
+    // installationA is delivered successfully; installationB's push report
+    // comes back EXPIRED, and removing that subscription (a later step,
+    // after the successful send) is what throws — modeling a transient
+    // Blob failure on that follow-up write, not the send itself.
+    const sendNotification = vi.fn(
+      async (subscription: { endpoint: string }) => {
+        if (subscription.endpoint === installationA.endpoint) {
+          return { status: 'SENT' as const }
+        }
+        return { status: 'EXPIRED' as const }
+      },
+    )
+    const failingSubscriptionsWriteBlob = vi.fn(async () => {
+      throw new Error('subscriptions blob write failed')
+    })
+
+    await expect(
+      handleSendRemindersRequest(request(), {
+        now: () => TRANSFER_TRIGGER_AT,
+        subscriptionsBlob: {
+          readBlob: subscriptionsReadBlob([installationA, installationB]),
+          writeBlob: failingSubscriptionsWriteBlob,
+          environment: 'production',
+        },
+        deliveryLogBlob: { readBlob: readLogBlob, writeBlob: writeLogBlob, environment: 'production' },
+        sendNotification,
+      }),
+    ).rejects.toThrow('subscriptions blob write failed')
+
+    // The successful delivery to installationA survived the later throw.
+    expect(storedLog.sent).toEqual([
+      {
+        reminderId: TRANSFER_REMINDER_ID,
+        installationId: installationA.installationId,
+        sentAt: TRANSFER_TRIGGER_AT.toISOString(),
+      },
+    ])
+    expect(storedLog.lockedAt).toBeNull()
+
+    // Next run: installationA must not receive a duplicate.
+    const secondSend = sentSendNotification()
+    const secondResponse = await handleSendRemindersRequest(request(), {
+      now: () => new Date(TRANSFER_TRIGGER_AT.getTime() + 60_000),
+      subscriptionsBlob: {
+        readBlob: subscriptionsReadBlob([installationA]),
+        environment: 'production',
+      },
+      deliveryLogBlob: { readBlob: readLogBlob, writeBlob: writeLogBlob, environment: 'production' },
+      sendNotification: secondSend,
+    })
+    expect(secondSend).not.toHaveBeenCalled()
+    expect(await secondResponse.json()).toMatchObject({ sent: 0 })
+  })
+
+  it('does not advance lastCheckedAt on a partially failed run, so the still-unprocessed installation is retried next time', async () => {
+    const priorCheckpoint = new Date(TRANSFER_TRIGGER_AT.getTime() - 20 * 60_000).toISOString()
+    let storedLog: {
+      lastCheckedAt: string | null
+      sent: { reminderId: string; installationId: string; sentAt: string }[]
+      lockedAt: string | null
+    } = { lastCheckedAt: priorCheckpoint, sent: [], lockedAt: null }
+    const readLogBlob = vi.fn(async () => blobResult(JSON.stringify(storedLog)))
+    const writeLogBlob = vi.fn(async (_path: string, body: unknown) => {
+      storedLog = JSON.parse(String(body))
+      return {} as Awaited<ReturnType<typeof put>>
+    })
+
+    // installationA succeeds; installationB's send itself throws, so it is
+    // never recorded either way — genuinely unprocessed, not merely
+    // "recorded but then rolled back".
+    const sendNotification = vi.fn(
+      async (subscription: { endpoint: string }) => {
+        if (subscription.endpoint === installationA.endpoint) {
+          return { status: 'SENT' as const }
+        }
+        throw new Error('device unreachable')
+      },
+    )
+
+    await expect(
+      handleSendRemindersRequest(request(), {
+        now: () => TRANSFER_TRIGGER_AT,
+        subscriptionsBlob: {
+          readBlob: subscriptionsReadBlob([installationA, installationB]),
+          environment: 'production',
+        },
+        deliveryLogBlob: { readBlob: readLogBlob, writeBlob: writeLogBlob, environment: 'production' },
+        sendNotification,
+      }),
+    ).rejects.toThrow('device unreachable')
+
+    // The checkpoint stayed exactly where it was before this run.
+    expect(storedLog.lastCheckedAt).toBe(priorCheckpoint)
+    expect(storedLog.sent).toEqual([
+      {
+        reminderId: TRANSFER_REMINDER_ID,
+        installationId: installationA.installationId,
+        sentAt: TRANSFER_TRIGGER_AT.toISOString(),
+      },
+    ])
+
+    // Next run: the reminder is still selected as due (the checkpoint never
+    // moved past its trigger instant) — installationB is retried,
+    // installationA is not sent again.
+    const secondSend = vi.fn(async (subscription: { endpoint: string }) => {
+      if (subscription.endpoint === installationA.endpoint) {
+        throw new Error('should not resend installationA')
+      }
+      return { status: 'SENT' as const }
+    })
+    const secondResponse = await handleSendRemindersRequest(request(), {
+      now: () => new Date(TRANSFER_TRIGGER_AT.getTime() + 5 * 60_000),
+      subscriptionsBlob: {
+        readBlob: subscriptionsReadBlob([installationA, installationB]),
+        environment: 'production',
+      },
+      deliveryLogBlob: { readBlob: readLogBlob, writeBlob: writeLogBlob, environment: 'production' },
+      sendNotification: secondSend,
+    })
+
+    expect(secondSend).toHaveBeenCalledTimes(1)
+    expect(await secondResponse.json()).toMatchObject({ sent: 1 })
+    expect(storedLog.sent).toHaveLength(2)
+  })
+
+  it('cross-installation: a plain delivery failure (no exception) to one installation does not block or duplicate the other in the same run', async () => {
+    // NOTE on scope: a plain `{status: 'FAILED'}` result (no exception) does
+    // NOT get a cross-run retry the way a throw does (see the previous two
+    // tests) — once a run completes normally, lastCheckedAt always advances
+    // to that run's `now`, and by definition every reminder just considered
+    // had triggerAt <= now, so it can never be "due" again afterward,
+    // regardless of whether every installation actually received it. Only a
+    // run that never completes (throws) leaves the checkpoint behind for a
+    // retry. This is a pre-existing characteristic of the simple
+    // checkpoint-based due-window, not something introduced by this change;
+    // fixing it would mean tracking delivery completeness independently of
+    // the checkpoint, which is a larger change than the targeted fix this
+    // commit makes. Flagged here rather than silently assumed.
+    let storedLog: {
+      lastCheckedAt: string | null
+      sent: { reminderId: string; installationId: string; sentAt: string }[]
+      lockedAt: string | null
+    } = { lastCheckedAt: null, sent: [], lockedAt: null }
+    const readLogBlob = vi.fn(async () => blobResult(JSON.stringify(storedLog)))
+    const writeLogBlob = vi.fn(async (_path: string, body: unknown) => {
+      storedLog = JSON.parse(String(body))
+      return {} as Awaited<ReturnType<typeof put>>
+    })
+
+    // A normal (non-throwing) delivery failure, exactly like a push service
+    // returning a retryable error — not an exception.
+    const sendNotification = vi.fn(
+      async (subscription: { endpoint: string }) => {
+        if (subscription.endpoint === installationA.endpoint) {
+          return { status: 'SENT' as const }
+        }
+        return { status: 'FAILED' as const, error: 'temporary push service error' }
+      },
+    )
+
+    const response = await handleSendRemindersRequest(request(), {
+      now: () => TRANSFER_TRIGGER_AT,
+      subscriptionsBlob: {
+        readBlob: subscriptionsReadBlob([installationA, installationB]),
+        environment: 'production',
+      },
+      deliveryLogBlob: { readBlob: readLogBlob, writeBlob: writeLogBlob, environment: 'production' },
+      sendNotification,
+    })
+
+    // installationB's failure is visible in the response and did not throw,
+    // so installationA's delivery still completed and was recorded.
+    expect(sendNotification).toHaveBeenCalledTimes(2)
+    expect(await response.json()).toMatchObject({ sent: 1, failed: 1 })
+    expect(storedLog.sent).toEqual([
+      {
+        reminderId: TRANSFER_REMINDER_ID,
+        installationId: installationA.installationId,
+        sentAt: TRANSFER_TRIGGER_AT.toISOString(),
+      },
+    ])
   })
 })

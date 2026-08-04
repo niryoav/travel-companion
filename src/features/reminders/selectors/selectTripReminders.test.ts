@@ -195,9 +195,9 @@ describe('selectTripReminders — real trip data', () => {
     // (documents, timeline entries, or excursions), so every day pair
     // produces a reminder — this also exercises selectDayPreparation's own
     // "is there anything to prepare" decision rather than duplicating it.
-    expect(prepareForTomorrow).toHaveLength(
-      oceaniaMarina2026TripData.days.length - 1,
-    )
+    // One extra reminder covers the evening before the very first day,
+    // which has no day-pair of its own in data.days.
+    expect(prepareForTomorrow).toHaveLength(oceaniaMarina2026TripData.days.length)
     for (const reminder of prepareForTomorrow) {
       const tomorrow = oceaniaMarina2026TripData.days.find(
         ({ id }) => id === reminder.sourceEntityId,
@@ -205,6 +205,22 @@ describe('selectTripReminders — real trip data', () => {
       expect(tomorrow).toBeDefined()
       expect(reminder.body).toContain(tomorrow?.title)
     }
+  })
+
+  it('generates the evening-before reminder for the very first trip day, anchored on the trip home timezone', () => {
+    const byKind = remindersByKind(oceaniaMarina2026TripData)
+    const prepareForTomorrow = byKind.get('prepare-for-tomorrow') ?? []
+    const firstDay = oceaniaMarina2026TripData.days[0]
+    const eveningBefore = prepareForTomorrow.find(
+      (reminder) => reminder.sourceEntityId === firstDay.id,
+    )
+
+    expect(eveningBefore).toBeDefined()
+    expect(eveningBefore?.timeZone).toBe(oceaniaMarina2026TripData.trip.homeTimeZone)
+    // 18:00 Europe/Brussels (CEST, UTC+2) on 2026-08-21, the day before
+    // trip.startDate (2026-08-22) — trip.startDate itself is untouched.
+    expect(eveningBefore?.triggerAt).toBe('2026-08-21T16:00:00.000Z')
+    expect(oceaniaMarina2026TripData.trip.startDate).toBe('2026-08-22')
   })
 
 

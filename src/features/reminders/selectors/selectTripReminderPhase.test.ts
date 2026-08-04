@@ -4,11 +4,11 @@ import { oceaniaMarina2026TripData } from '../../../trips/oceania-marina-2026/tr
 import { selectTripReminderPhase } from './selectTripReminderPhase'
 
 describe('selectTripReminderPhase', () => {
-  it('is before-trip strictly before the cruise window starts', () => {
+  it('is before-trip strictly before the notification window starts', () => {
     expect(
       selectTripReminderPhase(
         oceaniaMarina2026TripData,
-        new Date('2026-08-22T06:59:59.999Z'),
+        new Date('2026-08-21T15:44:59.999Z'),
       ),
     ).toBe('before-trip')
   })
@@ -17,7 +17,7 @@ describe('selectTripReminderPhase', () => {
     expect(
       selectTripReminderPhase(
         oceaniaMarina2026TripData,
-        new Date('2026-08-22T07:00:00.000Z'),
+        new Date('2026-08-21T15:45:00.000Z'),
       ),
     ).toBe('trip-active')
     expect(

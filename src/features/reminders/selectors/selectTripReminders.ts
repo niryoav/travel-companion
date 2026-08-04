@@ -1,6 +1,6 @@
 import { instantFromLocalTime } from '../../../domain/trip/localTimeInput.js'
 import { selectDayEvents } from '../../../domain/trip/selectors/selectDayEvents.js'
-import { formatLocalTime } from '../../../domain/trip/tripTime.js'
+import { addCalendarDays, formatLocalTime } from '../../../domain/trip/tripTime.js'
 import type {
   TripData,
   TripDay,
@@ -295,38 +295,76 @@ function selectBeforeYouLeaveReminders(
   return reminders
 }
 
+function buildPrepareForTomorrowReminder(
+  data: TripData,
+  tomorrow: TripDay,
+  todayLocalDate: string,
+  todayTimeZone: string,
+): TripReminder | null {
+  const preparation = selectDayPreparation(data, tomorrow)
+  if (preparation.isEmpty) {
+    return null
+  }
+
+  const triggerAt = instantFromLocalTime(
+    todayLocalDate,
+    PREPARE_FOR_TOMORROW_LOCAL_TIME,
+    todayTimeZone,
+  )
+  if (!triggerAt) {
+    return null
+  }
+
+  return {
+    id: reminderId(data.trip.id, 'prepare-for-tomorrow', tomorrow.id),
+    tripId: data.trip.id,
+    sourceEntityId: tomorrow.id,
+    kind: 'prepare-for-tomorrow',
+    triggerAt,
+    timeZone: todayTimeZone,
+    title: 'Prepare for tomorrow',
+    body: `See what you need to prepare for ${tomorrow.title}.`,
+    targetPath: '/prepare-tomorrow',
+    status: 'confirmed',
+  }
+}
+
 function selectPrepareForTomorrowReminders(data: TripData): TripReminder[] {
   const reminders: TripReminder[] = []
+
+  // The evening before the very first trip day has no entry of its own in
+  // data.days (the itinerary starts on departure day itself), so it isn't
+  // covered by the day-pair loop below. Handled explicitly here, anchored
+  // on the trip's home timezone, so the very first "Prepare for tomorrow"
+  // reminder can still fire the night before departure.
+  const firstDay = data.days[0]
+  const eveningBeforeDeparture = firstDay
+    ? addCalendarDays(data.trip.startDate, -1)
+    : null
+  if (firstDay && eveningBeforeDeparture) {
+    const reminder = buildPrepareForTomorrowReminder(
+      data,
+      firstDay,
+      eveningBeforeDeparture,
+      data.trip.homeTimeZone,
+    )
+    if (reminder) {
+      reminders.push(reminder)
+    }
+  }
 
   for (let index = 0; index < data.days.length - 1; index += 1) {
     const today = data.days[index]
     const tomorrow = data.days[index + 1]
-    const preparation = selectDayPreparation(data, tomorrow)
-    if (preparation.isEmpty) {
-      continue
-    }
-
-    const triggerAt = instantFromLocalTime(
+    const reminder = buildPrepareForTomorrowReminder(
+      data,
+      tomorrow,
       today.localDate,
-      PREPARE_FOR_TOMORROW_LOCAL_TIME,
       today.timeZone,
     )
-    if (!triggerAt) {
-      continue
+    if (reminder) {
+      reminders.push(reminder)
     }
-
-    reminders.push({
-      id: reminderId(data.trip.id, 'prepare-for-tomorrow', tomorrow.id),
-      tripId: data.trip.id,
-      sourceEntityId: tomorrow.id,
-      kind: 'prepare-for-tomorrow',
-      triggerAt,
-      timeZone: today.timeZone,
-      title: 'Prepare for tomorrow',
-      body: `See what you need to prepare for ${tomorrow.title}.`,
-      targetPath: '/prepare-tomorrow',
-      status: 'confirmed',
-    })
   }
 
   return reminders

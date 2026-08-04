@@ -169,6 +169,10 @@ export async function handleSendRemindersRequest(
   let failedCount = 0
   let dueCount: number
   let expiredInstallationIds = new Set<string>()
+  // Hoisted above the try so a throw partway through the send loop can
+  // still preserve whatever was already successfully delivered — see the
+  // catch block below.
+  const newRecords: PushDeliveryRecord[] = []
 
   try {
     const installations = await readPushSubscriptions(
@@ -207,7 +211,6 @@ export async function handleSendRemindersRequest(
         deliveryKey(record.reminderId, record.installationId),
       ),
     )
-    const newRecords: PushDeliveryRecord[] = []
 
     for (const reminder of dueReminders) {
       // All Aboard reminders are only ever generated with 'confirmed' status
@@ -267,10 +270,16 @@ export async function handleSendRemindersRequest(
       dependencies.deliveryLogBlob,
     )
   } catch (error) {
-    // Release the lease even on failure, so a transient error doesn't lock
-    // out the next 15-minute run for the full staleness window.
+    // A later step (e.g. removing an expired subscription, or the final
+    // write itself) can still throw after some pushes already succeeded.
+    // Keep whatever was actually delivered — reminderId + installationId
+    // dedup means recording them is always safe — but deliberately do NOT
+    // advance lastCheckedAt: reminders that were never successfully sent
+    // must remain due so the next run retries them. Also release the
+    // lease, so a transient error doesn't lock out the next 15-minute run
+    // for the full staleness window.
     await writePushDeliveryLog(
-      { ...log, lockedAt: null },
+      { ...log, sent: [...log.sent, ...newRecords], lockedAt: null },
       dependencies.deliveryLogBlob,
     )
     throw error
