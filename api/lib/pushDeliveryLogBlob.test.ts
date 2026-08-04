@@ -42,7 +42,12 @@ describe('readPushDeliveryLog', () => {
     const readBlob = vi.fn(async () => null)
     await expect(
       readPushDeliveryLog({ readBlob, environment: 'production' }),
-    ).resolves.toEqual({ schemaVersion: 1, lastCheckedAt: null, sent: [] })
+    ).resolves.toEqual({
+      schemaVersion: 1,
+      lastCheckedAt: null,
+      sent: [],
+      lockedAt: null,
+    })
   })
 
   it('returns the stored log', async () => {
@@ -56,6 +61,7 @@ describe('readPushDeliveryLog', () => {
           sentAt: '2026-08-22T07:30:01.000Z',
         },
       ],
+      lockedAt: null,
     }
     const readBlob = vi.fn(async () => blobResult(JSON.stringify(stored)))
     await expect(
@@ -72,6 +78,7 @@ describe('writePushDeliveryLog', () => {
         schemaVersion: 1,
         lastCheckedAt: '2026-08-22T07:30:00.000Z',
         sent: [],
+        lockedAt: null,
       },
       { writeBlob, environment: 'production' },
     )
@@ -82,6 +89,7 @@ describe('writePushDeliveryLog', () => {
         schemaVersion: 1,
         lastCheckedAt: '2026-08-22T07:30:00.000Z',
         sent: [],
+        lockedAt: null,
       }),
       {
         access: 'private',

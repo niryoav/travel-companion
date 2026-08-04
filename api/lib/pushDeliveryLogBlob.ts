@@ -18,6 +18,15 @@ export interface PushDeliveryLog {
   schemaVersion: 1
   lastCheckedAt: string | null
   sent: PushDeliveryRecord[]
+  /**
+   * A short-lived lease, not a true atomic lock — Vercel Blob has no
+   * compare-and-set. Set while a run is actively sending, cleared when it
+   * finishes; a run that finds a lease younger than the staleness timeout
+   * treats it as "another run is in progress" and no-ops instead of
+   * sending. A crashed run's stale lease self-heals after the timeout
+   * rather than staying stuck forever.
+   */
+  lockedAt: string | null
 }
 
 type PrivateBlobReader = typeof get
@@ -41,6 +50,7 @@ const EMPTY_LOG: PushDeliveryLog = {
   schemaVersion: 1,
   lastCheckedAt: null,
   sent: [],
+  lockedAt: null,
 }
 
 function isPushDeliveryRecord(value: unknown): value is PushDeliveryRecord {
@@ -68,7 +78,11 @@ function parseDeliveryLog(value: unknown): PushDeliveryLog {
     'sent' in value && Array.isArray(value.sent)
       ? value.sent.filter(isPushDeliveryRecord)
       : []
-  return { schemaVersion: 1, lastCheckedAt, sent }
+  const lockedAt =
+    'lockedAt' in value && typeof value.lockedAt === 'string'
+      ? value.lockedAt
+      : null
+  return { schemaVersion: 1, lastCheckedAt, sent, lockedAt }
 }
 
 async function parseBlobJson(result: GetBlobResult): Promise<unknown> {

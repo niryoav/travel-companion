@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 
 import { SurfaceCard } from '../../components/SurfaceCard'
-import type { TravelerId } from '../../domain/trip/tripTypes'
+import type { TravelerId, TripData } from '../../domain/trip/tripTypes'
+import { selectTripReminderPhase } from '../reminders/selectors/selectTripReminderPhase'
 import {
   detectPushReadiness,
   getOrCreatePushInstallationId,
@@ -12,8 +13,16 @@ import {
   type PushReadiness,
 } from '../reminders/pushNotificationClient'
 
+const PHASE_COPY = {
+  'before-trip': 'Daily test active before the trip.',
+  'trip-active': 'Real travel reminders active during the trip.',
+  'after-trip': null,
+} as const
+
 interface TravelNotificationsCardProps {
+  now: Date
   travelerId: TravelerId | null
+  tripData: TripData
 }
 
 type SubscriptionState = 'CHECKING' | 'NOT_SUBSCRIBED' | 'SUBSCRIBED'
@@ -23,7 +32,9 @@ type ActionMessage = { tone: 'success' | 'error'; text: string }
 const api = new HttpPushSubscriptionApi()
 
 export function TravelNotificationsCard({
+  now,
   travelerId,
+  tripData,
 }: TravelNotificationsCardProps) {
   const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as
     | string
@@ -39,6 +50,7 @@ export function TravelNotificationsCard({
   const [installationId] = useState(() =>
     getOrCreatePushInstallationId(window.localStorage),
   )
+  const [phase] = useState(() => selectTripReminderPhase(tripData, now))
 
   useEffect(() => {
     if (readiness !== 'READY') {
@@ -137,7 +149,10 @@ export function TravelNotificationsCard({
             </p>
           ) : subscription === 'SUBSCRIBED' ? (
             <>
-              <p role="status">Travel notifications are on for this device.</p>
+              <p role="status">
+                Notifications enabled.
+                {PHASE_COPY[phase] ? ` ${PHASE_COPY[phase]}` : ''}
+              </p>
               <button type="button" disabled={working} onClick={handleTest}>
                 Send test notification
               </button>

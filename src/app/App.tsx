@@ -145,7 +145,9 @@ export function App({
               element={
                 <MoreScreen
                   appBuildInfo={appBuildInfo}
+                  now={now}
                   pwaUpdateManager={pwaUpdateManager}
+                  tripData={tripData}
                   tripDataVersion={tripData.dataVersion}
                   tripOverrideRepository={tripOverrideRepository}
                   travelers={tripData.travelers}

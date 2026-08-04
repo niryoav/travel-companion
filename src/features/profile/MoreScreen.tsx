@@ -7,6 +7,7 @@ import { SurfaceCard } from '../../components/SurfaceCard'
 import type {
   Traveler,
   TravelerId,
+  TripData,
 } from '../../domain/trip/tripTypes'
 import type { TripStateRepository } from '../../storage/TripStateRepository'
 import { TravelerChoice } from './TravelerChoice'
@@ -20,7 +21,9 @@ import { TripDataSyncStatus } from './TripDataSyncStatus'
 
 interface MoreScreenProps {
   appBuildInfo: AppBuildInfo
+  now: Date
   pwaUpdateManager: PwaUpdateManager
+  tripData: TripData
   tripDataVersion: string
   tripOverrideRepository: TripOverrideRepository
   travelers: Traveler[]
@@ -29,7 +32,9 @@ interface MoreScreenProps {
 
 export function MoreScreen({
   appBuildInfo,
+  now,
   pwaUpdateManager,
+  tripData,
   tripDataVersion,
   tripOverrideRepository,
   travelers,
@@ -83,7 +88,7 @@ export function MoreScreen({
           travelerId={travelerId}
         />
       ) : null}
-      <TravelNotificationsCard travelerId={travelerId} />
+      <TravelNotificationsCard now={now} travelerId={travelerId} tripData={tripData} />
       <PwaStatusCard manager={pwaUpdateManager} />
       <AppInformationCard
         buildInfo={appBuildInfo}

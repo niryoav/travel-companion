@@ -1,8 +1,13 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { tripFixture } from '../../test/fixtures/tripFixture'
 import { TravelNotificationsCard } from './TravelNotificationsCard'
 import * as pushNotificationClient from '../reminders/pushNotificationClient'
+
+// Within tripFixture's trip window (2030-05-10 to 2030-05-14); the specific
+// phase doesn't matter for these tests, none of which assert phase copy.
+const FIXED_NOW = new Date('2030-05-11T12:00:00Z')
 
 const { sendTestNotification, registerSubscription, removeSubscription } =
   vi.hoisted(() => ({
@@ -50,7 +55,7 @@ describe('TravelNotificationsCard', () => {
   it('reports unsupported browsers without offering an action', async () => {
     mocked.detectPushReadiness.mockReturnValue('UNSUPPORTED')
 
-    render(<TravelNotificationsCard travelerId="traveler-yoav" />)
+    render(<TravelNotificationsCard now={FIXED_NOW} tripData={tripFixture} travelerId="traveler-yoav" />)
 
     expect(
       await screen.findByText(
@@ -63,7 +68,7 @@ describe('TravelNotificationsCard', () => {
   it('explains the iPhone Home Screen install step when not running standalone', async () => {
     mocked.detectPushReadiness.mockReturnValue('NEEDS_INSTALL')
 
-    render(<TravelNotificationsCard travelerId="traveler-yoav" />)
+    render(<TravelNotificationsCard now={FIXED_NOW} tripData={tripFixture} travelerId="traveler-yoav" />)
 
     expect(
       await screen.findByText(
@@ -77,7 +82,7 @@ describe('TravelNotificationsCard', () => {
     mocked.detectPushReadiness.mockReturnValue('READY')
     mocked.getPushSubscriptionStatus.mockResolvedValue('INACTIVE')
 
-    render(<TravelNotificationsCard travelerId={null} />)
+    render(<TravelNotificationsCard now={FIXED_NOW} tripData={tripFixture} travelerId={null} />)
 
     expect(
       await screen.findByText(
@@ -94,7 +99,7 @@ describe('TravelNotificationsCard', () => {
       Object.assign(vi.fn(), { permission: 'denied' }),
     )
 
-    render(<TravelNotificationsCard travelerId="traveler-yoav" />)
+    render(<TravelNotificationsCard now={FIXED_NOW} tripData={tripFixture} travelerId="traveler-yoav" />)
 
     expect(
       await screen.findByText(/Notifications are blocked for this browser/),
@@ -109,7 +114,7 @@ describe('TravelNotificationsCard', () => {
       status: 'SUBSCRIBED',
     })
 
-    render(<TravelNotificationsCard travelerId="traveler-yoav" />)
+    render(<TravelNotificationsCard now={FIXED_NOW} tripData={tripFixture} travelerId="traveler-yoav" />)
     await screen.findByRole('button', { name: 'Turn on travel notifications' })
 
     expect(mocked.subscribeToPushNotifications).not.toHaveBeenCalled()
@@ -129,7 +134,7 @@ describe('TravelNotificationsCard', () => {
       }),
     )
     expect(
-      await screen.findByText('Travel notifications are on for this device.'),
+      await screen.findByText(/Notifications enabled\./),
     ).toBeInTheDocument()
   })
 
@@ -140,7 +145,7 @@ describe('TravelNotificationsCard', () => {
       status: 'SUBSCRIBED',
     })
 
-    render(<TravelNotificationsCard travelerId="traveler-isabel" />)
+    render(<TravelNotificationsCard now={FIXED_NOW} tripData={tripFixture} travelerId="traveler-isabel" />)
     fireEvent.click(
       await screen.findByRole('button', {
         name: 'Turn on travel notifications',
@@ -158,7 +163,7 @@ describe('TravelNotificationsCard', () => {
     mocked.detectPushReadiness.mockReturnValue('READY')
     mocked.getPushSubscriptionStatus.mockResolvedValue('ACTIVE')
 
-    render(<TravelNotificationsCard travelerId="traveler-yoav" />)
+    render(<TravelNotificationsCard now={FIXED_NOW} tripData={tripFixture} travelerId="traveler-yoav" />)
     fireEvent.click(
       await screen.findByRole('button', { name: 'Send test notification' }),
     )
@@ -175,7 +180,7 @@ describe('TravelNotificationsCard', () => {
     mocked.detectPushReadiness.mockReturnValue('READY')
     mocked.getPushSubscriptionStatus.mockResolvedValue('ACTIVE')
 
-    render(<TravelNotificationsCard travelerId="traveler-yoav" />)
+    render(<TravelNotificationsCard now={FIXED_NOW} tripData={tripFixture} travelerId="traveler-yoav" />)
     fireEvent.click(
       await screen.findByRole('button', { name: 'Turn off notifications' }),
     )
@@ -188,5 +193,58 @@ describe('TravelNotificationsCard', () => {
     expect(
       await screen.findByRole('button', { name: 'Turn on travel notifications' }),
     ).toBeInTheDocument()
+  })
+})
+
+describe('TravelNotificationsCard — phase copy', () => {
+  it('mentions the daily test before the trip', async () => {
+    mocked.detectPushReadiness.mockReturnValue('READY')
+    mocked.getPushSubscriptionStatus.mockResolvedValue('ACTIVE')
+
+    render(
+      <TravelNotificationsCard
+        now={new Date('2030-05-01T00:00:00Z')}
+        tripData={tripFixture}
+        travelerId="traveler-yoav"
+      />,
+    )
+
+    expect(
+      await screen.findByText('Notifications enabled. Daily test active before the trip.'),
+    ).toBeInTheDocument()
+  })
+
+  it('mentions real travel reminders during the trip', async () => {
+    mocked.detectPushReadiness.mockReturnValue('READY')
+    mocked.getPushSubscriptionStatus.mockResolvedValue('ACTIVE')
+
+    render(
+      <TravelNotificationsCard
+        now={new Date('2030-05-11T12:00:00Z')}
+        tripData={tripFixture}
+        travelerId="traveler-yoav"
+      />,
+    )
+
+    expect(
+      await screen.findByText(
+        'Notifications enabled. Real travel reminders active during the trip.',
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('mentions only that notifications are enabled after the trip has ended', async () => {
+    mocked.detectPushReadiness.mockReturnValue('READY')
+    mocked.getPushSubscriptionStatus.mockResolvedValue('ACTIVE')
+
+    render(
+      <TravelNotificationsCard
+        now={new Date('2030-06-01T00:00:00Z')}
+        tripData={tripFixture}
+        travelerId="traveler-yoav"
+      />,
+    )
+
+    expect(await screen.findByText('Notifications enabled.')).toBeInTheDocument()
   })
 })

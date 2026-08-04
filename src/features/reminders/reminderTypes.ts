@@ -8,6 +8,7 @@ export type TripReminderKind =
   | 'embarkation'
   | 'excursion'
   | 'all-aboard'
+  | 'daily-test'
 
 /**
  * A single, deterministic reminder derived from the trip snapshot. The same
