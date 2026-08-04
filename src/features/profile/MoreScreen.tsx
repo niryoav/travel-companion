@@ -9,6 +9,7 @@ import type {
   TravelerId,
 } from '../../domain/trip/tripTypes'
 import type { TripStateRepository } from '../../storage/TripStateRepository'
+import { CalendarPocSection } from '../calendarPoc/CalendarPocSection'
 import { TravelerChoice } from './TravelerChoice'
 import type { AppBuildInfo } from '../../app/buildInfo'
 import type { PwaUpdateManager } from '../../pwa/PwaUpdateManager'
@@ -87,6 +88,7 @@ export function MoreScreen({
         buildInfo={appBuildInfo}
         tripDataVersion={tripDataVersion}
       />
+      <CalendarPocSection />
     </main>
   )
 }

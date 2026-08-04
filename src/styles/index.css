@@ -3304,6 +3304,72 @@ a:focus-visible {
   outline-offset: 3px;
 }
 
+.calendar-poc-card {
+  max-width: 38rem;
+  margin-top: 1rem;
+  padding: 1.25rem;
+}
+
+.calendar-poc-card h2 {
+  margin: 0.45rem 0 0;
+  font-size: clamp(1.25rem, 5vw, 1.55rem);
+}
+
+.calendar-poc-card > p {
+  margin: 0.55rem 0 0;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.calendar-poc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+
+.calendar-poc-actions button {
+  min-height: 3rem;
+  flex: 1 1 12rem;
+  border: 1px solid var(--champagne);
+  border-radius: 0.9rem;
+  background: var(--champagne);
+  color: var(--ocean-950);
+  padding: 0.7rem 1rem;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.calendar-poc-actions button:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 3px;
+}
+
+.calendar-poc-status {
+  margin-top: 0.75rem;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.calendar-poc-instructions {
+  margin-top: 1rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
+}
+
+.calendar-poc-instructions h3 {
+  margin: 0.6rem 0 0.3rem;
+  font-size: 1rem;
+}
+
+.calendar-poc-instructions ol {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
 .app-information-card dl {
   display: grid;
   gap: 0.65rem;
