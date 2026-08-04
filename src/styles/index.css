@@ -3238,6 +3238,75 @@ a:focus-visible {
   line-height: 1.55;
 }
 
+.travel-notifications-card {
+  max-width: 38rem;
+  margin-top: 1rem;
+  padding: 1.25rem;
+}
+
+.travel-notifications-card > p:not(.card-eyebrow) {
+  margin: 0.55rem 0 0;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.travel-notifications-actions {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.travel-notifications-card button {
+  display: block;
+  width: 100%;
+  min-height: 3rem;
+  border-radius: 0.9rem;
+  padding: 0.7rem 1rem;
+  font: inherit;
+  font-weight: 800;
+  text-align: center;
+  text-wrap: balance;
+  cursor: pointer;
+}
+
+.travel-notifications-card button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.travel-notifications-card button:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 3px;
+}
+
+.travel-notifications-button-primary {
+  border: 1px solid var(--champagne);
+  background: var(--champagne);
+  color: var(--ocean-950);
+}
+
+.travel-notifications-button-secondary {
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+.travel-notifications-message {
+  margin: 0.75rem 0 0;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.travel-notifications-message-success {
+  color: var(--positive);
+  font-weight: 700;
+}
+
+.travel-notifications-message-error {
+  color: var(--attention);
+  font-weight: 750;
+}
+
 .app-status-card,
 .trip-data-status,
 .app-information-card {

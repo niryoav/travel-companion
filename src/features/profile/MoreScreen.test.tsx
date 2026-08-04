@@ -35,8 +35,10 @@ describe('MoreScreen role-based trip status', () => {
             environmentLabel: 'Production',
             version: '97b35d2',
           }}
+          now={new Date('2030-05-10T12:00:00Z')}
           pwaUpdateManager={new PwaUpdateManager(false)}
           travelers={oceaniaMarina2026TripData.travelers}
+          tripData={oceaniaMarina2026TripData}
           tripDataVersion="test-data"
           tripOverrideRepository={repository}
           tripStateRepository={
@@ -98,8 +100,10 @@ describe('MoreScreen role-based trip status', () => {
             environmentLabel: 'Production',
             version: 'abc1234',
           }}
+          now={new Date('2026-07-30T16:32:00Z')}
           pwaUpdateManager={new PwaUpdateManager(false)}
           travelers={oceaniaMarina2026TripData.travelers}
+          tripData={oceaniaMarina2026TripData}
           tripDataVersion="test-data"
           tripOverrideRepository={repository}
           tripStateRepository={

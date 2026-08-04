@@ -2,7 +2,7 @@ import type {
   DocumentReference,
   TripData,
   TripEvent,
-} from '../tripTypes'
+} from '../tripTypes.js'
 
 export function selectDayDocuments(
   data: TripData,

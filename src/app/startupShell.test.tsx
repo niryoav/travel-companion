@@ -59,6 +59,12 @@ describe('startup shell', () => {
       resolve(process.cwd(), 'vite.config.ts'),
       'utf8',
     )
+    // cleanupOutdatedCaches is now called explicitly in the hand-authored
+    // service worker (src/sw.ts) rather than configured under generateSW.
+    const serviceWorkerSource = readFileSync(
+      resolve(process.cwd(), 'src/sw.ts'),
+      'utf8',
+    )
     const criticalStyles =
       html.match(/<style data-startup-shell>([\s\S]*?)<\/style>/)?.[1] ?? ''
 
@@ -76,7 +82,7 @@ describe('startup shell', () => {
     expect(pwaConfig).toContain("theme_color: '#063b61'")
     expect(pwaConfig).toContain("background_color: '#063b61'")
     expect(pwaConfig).toContain("registerType: 'prompt'")
-    expect(pwaConfig).toContain('cleanupOutdatedCaches: true')
+    expect(serviceWorkerSource).toContain('cleanupOutdatedCaches()')
     expect(html).toContain(
       '<meta name="robots" content="noindex, nofollow, noarchive" />',
     )

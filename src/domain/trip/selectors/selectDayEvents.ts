@@ -1,4 +1,4 @@
-import type { TripData, TripDay, TripEvent } from '../tripTypes'
+import type { TripData, TripDay, TripEvent } from '../tripTypes.js'
 
 export function selectDayEvents(
   data: TripData,

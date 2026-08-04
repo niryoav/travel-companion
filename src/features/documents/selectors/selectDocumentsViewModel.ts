@@ -2,13 +2,13 @@ import type {
   DocumentCategory,
   DocumentReference,
   TripData,
-} from '../../../domain/trip/tripTypes'
+} from '../../../domain/trip/tripTypes.js'
 import type {
   DocumentActionViewModel,
   DocumentGroupViewModel,
   DocumentsViewModel,
   TravelDocumentViewModel,
-} from '../documentTypes'
+} from '../documentTypes.js'
 
 function formatDate(localDate: string): string {
   return new Intl.DateTimeFormat('en-GB', {

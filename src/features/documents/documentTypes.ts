@@ -1,4 +1,4 @@
-import type { DocumentCategory } from '../../domain/trip/tripTypes'
+import type { DocumentCategory } from '../../domain/trip/tripTypes.js'
 
 export interface DocumentActionViewModel {
   id: string

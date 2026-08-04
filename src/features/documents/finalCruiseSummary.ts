@@ -1,4 +1,4 @@
-import type { DocumentActionViewModel } from './documentTypes'
+import type { DocumentActionViewModel } from './documentTypes.js'
 
 const FINAL_CRUISE_SUMMARY_FOLDER = 'Final Cruise Vacation Summary'
 

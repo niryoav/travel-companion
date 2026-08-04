@@ -2,6 +2,23 @@ export function isValidInstant(value: string): boolean {
   return Number.isFinite(Date.parse(value))
 }
 
+/**
+ * Pure calendar-date arithmetic on a 'YYYY-MM-DD' string — no timezone or
+ * clock time involved. Returns null for a malformed input rather than an
+ * Invalid Date, so callers can fail safe.
+ */
+export function addCalendarDays(localDate: string, days: number): string | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(localDate)
+  if (!match) {
+    return null
+  }
+  const utcDate = new Date(
+    Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])),
+  )
+  utcDate.setUTCDate(utcDate.getUTCDate() + days)
+  return utcDate.toISOString().slice(0, 10)
+}
+
 export function isSupportedTimeZone(value: string): boolean {
   try {
     new Intl.DateTimeFormat('en', { timeZone: value })

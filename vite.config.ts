@@ -4,7 +4,6 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vitest/config'
 
 import { resolveDeploymentBuildValues } from './build/deploymentBuildInfo'
-import { OFFLINE_ASSET_CACHE_NAME } from './src/pwa/offlineAssetCache'
 
 const deploymentBuild = resolveDeploymentBuildValues(process.env)
 
@@ -18,6 +17,13 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'prompt',
+      // A custom service worker source (src/sw.ts) is required to receive
+      // Web Push events and show notifications — generateSW cannot add
+      // custom event listeners, so precaching and runtime caching (below)
+      // are authored by hand there instead of under `workbox`.
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
       includeAssets: ['apple-touch-icon.png'],
       manifest: {
         name: 'Travel Companion',
@@ -47,36 +53,15 @@ export default defineConfig({
           },
         ],
       },
-      workbox: {
-        cleanupOutdatedCaches: true,
-        navigateFallback: '/index.html',
-        navigateFallbackDenylist: [
-          /^\/api\//,
-          /^\/documents\/.*\.(pdf|json)$/,
-          /^\/images\/voyage-progress\/.*\.png$/,
-        ],
+      injectManifest: {
         globPatterns: [
           '**/*.{js,css,html,svg,png,jpg,jpeg,webp,woff2}',
         ],
         globIgnores: ['images/voyage-progress/**'],
-        runtimeCaching: [
-          {
-            urlPattern: ({ url }: { url: URL }) =>
-              (url.pathname.startsWith('/documents/') &&
-                (url.pathname.endsWith('.pdf') ||
-                  url.pathname.endsWith('.json'))) ||
-              (url.pathname.startsWith('/images/voyage-progress/') &&
-                url.pathname.endsWith('.png')),
-            handler: 'CacheFirst',
-            options: {
-              cacheName: OFFLINE_ASSET_CACHE_NAME,
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-        ],
       },
       devOptions: {
         enabled: true,
+        type: 'module',
       },
     }),
   ],
