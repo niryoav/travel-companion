@@ -11,6 +11,7 @@ import { NavigationRoute, registerRoute } from 'workbox-routing'
 import { CacheFirst } from 'workbox-strategies'
 
 import { OFFLINE_ASSET_CACHE_NAME } from './pwa/offlineAssetCache'
+import { handleNotificationClickNavigation } from './pwa/notificationClickNavigation'
 import type { WebPushNotificationPayload } from './features/reminders/webPushPayload'
 
 declare let self: ServiceWorkerGlobalScope
@@ -106,25 +107,17 @@ self.addEventListener('notificationclick', (event) => {
   const targetPath =
     (event.notification.data as { targetPath?: string } | undefined)
       ?.targetPath ?? '/'
-  const targetUrl = new URL(targetPath, self.location.origin).href
+  // Built from this service worker's own origin — the same approach works
+  // unmodified on a Vercel Preview deployment or in production, since each
+  // runs its own service worker at its own origin.
+  const targetUrl = new URL(targetPath, self.location.origin)
 
   event.waitUntil(
-    (async () => {
-      const clients = await self.clients.matchAll({
-        type: 'window',
-        includeUncontrolled: true,
-      })
-      const existingClient = clients.find(
-        (client) => new URL(client.url).origin === self.location.origin,
-      )
-      if (existingClient) {
-        await existingClient.focus()
-        if ('navigate' in existingClient) {
-          await existingClient.navigate(targetUrl)
-        }
-        return
-      }
-      await self.clients.openWindow(targetUrl)
-    })(),
+    handleNotificationClickNavigation(
+      targetUrl,
+      () =>
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true }),
+      (url) => self.clients.openWindow(url),
+    ),
   )
 })
