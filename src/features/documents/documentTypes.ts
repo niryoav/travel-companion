@@ -20,7 +20,7 @@ export interface TravelDocumentViewModel extends DocumentActionViewModel {
 }
 
 export interface DocumentGroupViewModel {
-  id: 'HOTEL' | 'TRANSFER' | 'EXCURSION'
+  id: 'HOTEL' | 'TRANSFER' | 'EXCURSION' | 'FLIGHT' | 'MEDICAL'
   title: string
   documents: TravelDocumentViewModel[]
 }

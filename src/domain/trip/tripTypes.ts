@@ -72,6 +72,7 @@ export type DocumentCategory =
   | 'EXCURSION'
   | 'EXCURSION_TICKET'
   | 'EXCURSION_CONFIRMATION'
+  | 'MEDICAL'
 
 export type TripPhase =
   | 'PRE_TRIP'

@@ -34,6 +34,8 @@ function categoryLabel(category: DocumentCategory): string {
       return 'Flight'
     case 'CRUISE':
       return 'Cruise'
+    case 'MEDICAL':
+      return 'Medical'
   }
 }
 
@@ -98,6 +100,16 @@ const groupDefinitions: {
       category === 'EXCURSION' ||
       category === 'EXCURSION_TICKET' ||
       category === 'EXCURSION_CONFIRMATION',
+  },
+  {
+    id: 'FLIGHT',
+    title: 'Flights',
+    matches: (category) => category === 'FLIGHT',
+  },
+  {
+    id: 'MEDICAL',
+    title: 'Health',
+    matches: (category) => category === 'MEDICAL',
   },
 ]
 

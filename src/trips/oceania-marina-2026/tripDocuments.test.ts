@@ -29,6 +29,8 @@ describe('bundled practical travel documents', () => {
         'day-2026-09-04',
         'TRANSFER',
       ],
+      ['document-medical-declaration', 'day-2026-08-22', 'MEDICAL'],
+      ['document-icelandair-coravin-approval', 'day-2026-08-22', 'FLIGHT'],
     ]
 
     expect(
