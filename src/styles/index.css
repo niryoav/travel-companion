@@ -523,6 +523,42 @@ a:focus-visible {
   line-height: 1.45;
 }
 
+.today-weather-outlook {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.today-weather-outlook li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 5.5rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--champagne) 10%, transparent);
+  font-size: 0.82rem;
+}
+
+.today-weather-outlook-label {
+  color: var(--text-muted);
+}
+
+.today-weather-outlook-time {
+  font-weight: 700;
+}
+
+.today-weather-outlook-temperature {
+  color: var(--champagne);
+}
+
+.today-weather-outlook-rain {
+  color: var(--text-muted);
+}
+
 .today-preparation-grid {
   display: grid;
   gap: 1rem;

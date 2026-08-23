@@ -143,6 +143,13 @@ export interface TodayPriorityViewModel {
   documentAction?: DocumentActionViewModel
 }
 
+export interface TodayWeatherOutlookEntry {
+  label: string
+  time: string
+  temperature: string
+  rainChance?: string
+}
+
 export interface TodayWeatherViewModel {
   location: string
   condition: string
@@ -152,6 +159,7 @@ export interface TodayWeatherViewModel {
   rainChance?: string
   seaCondition?: string
   implication: string
+  outlook?: TodayWeatherOutlookEntry[]
 }
 
 export interface TodayPreparationViewModel {

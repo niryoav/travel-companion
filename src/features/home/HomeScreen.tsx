@@ -4,8 +4,12 @@ import { useLocation } from 'react-router'
 import type { DailyLoveMessageSchedule } from '../../domain/content/dailyLoveMessage'
 import { selectDailyLoveMessage } from '../../domain/content/dailyLoveMessage'
 import { selectCurrentLocalDate } from '../../domain/trip/selectors/selectCurrentLocalDate'
+import { selectDayEvents } from '../../domain/trip/selectors/selectDayEvents'
+import { selectToday } from '../../domain/trip/selectors/selectToday'
 import { selectTripDays } from '../../domain/trip/selectors/selectTripDays'
 import type { TripData } from '../../domain/trip/tripTypes'
+import { selectWeatherLocation } from '../../domain/weather/selectWeatherLocation'
+import { useTripWeather } from '../weather/useTripWeather'
 import {
   cruiseDayFromSearch,
   cruiseTimeFromSearch,
@@ -21,6 +25,7 @@ import { HomePhaseView } from './HomePhaseView'
 import { NextImportantMomentCard } from './components/NextImportantMomentCard'
 import { HOME_PHASES } from './homeTypes'
 import { selectHomeViewModel } from './selectors/selectHomeViewModel'
+import { selectHomeWeather } from './selectors/selectHomeWeather'
 import {
   isActiveTrip,
   resolveImportantMoments,
@@ -109,11 +114,34 @@ export function HomeScreen({
   const simulationScenarios = simulationScenario
     ? createHomeSimulationScenarios(tripData)
     : null
+  const referenceNow = cruiseDayNow ?? now
+  const today = selectToday(tripData, referenceNow)
+  const weatherLocation = today
+    ? selectWeatherLocation(tripData, today)
+    : null
+  const liveWeatherResult = useTripWeather(weatherLocation?.primary ?? null)
+  const firstEventStartsAt = today
+    ? selectDayEvents(tripData, today).find(({ startsAt }) => startsAt)
+        ?.startsAt
+    : undefined
+  const weatherReferenceInstant =
+    firstEventStartsAt &&
+    referenceNow.getTime() < Date.parse(firstEventStartsAt)
+      ? new Date(firstEventStartsAt)
+      : referenceNow
   const viewModel = simulationScenario
     ? simulationScenarios![simulationScenario]
     : reviewState
       ? homeReviewFixtures[reviewState]
-      : selectHomeViewModel(tripData, cruiseDayNow ?? now)
+      : {
+          ...selectHomeViewModel(tripData, referenceNow),
+          weather: selectHomeWeather(
+            weatherLocation,
+            liveWeatherResult,
+            referenceNow,
+            weatherReferenceInstant,
+          ),
+        }
   const loveMessage = selectDailyLoveMessage(
     loveMessageSchedule,
     selectCurrentLocalDate(tripData, now),
