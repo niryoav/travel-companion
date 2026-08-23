@@ -123,6 +123,8 @@ export interface Location {
   name: string
   city?: string
   country?: string
+  latitude?: number
+  longitude?: number
 }
 
 export interface MealServiceWindow {

@@ -127,12 +127,16 @@ export const tripFixture: TripData = {
       name: 'Harbor Terminal',
       city: 'Harbor City',
       country: 'Example Country',
+      latitude: 51.05,
+      longitude: 3.72,
     },
     {
       id: 'location-coast-town',
       name: 'Coast Town Port',
       city: 'Coast Town',
       country: 'Example Country',
+      latitude: 50.9,
+      longitude: -1.4,
     },
   ],
   transports: [

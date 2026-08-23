@@ -35,6 +35,26 @@ export function TodayWeatherCard({
         ) : null}
       </div>
       <p className="today-weather-implication">{weather.implication}</p>
+      {weather.outlook?.length ? (
+        <ul className="today-weather-outlook">
+          {weather.outlook.map((entry) => (
+            <li key={`${entry.label}-${entry.time}`}>
+              <span className="today-weather-outlook-label">
+                {entry.label}
+              </span>
+              <span className="today-weather-outlook-time">{entry.time}</span>
+              <span className="today-weather-outlook-temperature">
+                {entry.temperature}
+              </span>
+              {entry.rainChance ? (
+                <span className="today-weather-outlook-rain">
+                  {entry.rainChance}
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </section>
   )
 }
